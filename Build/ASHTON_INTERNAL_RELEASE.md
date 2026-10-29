@@ -2,7 +2,7 @@
 
 This document defines how the Ashton custom Smokeview fork is built, tested,
 versioned, packaged, and distributed internally. The current release line is
-based on Smokeview 6.11.2. The current test build is `6.11.2-af2-rc4`;
+based on Smokeview 6.11.2. The current test build is `6.11.2-af2-rc5`;
 `6.11.2-af1` is the previous tagged release.
 
 ## Current Customisation
