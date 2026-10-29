@@ -154,19 +154,16 @@ Only tag a commit after its release package has passed the acceptance tests.
 
 ### Pre-release test builds
 
-While a release line is still being iterated on and has not yet been tagged,
-set `ASHTON_RELEASE` to that release name with an `-rcN` suffix, for example
-`af1-rc1`, `af1-rc2`, and so on for each distributed test build. This keeps
-successive test builds distinguishable (in the `-version` banner, the
-installer filename, and the embedded checksum) without implying a numbered
-release (`af2`) has begun. `ASHTON_RELEASE` is a free-form string, so no other
-build or packaging script needs to change to support this.
+The current `af2-rc6` build uses the older suffix scheme. The next Windows
+build moves to the three-part Ashton scheme: test selects `af2.1.0-rc1`, and
+live selects `af2.1.0`. Further test builds increment the candidate number
+(`af2.1.0-rc2`); after a live `af2.1.0` build, the next patch is
+`af2.1.1-rc1` or `af2.1.1`. A planned feature release can be selected
+explicitly with `-Version af2.2.0-rc1`.
 
-Once a build passes acceptance testing, drop the `-rcN` suffix (`af1-rc3`
-becomes `af1`), rebuild and repackage so the final artefact's embedded version
-matches exactly, and only then create the annotated tag. Do not tag an `-rcN`
-build. The next release line after a tagged version increments the numbered
-suffix as before (`af1` to `af2`, not `af1.1`).
+Once a test build passes acceptance testing, choose live to drop the `-rcN`
+suffix, rebuild and repackage so the final artefact's embedded version matches
+exactly, and only then create the annotated tag. Do not tag an `-rcN` build.
 
 ## Configuration Files
 
@@ -245,9 +242,9 @@ the [official portable static ImageMagick archive](https://imagemagick.org/downl
 ```
 
 This script asks whether the next build is a test or live release. With the
-current `af2-rc6` value, test selects `af2-rc7` and live selects `af2`.
+current `af2-rc6` value, test selects `af2.1.0-rc1` and live selects `af2.1.0`.
 It updates `CMakeLists.txt` and the current build references in this guide
-before building. Pass `-Version af2-rc7` for unattended builds or to choose a
+before building. Pass `-Version af2.1.0-rc1` for unattended builds or to choose a
 specific version.
 
 ### Build both installers on one Windows workstation
@@ -277,9 +274,9 @@ py -3 -m pip install pyinstaller
 
 The script uses the same test/live prompt as the Windows-only build and updates
 `ASHTON_RELEASE` in `CMakeLists.txt` and the current build references in this
-guide before building. For unattended builds, pass `-Version af2-rc7`.
-If the fork adopts a three-part Ashton release such as `af2.0.1`, the script
-increments its patch number for the next test or live build. The upstream
+guide before building. For unattended builds, pass `-Version af2.1.0-rc1`.
+After a live three-part Ashton release, the script increments its patch number
+for the next test or live build. The upstream
 Smokeview version (currently `6.11.2`) remains the value in `CMakeLists.txt`;
 update it there when the fork moves to a newer upstream Smokeview version.
 
@@ -321,8 +318,8 @@ and Linux desktop launcher use `capture_logo.png`, while the Windows capture
 executable embeds `capture_logo.ico`.
 
 The release version combines the upstream Smokeview version with the Ashton
-fork release, for example `6.11.2-af1`. Increment `ASHTON_RELEASE` in the root
-`CMakeLists.txt` (`af2`, `af3`, and so on) before creating the next release.
+fork release, for example `6.11.2-af2.1.0`. The release selector updates
+`ASHTON_RELEASE` in the root `CMakeLists.txt` when building a new version.
 The packaging scripts derive the version automatically and reject an installer
 whose package version does not match the revision embedded in its executable.
 

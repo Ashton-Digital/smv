@@ -21,17 +21,18 @@ function Select-ReleaseVersion {
             throw "Cannot increment $OldRelease automatically. Pass -Version explicitly."
         }
         $Base = $OldRelease -replace '-rc[0-9]+$', ''
-        if ($Parts.Groups['candidate'].Success) {
+        if (-not $Parts.Groups['minor'].Success) {
+            # Migrate the older afN / afN-rcN scheme to the chosen afN.1.0 line.
+            $Base = "af$($Parts.Groups['major'].Value).1.0"
+            $TestRelease = "$Base-rc1"
+            $LiveRelease = $Base
+        } elseif ($Parts.Groups['candidate'].Success) {
             $TestRelease = "$Base-rc$([int]::Parse($Parts.Groups['candidate'].Value) + 1)"
             $LiveRelease = $Base
-        } elseif ($Parts.Groups['minor'].Success) {
+        } else {
             $NextPatch = [int]::Parse($Parts.Groups['patch'].Value) + 1
             $TestRelease = "af$($Parts.Groups['major'].Value).$($Parts.Groups['minor'].Value).$NextPatch-rc1"
             $LiveRelease = "af$($Parts.Groups['major'].Value).$($Parts.Groups['minor'].Value).$NextPatch"
-        } else {
-            $NextMajor = [int]::Parse($Parts.Groups['major'].Value) + 1
-            $TestRelease = "af$NextMajor-rc1"
-            $LiveRelease = "af$NextMajor"
         }
         if ([Console]::IsInputRedirected) {
             throw "Pass -Version for a non-interactive build (for example, -Version $TestRelease)."
@@ -53,7 +54,7 @@ function Select-ReleaseVersion {
         $Version.Substring($UpstreamVersion.Length + 1)
     } else { $Version }
     if ($NewRelease -notmatch '^af[0-9]+(?:\.[0-9]+\.[0-9]+)?(?:-rc[1-9][0-9]*)?$') {
-        throw "Invalid Ashton release: $NewRelease. Use af2, af2-rc7, af2.0.1, or af2.0.1-rc1."
+        throw "Invalid Ashton release: $NewRelease. Use af2.1.0 or af2.1.0-rc1."
     }
     $SelectedVersion = "$UpstreamVersion-$NewRelease"
     $OldSetting = 'set(ASHTON_RELEASE "' + $OldRelease + '")'
