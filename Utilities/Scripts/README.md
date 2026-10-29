@@ -57,13 +57,14 @@ Right-clicking a `.smv` file and choosing **Open With** gives two options:
 ## Capture result slices window
 
 The Windows MSI installs **Capture result slices** in the Start menu. Open it
-to choose one `.smv` file or a folder of cases (searched recursively), select
+to choose one `.smv` file or a folder of cases (with **Include subfolders** on
+by default), select
 visibility, temperature, velocity and pressure slices, enter one or more
 simulation times separated by commas, and optionally choose an output folder.
 Right-clicking an `.smv` file and choosing **Capture result slices** opens the
 same window with that case preselected.
-The window opens in dark mode with darker cards and rounded buttons. It shows
-the capture logo and has a light-mode button. Under **Advanced · slice
+The window opens in dark mode with rounded buttons, a resizable capture log,
+and a light-mode button. Under **Advanced — slice
 positions**, enable the position filter, scan the selected input to see
 available planes, then choose or type positions
 such as `Y=3` or `Y=3,Y=5`. Leave the filter off to capture every plane.
