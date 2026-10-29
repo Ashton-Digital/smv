@@ -253,12 +253,14 @@ the extracted portable ImageMagick folder described below. Docker builds the
 Linux binary in Ubuntu 22.04; Visual Studio and WiX build the MSI on Windows.
 Both builds use the same checkout, with separate CMake build directories.
 
-To set up Docker Desktop, enable WSL 2 in an Administrator PowerShell with
-`wsl --install` (restart if prompted), then install Docker Desktop from the
-linked official page. Start Docker Desktop and select its WSL 2 engine. In a
-PowerShell terminal, check `docker info --format '{{.OSType}}'` prints `linux`.
-The Docker build runs from Windows PowerShell; a separate Ubuntu installation
-inside WSL is not required.
+WSL is optional. Docker Desktop can run Linux containers using its WSL 2
+backend, Hyper-V backend (with an all-users Docker Desktop installation), or
+Docker VMM. Choose a backend supported by the Windows machine when installing
+Docker Desktop from the linked official page. If using WSL 2, enable it with
+`wsl --install` in an Administrator PowerShell and restart if prompted. Start
+Docker Desktop, then check in PowerShell that
+`docker info --format '{{.OSType}}'` prints `linux`. The build runs from
+Windows PowerShell; no separate Ubuntu installation is required.
 
 Run this from the repository root in an x64 Visual Studio Developer PowerShell:
 
