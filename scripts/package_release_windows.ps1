@@ -3,7 +3,8 @@
 Build Smokeview and create a Windows MSI installer.
 
 .DESCRIPTION
-Requires Visual Studio 2022 with C++ build tools, CMake, and WiX Toolset 3.
+Requires Visual Studio 2022 with C++ build tools, CMake, WiX Toolset 3,
+Python 3.10+ with PyInstaller, and a Windows ImageMagick directory.
 #>
 [CmdletBinding()]
 param(
@@ -11,6 +12,7 @@ param(
     [string]$ConfigFile = "Build/for_bundle/smokeview.ini",
     [string]$BuildDir = "cbuild/release-windows",
     [string]$OutputDir = "dist",
+    [string]$ImageMagickDir,
     [switch]$SkipBuild
 )
 
@@ -88,6 +90,40 @@ function Find-WixTool {
 $ConfigFile = Get-RepoPath $ConfigFile
 $BuildDir = Get-RepoPath $BuildDir
 $OutputDir = Get-RepoPath $OutputDir
+if (-not $ImageMagickDir) {
+    throw "Pass -ImageMagickDir PATH to the extracted official Windows portable Q16 x64 static build (the folder containing magick.exe)."
+}
+$ImageMagickDir = Get-RepoPath $ImageMagickDir
+if (-not (Test-Path -LiteralPath (Join-Path $ImageMagickDir "magick.exe"))) {
+    throw "ImageMagick directory does not contain magick.exe: $ImageMagickDir"
+}
+
+$PythonCommand = Get-Command py.exe -ErrorAction SilentlyContinue
+$PythonPrefix = @("-3")
+if (-not $PythonCommand) {
+    $PythonCommand = Get-Command python.exe -ErrorAction SilentlyContinue
+    $PythonPrefix = @()
+}
+if (-not $PythonCommand) {
+    throw "Python 3.10 or newer is required on the build machine."
+}
+& $PythonCommand.Source @PythonPrefix -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"
+if ($LASTEXITCODE -ne 0) {
+    throw "Python 3.10 or newer is required on the build machine."
+}
+& $PythonCommand.Source @PythonPrefix -c "import tkinter"
+if ($LASTEXITCODE -ne 0) {
+    throw "The build machine's Python must include Tcl/Tk so PyInstaller can bundle the capture window."
+}
+$PythonVersion = (& $PythonCommand.Source @PythonPrefix -c "import sys; print(sys.version.split()[0])" | Out-String).Trim()
+$PythonLicense = (& $PythonCommand.Source @PythonPrefix -c "import pathlib, sys; print(pathlib.Path(sys.base_prefix, 'LICENSE.txt'))" | Out-String).Trim()
+if (-not (Test-Path -LiteralPath $PythonLicense)) {
+    throw "Python's LICENSE.txt was not found beside the build interpreter: $PythonLicense"
+}
+$PyInstallerVersion = (& $PythonCommand.Source @PythonPrefix -m PyInstaller --version | Out-String).Trim()
+if ($LASTEXITCODE -ne 0) {
+    throw "PyInstaller is required on the build machine. Install it with: py -3 -m pip install pyinstaller"
+}
 
 if (-not $Version) {
     $CMakeContents = Get-Content -LiteralPath (Join-Path $RepoRoot "CMakeLists.txt") -Raw
@@ -154,7 +190,7 @@ if (-not $SkipBuild) {
     Invoke-NativeCommand -Command $CMakeCommand -Arguments @(
         "--build", $BuildDir,
         "--config", "Release",
-        "--target", "smokeview", "capture_slices_ui",
+        "--target", "smokeview",
         "--parallel"
     )
 }
@@ -167,15 +203,6 @@ $Binary = $BinaryCandidates | Where-Object { Test-Path -LiteralPath $_ } | Selec
 if (-not $Binary) {
     throw "Release executable not found under $BuildDir."
 }
-$UiBinaryCandidates = @(
-    (Join-Path $BuildDir "Release/capture_slices_ui.exe"),
-    (Join-Path $BuildDir "capture_slices_ui.exe")
-)
-$UiBinary = $UiBinaryCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
-if (-not $UiBinary) {
-    throw "Capture UI launcher not found under $BuildDir."
-}
-
 $VersionOutput = (& $Binary "-version" 2>&1 | Out-String)
 if ($LASTEXITCODE -ne 0) {
     throw "Could not read the revision from the release executable."
@@ -198,8 +225,43 @@ $PackageDir = Join-Path $StageRoot $PackageName
 
 try {
     New-Item -ItemType Directory -Force -Path $PackageDir | Out-Null
+    $PyDist = Join-Path $StageRoot "python-dist"
+    $PyWork = Join-Path $StageRoot "python-work"
+    $PySpec = Join-Path $StageRoot "python-spec"
+    foreach ($App in @(
+        @{ Name = "capture_slices_ui"; Script = $CaptureUiScript; Mode = "--windowed" },
+        @{ Name = "capture_result_slices"; Script = $CaptureScript; Mode = "--console" }
+    )) {
+        $PyArguments = $PythonPrefix + @(
+            "-m", "PyInstaller", "--noconfirm", "--clean", "--onefile",
+            $App.Mode, "--name", $App.Name, "--distpath", $PyDist,
+            "--workpath", $PyWork, "--specpath", $PySpec, $App.Script
+        )
+        Invoke-NativeCommand -Command $PythonCommand.Source -Arguments $PyArguments
+    }
+    $UiBinary = Join-Path $PyDist "capture_slices_ui.exe"
+    $CaptureBinary = Join-Path $PyDist "capture_result_slices.exe"
+    foreach ($RequiredBinary in @($UiBinary, $CaptureBinary)) {
+        if (-not (Test-Path -LiteralPath $RequiredBinary)) {
+            throw "PyInstaller output is missing: $RequiredBinary"
+        }
+    }
     Copy-Item -LiteralPath $Binary -Destination (Join-Path $PackageDir "smokeview.exe")
     Copy-Item -LiteralPath $UiBinary -Destination (Join-Path $PackageDir "capture_slices_ui.exe")
+    Copy-Item -LiteralPath $CaptureBinary -Destination (Join-Path $PackageDir "capture_result_slices.exe")
+    Copy-Item -LiteralPath $PythonLicense -Destination (Join-Path $PackageDir "PYTHON-LICENSE.txt")
+    Copy-Item -LiteralPath $ImageMagickDir -Destination (Join-Path $PackageDir "imagemagick") -Recurse
+    $PackagedMagick = Join-Path $PackageDir "imagemagick/magick.exe"
+    $MagickOutput = (& $PackagedMagick -version | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0 -or -not $MagickOutput) {
+        throw "Packaged ImageMagick did not run: $PackagedMagick"
+    }
+    $MagickVersion = ($MagickOutput -split '\r?\n')[0]
+    @"
+Python: $PythonVersion (embedded by PyInstaller $PyInstallerVersion)
+ImageMagick: $MagickVersion
+ImageMagick executable SHA-256: $((Get-FileHash -LiteralPath $PackagedMagick -Algorithm SHA256).Hash.ToLowerInvariant())
+"@ | Set-Content -LiteralPath (Join-Path $PackageDir "DEPENDENCIES.txt") -Encoding UTF8
     Copy-Item -LiteralPath $ConfigFile -Destination (Join-Path $PackageDir "smokeview.ini")
     Copy-Item -LiteralPath $RootMarkerFile -Destination (Join-Path $PackageDir ".smokeview_bin")
     Copy-Item -LiteralPath $CaptureScript -Destination (Join-Path $PackageDir "capture_result_slices.py")
@@ -228,19 +290,7 @@ if not exist "%CASE_FILE%" (
     exit /b 2
 )
 
-where py.exe >nul 2>&1
-if not errorlevel 1 (
-    py -3 "%~dp0capture_result_slices.py" "%CASE_FILE%" --smokeview "%~dp0smokeview.exe" --overwrite
-) else (
-    where python.exe >nul 2>&1
-    if errorlevel 1 (
-        echo Error: Python 3.10 or newer was not found.
-        echo Install Python from https://www.python.org/downloads/windows/
-        pause
-        exit /b 2
-    )
-    python "%~dp0capture_result_slices.py" "%CASE_FILE%" --smokeview "%~dp0smokeview.exe" --overwrite
-)
+"%~dp0capture_result_slices.exe" "%CASE_FILE%" --smokeview "%~dp0smokeview.exe" --overwrite
 
 if errorlevel 1 (
     echo.
@@ -276,8 +326,8 @@ Keep this directory together. Run Smokeview with an absolute path to a case:
 The packaged smokeview.ini and objects.svo files are loaded from this directory.
 
 Open Capture result slices from the Start menu to select one case or a folder,
-choose slice types and times, and set an output location. Python 3.10 or newer
-with Tkinter is required for the capture window.
+choose slice types and times, and set an output location. The window and
+capture engine include their Python runtime.
 
 Capture every configured result-review slice with:
 
@@ -292,12 +342,7 @@ This opens the capture window with that case selected.
 This starts a separate automated Smokeview process. An interactive Smokeview
 window may remain open while capture runs.
 
-The capture utility requires Python 3.10 or newer. Model cropping requires
-ImageMagick; install it from PowerShell with:
-
-  winget install --id ImageMagick.Q16 -e --source winget
-
-Use --no-crop if ImageMagick is intentionally unavailable. The case's associated
+The installed imagemagick folder supplies model cropping. The case's associated
 slice and data files must remain beside the .smv file.
 
 Contact the Ashton Digital internal support channel for help with this build.
@@ -378,7 +423,9 @@ Contact the Ashton Digital internal support channel for help with this build.
     foreach ($RequiredPayloadFile in @(
         "smokeview.exe", "smokeview.ini", "objects.svo", ".smokeview_bin",
         "capture_slices_ui.exe", "capture_slices_ui.pyw",
-        "capture_result_slices.py", "capture_result_slices.cmd", "smvhelp.txt"
+        "capture_result_slices.exe", "capture_result_slices.py",
+        "capture_result_slices.cmd", "smvhelp.txt", "magick.exe",
+        "PYTHON-LICENSE.txt", "DEPENDENCIES.txt"
     )) {
         if ($HarvestContents -notmatch [regex]::Escape($RequiredPayloadFile)) {
             throw "WiX payload does not include $RequiredPayloadFile."

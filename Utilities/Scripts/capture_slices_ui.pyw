@@ -74,6 +74,10 @@ def output_for_case(case: Path, source: Path, folder_mode: bool, chosen_root: Pa
 
 
 def crop_tool_available() -> bool:
+    if getattr(sys, "frozen", False):
+        bundled = Path(sys.executable).resolve().parent / "imagemagick" / "magick.exe"
+        if bundled.is_file():
+            return True
     return bool(shutil.which("magick") or (sys.platform != "win32" and shutil.which("convert")))
 
 
@@ -173,7 +177,11 @@ class CaptureWindow:
             output_root = Path(root_text).expanduser().resolve() if root_text else None
             if output_root is not None and output_root.exists() and not output_root.is_dir():
                 raise ValueError(f"Output is not a folder: {output_root}")
-            if not CAPTURE_SCRIPT.is_file():
+            if getattr(sys, "frozen", False):
+                worker_exe = Path(sys.executable).resolve().with_name("capture_result_slices.exe")
+                if not worker_exe.is_file():
+                    raise ValueError(f"Capture engine is missing: {worker_exe}")
+            elif not CAPTURE_SCRIPT.is_file():
                 raise ValueError(f"Capture engine is missing: {CAPTURE_SCRIPT}")
         except ValueError as error:
             messagebox.showerror("Capture setup", str(error), parent=self.root)
@@ -198,8 +206,13 @@ class CaptureWindow:
                     output = output_for_case(case, source, folder_mode, output_root, time, len(times) > 1)
                     self.events.put(("status", f"Case {case_number}/{len(cases)} · {time:g} s"))
                     self.events.put(("log", f"\n{case} at {time:g} s → {output}\n"))
-                    command = [sys.executable, "-u", str(CAPTURE_SCRIPT), str(case), "-o", str(output),
-                               "--time", repr(time), "--quantities", *quantities]
+                    if getattr(sys, "frozen", False):
+                        install_dir = Path(sys.executable).resolve().parent
+                        command = [str(install_dir / "capture_result_slices.exe"), str(case),
+                                   "--smokeview", str(install_dir / "smokeview.exe")]
+                    else:
+                        command = [sys.executable, "-u", str(CAPTURE_SCRIPT), str(case)]
+                    command.extend(["-o", str(output), "--time", repr(time), "--quantities", *quantities])
                     if not crop:
                         command.append("--no-crop")
                     if overwrite:
@@ -207,7 +220,7 @@ class CaptureWindow:
                     kwargs: dict[str, object] = {"stdout": subprocess.PIPE, "stderr": subprocess.STDOUT,
                                                   "text": True, "encoding": "utf-8", "errors": "replace"}
                     if os.name == "nt":
-                        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+                        kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
                     else:
                         kwargs["start_new_session"] = True
                     process = subprocess.Popen(command, **kwargs)

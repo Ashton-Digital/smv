@@ -64,9 +64,11 @@ Right-clicking an `.smv` file and choosing **Capture result slices** opens the
 same window with that case preselected.
 
 On Linux, the installer adds the **Capture result slices** application to the
-desktop menu and the `smv-cap-ui` command. The window needs Python 3.10 or newer
-and Tkinter (`python3-tk` on Ubuntu/Debian). If ImageMagick is unavailable,
-cropping is disabled and full-size images are saved.
+desktop menu and the `smv-cap-ui` command. The Linux window needs Python 3.10
+or newer and Tkinter (`python3-tk` on Ubuntu/Debian). The Windows MSI bundles
+Python, Tk and a private ImageMagick copy, so Windows users do not need to
+install those separately. If ImageMagick is unavailable on Linux, cropping is
+disabled and full-size images are saved.
 
 By default, images go into `CASE_slice_captures` beside each `.smv` file. If
 several times are entered, each time gets its own subfolder. With a chosen
@@ -137,9 +139,10 @@ ashton-smokeview-v6.11.2-af1-linux-x64/
 ```
 
 The launcher recognises `smokeview`, `smokeview_linux`, or `smokeview.exe`
-beside itself. After installing Python 3.10 or newer and ImageMagick, a user can
-run the packaged script without cloning or building the repository. Use
-`--no-crop` when ImageMagick is intentionally unavailable.
+beside itself. On Linux, install Python 3.10 or newer and ImageMagick to run
+the packaged script without cloning the repository. Use `--no-crop` when
+ImageMagick is intentionally unavailable. On Windows, the MSI also includes
+`capture_result_slices.exe` and the portable ImageMagick files.
 
 The Ashton installers provide operating-system integrations for the matched
 capture utility. On Windows, right-click an `.smv` file and select **Capture

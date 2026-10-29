@@ -2,7 +2,7 @@
 
 This document defines how the Ashton custom Smokeview fork is built, tested,
 versioned, packaged, and distributed internally. The current release line is
-based on Smokeview 6.11.2. The current test build is `6.11.2-af2-rc1`;
+based on Smokeview 6.11.2. The current test build is `6.11.2-af2-rc2`;
 `6.11.2-af1` is the previous tagged release.
 
 ## Current Customisation
@@ -237,10 +237,11 @@ WiX `.msi` installer.
 ./scripts/package_release_linux.sh
 ```
 
-From an x64 Visual Studio Developer PowerShell on Windows:
+From an x64 Visual Studio Developer PowerShell on Windows, after extracting
+the [official portable static ImageMagick archive](https://imagemagick.org/download/):
 
 ```powershell
-.\scripts\package_release_windows.ps1
+.\scripts\package_release_windows.ps1 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
 ```
 
 Both scripts use `Build/for_bundle/smokeview.ini`, the committed snapshot of
@@ -258,27 +259,32 @@ its numeric Windows Installer
 version uses the upstream version, while the full Ashton version appears in
 the product name, filename, and packaged `VERSION` file.
 
+The Windows packaging machine also needs Python 3.10+ with PyInstaller
+(`py -3 -m pip install pyinstaller`) and an extracted, official ImageMagick
+portable Q16 x64 static archive. Pass the folder containing `magick.exe` with
+`-ImageMagickDir`. PyInstaller embeds Python and Tk in
+the two capture executables; the MSI copies the portable ImageMagick tree
+beside them. Installed Windows users do not need separate Python or
+ImageMagick installations. The packaged `DEPENDENCIES.txt` records the build
+interpreter, PyInstaller version, ImageMagick version and executable checksum.
+
 The release version combines the upstream Smokeview version with the Ashton
 fork release, for example `6.11.2-af1`. Increment `ASHTON_RELEASE` in the root
 `CMakeLists.txt` (`af2`, `af3`, and so on) before creating the next release.
 The packaging scripts derive the version automatically and reject an installer
 whose package version does not match the revision embedded in its executable.
 
-Both installers include `capture_result_slices.py` beside the Smokeview
-executable. This keeps the capture utility matched to the custom build and lets
-it discover the installed executable without a `--smokeview` argument. End
-users still need Python 3.10 or newer (enforced with a clear error rather than
-a raw `SyntaxError`/exception on older interpreters) and, unless they use
-`--no-crop`, ImageMagick (either the `magick` or the `convert` command). On
-Ubuntu/Debian, install it with:
+Both installers include the capture engine beside the Smokeview executable.
+This keeps the utility matched to the custom build and lets it discover the
+installed executable without a `--smokeview` argument. Linux users need Python
+3.10 or newer and, unless they use `--no-crop`, ImageMagick. On Ubuntu/Debian,
+install it with:
 
 ```bash
 sudo apt-get install imagemagick
 ```
 
-The capture window also needs Tkinter. On Windows, install Python with Tcl/Tk
-for all users on a shared workstation; on Ubuntu/Debian, install `python3-tk`.
-The MSI ships the window and a native launcher but does not bundle Python.
+The Linux capture window also needs Tkinter (`python3-tk` on Ubuntu/Debian).
 
 On Windows, the installer adds **Capture result slices** to the Start menu and
 the `.smv` context menu, and installs `smvhelp.txt` beside `smokeview.exe`.
@@ -420,9 +426,11 @@ installer also sweeps up any leftover directory from the old
 `ashton-smokeview-v<version>` scheme the first time it runs after this change.
 
 The Windows payload uses `smokeview.exe` and also includes
-`capture_result_slices.cmd`, which invokes the Python capture utility,
-`capture_slices_ui.exe` and `capture_slices_ui.pyw`, which open the capture
-window, and `smvhelp.txt`, which summarises the result shortcuts and capture
+`capture_result_slices.exe` and `capture_result_slices.cmd`, which run the
+capture engine with bundled Python, `capture_slices_ui.exe`, which opens the
+capture window with bundled Tk, and a private `imagemagick/` directory for
+cropping. The source scripts remain beside these executables. `smvhelp.txt`
+summarises the result shortcuts and capture
 options. `VERSION` contains the release version, Git commit,
 build date, platform and compiler. `README.txt` contains the launch and capture
 commands, dependency notes, configuration location and support information.
@@ -487,8 +495,9 @@ Verify all of the following before distributing a release:
 - `Ctrl+U` unloads all data and restores the pre-workflow camera and clipping.
 - The installer passes testing on a second machine that has no source checkout.
 - The published `.sha256` file validates the installer.
-- The installed capture utility reports Python, Smokeview and ImageMagick
-  dependencies clearly before rendering.
+- The installed capture utility reports its bundled Python, Smokeview and
+  ImageMagick dependencies clearly before rendering on Windows; the Linux
+  package reports system dependencies.
 - The capture utility renders, crops and renames all configured result slices.
 - Capture can run in a separate automated process while an interactive
   Smokeview window remains open.

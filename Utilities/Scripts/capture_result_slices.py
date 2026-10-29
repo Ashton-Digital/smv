@@ -122,6 +122,11 @@ def png_size(path: Path) -> tuple[int, int]:
 
 
 def image_magick_command() -> list[str] | None:
+    if getattr(sys, "frozen", False):
+        bundled = Path(sys.executable).resolve().parent / "imagemagick" / "magick.exe"
+        if bundled.is_file():
+            os.environ["MAGICK_HOME"] = str(bundled.parent)
+            return [str(bundled)]
     magick = shutil.which("magick")
     if magick is not None:
         return [magick]
@@ -365,6 +370,8 @@ def find_smokeview(explicit: Path | None) -> Path:
         return explicit
 
     candidates: list[Path] = []
+    if getattr(sys, "frozen", False):
+        candidates.append(Path(sys.executable).resolve().with_name("smokeview.exe"))
     script_dir = Path(__file__).resolve().parent
     for executable_name in ("smokeview", "smokeview_linux", "smokeview.exe"):
         candidates.append(script_dir / executable_name)

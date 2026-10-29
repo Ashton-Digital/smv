@@ -27,11 +27,11 @@ Capture result slices
 
 The capture launcher runs a separate Smokeview process. You can keep an
 interactive Smokeview window open. Images are saved beside the case in a
-folder named case_slice_captures. Python 3.10 or newer is required. Cropping
-also requires ImageMagick; use --no-crop if it is unavailable.
+folder named case_slice_captures. The MSI includes Python and ImageMagick
+for capture; no separate installation is needed.
 
 For all capture options, run:
-  py -3 capture_result_slices.py --help
+  capture_result_slices.exe --help
 
 Useful options: --overwrite, --no-crop, -o DIRECTORY, --time SECONDS,
 --prefix NAME, and --crop-padding PIXELS.
