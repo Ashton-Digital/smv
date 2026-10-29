@@ -300,13 +300,13 @@ Contact the Ashton Digital internal support channel for help with this build.
   <Product Id="*" Name="Ashton Smokeview @VERSION@" Language="1033"
            Version="@MSI_VERSION@" Manufacturer="Ashton Digital"
            UpgradeCode="1940D8A1-C842-442F-BF5D-00A570219BDB">
-    <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" />
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" InstallPrivileges="elevated" />
     <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer Ashton Smokeview is already installed." />
     <MediaTemplate EmbedCab="yes" />
     <Icon Id="SmokeviewIcon" SourceFile="@ICON@" />
     <Property Id="ARPPRODUCTICON" Value="SmokeviewIcon" />
     <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="LocalAppDataFolder">
+      <Directory Id="ProgramFiles64Folder">
         <Directory Id="AshtonFolder" Name="Ashton Digital">
           <Directory Id="INSTALLDIR" Name="Smokeview" />
         </Directory>
@@ -317,13 +317,15 @@ Contact the Ashton Digital internal support channel for help with this build.
     </Directory>
     <DirectoryRef Id="INSTALLDIR">
       <Component Id="SmvAssociation" Guid="A7F23B24-5D06-48F4-A953-2611D789A743">
-        <RegistryValue Root="HKCU" Key="Software\Classes\.smv" Type="string" Value="AshtonSmokeview.smv" KeyPath="yes" />
-        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv" Type="string" Value="Smokeview case" />
-        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv\DefaultIcon" Type="string" Value="[INSTALLDIR]smokeview.exe,0" />
-        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv\shell\open\command" Type="string" Value="&quot;[INSTALLDIR]smokeview.exe&quot; &quot;%1&quot;" />
-        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv\shell\capture" Type="string" Value="Capture result slices" />
-        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv\shell\capture" Name="Icon" Type="string" Value="[INSTALLDIR]smokeview.exe,0" />
-        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv\shell\capture\command" Type="string" Value="&quot;[INSTALLDIR]capture_result_slices.cmd&quot; &quot;%1&quot;" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.smv" Type="string" Value="AshtonSmokeview.smv" KeyPath="yes" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv" Type="string" Value="Smokeview case" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv\DefaultIcon" Type="string" Value="[INSTALLDIR]smokeview.exe,0" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv\shell\open\command" Type="string" Value="&quot;[INSTALLDIR]smokeview.exe&quot; &quot;%1&quot;" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv\shell\capture" Type="string" Value="Capture result slices" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv\shell\capture" Name="Icon" Type="string" Value="[INSTALLDIR]smokeview.exe,0" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv\shell\capture\command" Type="string" Value="&quot;[INSTALLDIR]capture_result_slices.cmd&quot; &quot;%1&quot;" />
+        <RemoveFolder Id="RemoveInstallDir" Directory="INSTALLDIR" On="uninstall" />
+        <RemoveFolder Id="RemoveAshtonFolder" Directory="AshtonFolder" On="uninstall" />
       </Component>
     </DirectoryRef>
     <DirectoryRef Id="AshtonMenu">
@@ -331,7 +333,7 @@ Contact the Ashton Digital internal support channel for help with this build.
         <Shortcut Id="SmokeviewShortcut" Name="Ashton Smokeview" Target="[INSTALLDIR]smokeview.exe" WorkingDirectory="INSTALLDIR" />
         <Shortcut Id="HelpShortcut" Name="Smokeview Help" Target="[INSTALLDIR]smvhelp.txt" />
         <RemoveFolder Id="RemoveAshtonMenu" On="uninstall" />
-        <RegistryValue Root="HKCU" Key="Software\Ashton Digital\Smokeview" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+        <RegistryValue Root="HKLM" Key="Software\Ashton Digital\Smokeview" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </DirectoryRef>
     <Feature Id="MainFeature" Title="Ashton Smokeview" Level="1">
@@ -364,10 +366,10 @@ Contact the Ashton Digital internal support channel for help with this build.
         }
     }
     Invoke-NativeCommand -Command $CandleCommand -Arguments @(
-        "-dPayloadDir=$PackageDir", "-out", (Join-Path $StageRoot "installer.wixobj"), $WxsPath
+        "-arch", "x64", "-dPayloadDir=$PackageDir", "-out", (Join-Path $StageRoot "installer.wixobj"), $WxsPath
     )
     Invoke-NativeCommand -Command $CandleCommand -Arguments @(
-        "-dPayloadDir=$PackageDir", "-out", (Join-Path $StageRoot "payload.wixobj"), $HarvestPath
+        "-arch", "x64", "-dPayloadDir=$PackageDir", "-out", (Join-Path $StageRoot "payload.wixobj"), $HarvestPath
     )
     Invoke-NativeCommand -Command $LightCommand -Arguments @(
         "-out", $InstallerPath,

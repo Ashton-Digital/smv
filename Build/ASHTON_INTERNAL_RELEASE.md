@@ -252,8 +252,9 @@ Both scripts put the installer and a SHA-256 checksum in `dist/`. They accept
 with `--skip-build`/`-SkipBuild`. The Windows package uses the static MSVC
 runtime so that installing the Visual C++ Redistributable is not a prerequisite.
 Creating the Windows installer also requires WiX Toolset 3 (`heat.exe`,
-`candle.exe`, and `light.exe`). The MSI installs per user under
-`%LOCALAPPDATA%\Ashton Digital\Smokeview`; its numeric Windows Installer
+`candle.exe`, and `light.exe`). The MSI installs for all users under
+`%ProgramFiles%\Ashton Digital\Smokeview` and requests administrator elevation;
+its numeric Windows Installer
 version uses the upstream version, while the full Ashton version appears in
 the product name, filename, and packaged `VERSION` file.
 

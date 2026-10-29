@@ -125,7 +125,7 @@ Help** Start menu shortcut for the result-review shortcuts and capture options.
 The equivalent PowerShell command is:
 
 ```powershell
-$install = "$env:LOCALAPPDATA\Ashton Digital\Smokeview"
+$install = "$env:ProgramFiles\Ashton Digital\Smokeview"
 & "$install\capture_result_slices.cmd" "C:\path\to\case.smv"
 ```
 
