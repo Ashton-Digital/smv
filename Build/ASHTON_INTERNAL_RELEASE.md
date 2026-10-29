@@ -2,7 +2,7 @@
 
 This document defines how the Ashton custom Smokeview fork is built, tested,
 versioned, packaged, and distributed internally. The current release line is
-based on Smokeview 6.11.2. The current test build is `6.11.2-af2-rc5`;
+based on Smokeview 6.11.2. The current test build is `6.11.2-af2-rc6`;
 `6.11.2-af1` is the previous tagged release.
 
 ## Current Customisation
@@ -244,12 +244,36 @@ the [official portable static ImageMagick archive](https://imagemagick.org/downl
 .\scripts\package_release_windows.ps1 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
 ```
 
-Both scripts use `Build/for_bundle/smokeview.ini`, the committed snapshot of
-the company default. Use `--config` or `-ConfigFile` only to test an explicitly
-selected alternative configuration.
+### Build both installers on one Windows workstation
 
-Both scripts put the installer and a SHA-256 checksum in `dist/`. They accept
-`--help`/`Get-Help`-style parameter discovery and can package an existing build
+Install and start [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+in **Linux containers** mode. The Windows host needs Visual Studio 2022 C++
+build tools, CMake, WiX Toolset 3, Python 3.10+ with Tk and PyInstaller, and
+the extracted portable ImageMagick folder described below. Docker builds the
+Linux binary in Ubuntu 22.04; Visual Studio and WiX build the MSI on Windows.
+Both builds use the same checkout, with separate CMake build directories.
+
+Run this from the repository root in an x64 Visual Studio Developer PowerShell:
+
+```powershell
+py -3 -m pip install pyinstaller
+.\scripts\package_release_all.ps1 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
+```
+
+The script builds and checks both `dist/ashton-smokeview-v<version>-windows-x64.msi`
+and `dist/ashton-smokeview-v<version>-linux-x64.sh`, including their `.sha256`
+files. It checks that the Linux binary's glibc requirement does not exceed
+Ubuntu 22.04's 2.35. The first Docker image build downloads the Ubuntu build
+dependencies; later builds reuse the image. The Linux installer still needs to
+be tested on a separate Linux machine and the MSI on a separate Windows
+machine before distribution.
+
+All three scripts use `Build/for_bundle/smokeview.ini`, the committed snapshot
+of the company default. The individual platform scripts accept `--config` or
+`-ConfigFile` to test an explicitly selected alternative configuration.
+
+The platform scripts put their installer and a SHA-256 checksum in `dist/`.
+They accept `--help`/`Get-Help`-style parameter discovery and can package an existing build
 with `--skip-build`/`-SkipBuild`. The Windows package uses the static MSVC
 runtime so that installing the Visual C++ Redistributable is not a prerequisite.
 Creating the Windows installer also requires WiX Toolset 3 (`heat.exe`,
@@ -267,6 +291,11 @@ the two capture executables; the MSI copies the portable ImageMagick tree
 beside them. Installed Windows users do not need separate Python or
 ImageMagick installations. The packaged `DEPENDENCIES.txt` records the build
 interpreter, PyInstaller version, ImageMagick version and executable checksum.
+
+The camera-and-smoke capture icon is authored in
+`Utilities/Scripts/capture_logo.svg`; the UI
+and Linux desktop launcher use `capture_logo.png`, while the Windows capture
+executable embeds `capture_logo.ico`.
 
 The release version combines the upstream Smokeview version with the Ashton
 fork release, for example `6.11.2-af1`. Increment `ASHTON_RELEASE` in the root
@@ -581,9 +610,9 @@ writable by them. This has not come up as a problem in practice, since the
 approved company default is meant to be used as shipped, but it is worth
 knowing if a user reports that "Save Settings" silently fails.
 
-Windows recipients run the `.msi` installer normally. The Linux installer cannot
-be used natively on Windows; each platform needs its own build and acceptance-test
-pass.
+Windows recipients run the `.msi` installer normally. The Linux installer
+cannot be used natively on Windows. The combined build command produces both
+artifacts on one workstation, but each still needs its own acceptance-test pass.
 
 ## Remaining Release Work
 
