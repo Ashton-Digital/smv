@@ -292,7 +292,7 @@ beside them. Installed Windows users do not need separate Python or
 ImageMagick installations. The packaged `DEPENDENCIES.txt` records the build
 interpreter, PyInstaller version, ImageMagick version and executable checksum.
 
-The camera-and-smoke capture icon is authored in
+The camera-and-flame capture icon is authored in
 `Utilities/Scripts/capture_logo.svg`; the UI
 and Linux desktop launcher use `capture_logo.png`, while the Windows capture
 executable embeds `capture_logo.ico`.
@@ -560,15 +560,26 @@ Publish both the installer and its `.sha256` file using one controlled location:
 Do not distribute an unversioned installer over an existing release. Keep old
 installers available so a team can roll back to the preceding known-good version.
 
+Copy the generated `dist/ashton-smokeview-v<version>-linux-x64.sh` and its
+`.sha256` file to the Linux machine. No compiler or WiX tools are needed there.
+On Ubuntu/Debian, install any missing runtime packages once for either install
+mode (adjust package names for other distributions):
+
+```bash
+sudo apt-get install libglew2.2 libgd3 libgl1 libglu1-mesa libxmu6 libx11-6 \
+  libxext6 libxt6 imagemagick python3 python3-tk
+```
+
 Linux recipients installing only for themselves should make the downloaded
 installer executable and run it:
 
 ```bash
-chmod +x ashton-smokeview-v6.11.2-af1-linux-x64.sh
-./ashton-smokeview-v6.11.2-af1-linux-x64.sh
+chmod +x ashton-smokeview-v6.11.2-af2-rc6-linux-x64.sh
+./ashton-smokeview-v6.11.2-af2-rc6-linux-x64.sh
 ```
 
-That installs under `$HOME/.local/opt`, with the `af-smv`/`smv-cap`/`smvhelp`
+That installs under `$HOME/.local/opt/ashton-smokeview`, with the
+`af-smv`/`smv-cap`/`smv-cap-ui`/`smvhelp`
 commands symlinked into `$HOME/.local/bin` and the `.smv` file association set
 only for that user.
 
@@ -579,13 +590,14 @@ sudo themselves, one administrator installs it once for everybody with
 `--system`:
 
 ```bash
-chmod +x ashton-smokeview-v6.11.2-af1-linux-x64.sh
-sudo ./ashton-smokeview-v6.11.2-af1-linux-x64.sh --system
+chmod +x ashton-smokeview-v6.11.2-af2-rc6-linux-x64.sh
+sudo ./ashton-smokeview-v6.11.2-af2-rc6-linux-x64.sh --system
 ```
 
-`--system` requires root and installs into `/opt`, symlinks `af-smv`, `smv-cap`,
-`smvhelp` and a generic `smokeview` into `/usr/local/bin` (on every user's
-`PATH` by default), and registers the `.smv` file association and desktop
+`--system` requires root and installs into `/opt/ashton-smokeview`, symlinks
+`af-smv`, `smv-cap`, `smv-cap-ui`, `smvhelp` and a generic `smokeview` into
+`/usr/local/bin` (on every user's `PATH` by default), and registers the `.smv`
+file association and desktop
 entries under `/usr/share` rather than any one user's home directory. It also
 sets the
 system-wide default `.smv` application directly, since `xdg-mime default` only
@@ -594,15 +606,6 @@ machine-wide default on its own. **Do not** run the installer as root without
 `--system` — that installs a copy usable only by the root account, under
 `/root`, which is invisible and useless to everyone else; the installer prints
 a warning if you do this.
-
-Because the target machine itself needs no build tools, only these runtime
-packages, install them once on the shared machine (adjust package names for
-non-Debian distributions):
-
-```bash
-sudo apt-get install libglew2.2 libgd3 libgl1 libglu1-mesa libxmu6 libx11-6 \
-  libxext6 libxt6 imagemagick python3
-```
 
 One consequence of a root-owned, shared `/opt` install: users cannot save
 Smokeview settings back into the packaged `smokeview.ini`, since it is not
