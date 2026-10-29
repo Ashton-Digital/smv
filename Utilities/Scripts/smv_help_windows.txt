@@ -29,9 +29,11 @@ The capture launcher runs a separate Smokeview process. You can keep an
 interactive Smokeview window open. Images are saved beside the case in a
 folder named case_slice_captures. The MSI includes Python and ImageMagick
 for capture; no separate installation is needed.
+The capture window opens in dark mode. Its advanced slice-position control
+can scan a case and select planes such as Y=3 or Y=5.
 
 For all capture options, run:
   capture_result_slices.exe --help
 
-Useful options: --overwrite, --no-crop, -o DIRECTORY, --time SECONDS,
+Useful options: --planes Y=3,Y=5, --overwrite, --no-crop, -o DIRECTORY, --time SECONDS,
 --prefix NAME, and --crop-padding PIXELS.

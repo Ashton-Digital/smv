@@ -62,6 +62,10 @@ visibility, temperature, velocity and pressure slices, enter one or more
 simulation times separated by commas, and optionally choose an output folder.
 Right-clicking an `.smv` file and choosing **Capture result slices** opens the
 same window with that case preselected.
+The window opens in dark mode, shows the capture logo, and has a light-mode
+button. Under **Advanced · slice positions**, enable the position filter,
+scan the selected input to see available planes, then choose or type positions
+such as `Y=3` or `Y=3,Y=5`. Leave the filter off to capture every plane.
 
 On Linux, the installer adds the **Capture result slices** application to the
 desktop menu and the `smv-cap-ui` command. The Linux window needs Python 3.10
@@ -105,9 +109,11 @@ border, or `--no-crop` to retain the full render. Use `--quantities visibility
 temperature` (or any subset of the four names) to render only selected result
 types. The desktop window uses this option so unchecked types are skipped by
 Smokeview. Cropping uses ImageMagick; the startup dependency check stops before
-rendering if ImageMagick is missing unless `--no-crop` is used. If an individual
-model cannot be identified
-confidently, that PNG is retained uncropped with a warning.  Use `--prefix
+rendering if ImageMagick is missing unless `--no-crop` is used.
+Use `--planes Y=3,Y=5` to render only those slice planes across the selected
+result types. The match is by axis and position in metres; the default renders
+all planes. If an individual model cannot be identified confidently, that PNG
+is retained uncropped with a warning. Use `--prefix
 NAME` to override the output filename prefix (default: the case name), and
 `--keep-script` to retain the generated `.ssf` script file in the output
 directory for troubleshooting.  When no executable is specified, the script

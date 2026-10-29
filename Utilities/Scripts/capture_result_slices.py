@@ -25,6 +25,11 @@ import subprocess
 import sys
 import tempfile
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+from smv_planes import parse_plane_selection
+
 
 QUANTITIES = ("visibility", "temperature", "velocity", "pressure")
 QUANTITY_PATTERN = "|".join(QUANTITIES)
@@ -365,6 +370,18 @@ def supports_result_capture(executable: Path) -> bool:
     return not keywords
 
 
+def supports_plane_filter(executable: Path) -> bool:
+    marker = b"SMV_FEATURE_CAPTURE_PLANES_1"
+    overlap = b""
+    with executable.open("rb") as stream:
+        while chunk := stream.read(1024 * 1024):
+            data = overlap + chunk
+            if marker in data:
+                return True
+            overlap = data[-len(marker):]
+    return False
+
+
 def find_smokeview(explicit: Path | None) -> Path:
     if explicit is not None:
         return explicit
@@ -398,7 +415,7 @@ def find_smokeview(explicit: Path | None) -> Path:
     )
 
 
-def check_dependencies(smokeview: Path, crop_enabled: bool) -> list[str] | None:
+def check_dependencies(smokeview: Path, crop_enabled: bool, plane_filter: bool = False) -> list[str] | None:
     def report(message: str) -> None:
         print(message, flush=True)
 
@@ -425,6 +442,11 @@ def check_dependencies(smokeview: Path, crop_enabled: bool) -> list[str] | None:
             "Build Smokeview from this checkout or pass that executable with --smokeview."
         )
     report(f"  [OK] Smokeview capture support: {smokeview}")
+    if plane_filter and not supports_plane_filter(smokeview):
+        raise RuntimeError(
+            f"{smokeview} does not support selecting slice positions. "
+            "Use the matching Smokeview build or omit --planes."
+        )
 
     convert_command = image_magick_command()
     if crop_enabled:
@@ -492,6 +514,10 @@ def parse_args() -> argparse.Namespace:
         help="capture only selected quantities: visibility temperature velocity pressure",
     )
     parser.add_argument(
+        "--planes", type=parse_plane_selection, metavar="AXIS=METRES,...",
+        help="capture only these slice positions, for example Y=3,Y=5 (default: all planes)",
+    )
+    parser.add_argument(
         "--size", type=render_size, metavar="WIDTHxHEIGHT",
         help="capture dimensions (default: current display resolution)",
     )
@@ -529,7 +555,8 @@ def main() -> int:
         raise RuntimeError("The output path cannot contain a newline or '#' character")
 
     smokeview = find_smokeview(args.smokeview)
-    convert_command = check_dependencies(smokeview, crop_enabled=not args.no_crop)
+    convert_command = check_dependencies(smokeview, crop_enabled=not args.no_crop,
+                                         plane_filter=bool(args.planes))
     output.mkdir(parents=True, exist_ok=True)
     legacy_pattern = legacy_capture_pattern(prefix)
     human_pattern = human_capture_pattern(prefix)
@@ -595,16 +622,21 @@ def main() -> int:
             capture_env["ASHTON_CAPTURE_QUANTITIES"] = ",".join(args.quantities)
         else:
             capture_env.pop("ASHTON_CAPTURE_QUANTITIES", None)
+        if args.planes:
+            capture_env["ASHTON_CAPTURE_PLANES"] = args.planes
+        else:
+            capture_env.pop("ASHTON_CAPTURE_PLANES", None)
         returncode = subprocess.run(command, cwd=case.parent, env=capture_env, check=False).returncode
         if returncode != 0:
             return returncode
         captures = discover_captures(output, prefix, previous_captures)
         if not captures:
             print(
-                "capture_result_slices: warning: no new result PNG files were found",
+                "capture_result_slices: warning: no new result PNG files were found"
+                + (" at the requested slice positions" if args.planes else ""),
                 file=sys.stderr,
             )
-            return 0
+            return 2 if args.planes else 0
         if not args.no_crop:
             assert convert_command is not None
             crop_captures(captures, args.crop_padding, convert_command)

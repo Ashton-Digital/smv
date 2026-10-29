@@ -14,7 +14,7 @@ import sys
 import threading
 try:
     import tkinter as tk
-    from tkinter import filedialog, messagebox, scrolledtext, ttk
+    from tkinter import filedialog, messagebox, ttk
 except ImportError:
     message = "Tkinter is required for the capture window. Install Python with Tk support."
     if sys.platform == "win32":
@@ -24,9 +24,22 @@ except ImportError:
         print(message, file=sys.stderr)
     raise SystemExit(2)
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+from smv_planes import available_planes, parse_plane_selection
+
 
 QUANTITIES = ("visibility", "temperature", "velocity", "pressure")
 CAPTURE_SCRIPT = Path(__file__).resolve().with_name("capture_result_slices.py")
+LOGO_FILE = Path(sys.executable).resolve().parent / "capture_logo.png" if getattr(sys, "frozen", False) else Path(__file__).resolve().with_name("capture_logo.png")
+
+THEMES = {
+    "dark": {"background": "#14212b", "surface": "#1e303d", "field": "#101d27",
+             "foreground": "#edf4f5", "muted": "#a9c0c9", "accent": "#53c4c5", "border": "#385361"},
+    "light": {"background": "#f2f7f8", "surface": "#ffffff", "field": "#ffffff",
+              "foreground": "#192d38", "muted": "#526c78", "accent": "#087f86", "border": "#c6d8dd"},
+}
 
 
 def parse_times(text: str) -> list[float]:
@@ -101,7 +114,15 @@ class CaptureWindow:
         self.quantities = {name: tk.BooleanVar(value=True) for name in QUANTITIES}
         self.crop = tk.BooleanVar(value=crop_tool_available())
         self.overwrite = tk.BooleanVar(value=True)
+        self.limit_planes = tk.BooleanVar(value=False)
+        self.plane_value = tk.StringVar()
+        self.available_plane_text = tk.StringVar(value="Scan a case to see its slice positions.")
+        self.scan_generation = 0
         self.status = tk.StringVar(value="Choose a case or folder to begin.")
+        self.theme_name = "dark"
+        self.style = ttk.Style(root)
+        self.style.theme_use("clam")
+        self._apply_theme()
         self._build()
         root.after(100, self._drain_events)
         root.protocol("WM_DELETE_WINDOW", self._close)
@@ -109,6 +130,19 @@ class CaptureWindow:
     def _build(self) -> None:
         frame = ttk.Frame(self.root, padding=14)
         frame.pack(fill="both", expand=True)
+        header = ttk.Frame(frame)
+        header.pack(fill="x", pady=(0, 12))
+        if LOGO_FILE.is_file():
+            self.window_icon = tk.PhotoImage(file=str(LOGO_FILE))
+            self.root.iconphoto(True, self.window_icon)
+            self.header_logo = self.window_icon.subsample(4)
+            ttk.Label(header, image=self.header_logo).pack(side="left", padx=(0, 12))
+        title = ttk.Frame(header)
+        title.pack(side="left", fill="x", expand=True)
+        ttk.Label(title, text="Capture result slices", style="Heading.TLabel").pack(anchor="w")
+        ttk.Label(title, text="ASHTON SMOKEVIEW", style="Muted.TLabel").pack(anchor="w")
+        self.theme_button = ttk.Button(header, text="Light mode", command=self._toggle_theme)
+        self.theme_button.pack(side="right")
         source_group = ttk.LabelFrame(frame, text="Input", padding=10)
         source_group.pack(fill="x")
         ttk.Radiobutton(source_group, text="One .smv file", variable=self.folder_mode, value=False).grid(row=0, column=0, sticky="w")
@@ -139,20 +173,109 @@ class CaptureWindow:
             ttk.Label(options, text="ImageMagick was not found; full-size images will be saved.").grid(row=4, column=0, columnspan=5, sticky="w")
         ttk.Checkbutton(options, text="Replace existing captures", variable=self.overwrite).grid(row=5, column=0, columnspan=5, sticky="w", pady=(5, 0))
 
+        advanced = ttk.LabelFrame(frame, text="Advanced · slice positions", padding=10)
+        advanced.pack(fill="x", pady=(10, 0))
+        ttk.Checkbutton(advanced, text="Capture only selected slice positions", variable=self.limit_planes,
+                        command=self._toggle_plane_details).pack(anchor="w")
+        self.plane_details = ttk.Frame(advanced)
+        ttk.Label(self.plane_details, text="Positions (metres), for example Y=3 or Y=3,Y=5:").pack(anchor="w", pady=(6, 2))
+        plane_row = ttk.Frame(self.plane_details)
+        plane_row.pack(fill="x")
+        self.plane_entry = ttk.Combobox(plane_row, textvariable=self.plane_value)
+        self.plane_entry.pack(side="left", fill="x", expand=True)
+        self.scan_button = ttk.Button(plane_row, text="Scan input", command=self._scan_planes)
+        self.scan_button.pack(side="left", padx=(8, 0))
+        ttk.Label(self.plane_details, textvariable=self.available_plane_text, style="Muted.TLabel",
+                  wraplength=600).pack(anchor="w", pady=(5, 0))
+
         controls = ttk.Frame(frame)
         controls.pack(fill="x", pady=(10, 0))
-        self.run_button = ttk.Button(controls, text="Capture slices", command=self._start)
+        self.run_button = ttk.Button(controls, text="Capture slices", command=self._start, style="Accent.TButton")
         self.run_button.pack(side="left")
         self.cancel_button = ttk.Button(controls, text="Cancel", command=self._cancel, state="disabled")
         self.cancel_button.pack(side="left", padx=8)
         ttk.Label(controls, textvariable=self.status).pack(side="left", padx=12)
-        self.log = scrolledtext.ScrolledText(frame, height=12, wrap="word", state="disabled")
-        self.log.pack(fill="both", expand=True, pady=(10, 0))
+        log_frame = ttk.Frame(frame)
+        log_frame.pack(fill="both", expand=True, pady=(10, 0))
+        self.log = tk.Text(log_frame, height=12, wrap="word", state="disabled")
+        self.log.pack(side="left", fill="both", expand=True)
+        scrollbar = ttk.Scrollbar(log_frame, orient="vertical", command=self.log.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.log.configure(yscrollcommand=scrollbar.set)
+        self._apply_theme()
+        if self.source.get():
+            self.root.after(200, self._scan_planes)
+
+    def _toggle_plane_details(self) -> None:
+        if self.limit_planes.get():
+            self.plane_details.pack(fill="x")
+            self._scan_planes()
+        else:
+            self.plane_details.pack_forget()
+
+    def _scan_planes(self) -> None:
+        source_text = self.source.get().strip()
+        if not source_text:
+            self.available_plane_text.set("Choose a .smv file or folder first.")
+            return
+        self.scan_generation += 1
+        generation = self.scan_generation
+        self.scan_button.configure(state="disabled")
+        self.available_plane_text.set("Scanning slice positions…")
+
+        def scan() -> None:
+            try:
+                source = Path(source_text).expanduser().resolve()
+                cases = find_cases(source, self.folder_mode.get())
+                positions = {position for case in cases for position in available_planes(case)}
+                ordered = sorted(positions, key=lambda token: ("xyz".index(token[0].lower()), float(token[2:])))
+                self.events.put(("planes", (generation, ordered, len(cases))))
+            except (OSError, ValueError) as error:
+                self.events.put(("plane_error", (generation, str(error))))
+
+        threading.Thread(target=scan, daemon=True).start()
+
+    def _apply_theme(self) -> None:
+        colors = THEMES[self.theme_name]
+        self.root.configure(background=colors["background"])
+        self.style.configure("TFrame", background=colors["background"])
+        self.style.configure("TLabel", background=colors["background"], foreground=colors["foreground"])
+        self.style.configure("Heading.TLabel", background=colors["background"], foreground=colors["foreground"], font=("Segoe UI", 16, "bold"))
+        self.style.configure("Muted.TLabel", background=colors["background"], foreground=colors["muted"], font=("Segoe UI", 9, "bold"))
+        self.style.configure("TLabelframe", background=colors["background"], foreground=colors["foreground"], bordercolor=colors["border"])
+        self.style.configure("TLabelframe.Label", background=colors["background"], foreground=colors["foreground"])
+        for widget in ("TCheckbutton", "TRadiobutton"):
+            self.style.configure(widget, background=colors["background"], foreground=colors["foreground"])
+            self.style.map(widget, background=[("active", colors["background"])], foreground=[("disabled", colors["muted"])])
+        self.style.configure("TEntry", fieldbackground=colors["field"], foreground=colors["foreground"], insertcolor=colors["foreground"], bordercolor=colors["border"])
+        self.style.configure("TCombobox", fieldbackground=colors["field"], background=colors["surface"],
+                             foreground=colors["foreground"], arrowcolor=colors["foreground"], bordercolor=colors["border"])
+        self.style.map("TCombobox", fieldbackground=[("readonly", colors["field"])],
+                       foreground=[("readonly", colors["foreground"])])
+        self.root.option_add("*TCombobox*Listbox.background", colors["field"])
+        self.root.option_add("*TCombobox*Listbox.foreground", colors["foreground"])
+        self.style.configure("TScrollbar", background=colors["surface"], troughcolor=colors["field"],
+                             arrowcolor=colors["foreground"], bordercolor=colors["border"])
+        self.style.configure("TButton", background=colors["surface"], foreground=colors["foreground"], bordercolor=colors["border"], padding=(10, 6))
+        self.style.map("TButton", background=[("active", colors["border"])], foreground=[("disabled", colors["muted"])])
+        self.style.configure("Accent.TButton", background=colors["accent"], foreground=colors["background"], bordercolor=colors["accent"], font=("Segoe UI", 9, "bold"))
+        self.style.map("Accent.TButton", background=[("active", colors["border"])])
+        if hasattr(self, "log"):
+            self.log.configure(background=colors["field"], foreground=colors["foreground"],
+                               insertbackground=colors["foreground"], selectbackground=colors["accent"],
+                               relief="flat", highlightthickness=1, highlightbackground=colors["border"])
+
+    def _toggle_theme(self) -> None:
+        self.theme_name = "light" if self.theme_name == "dark" else "dark"
+        self._apply_theme()
+        self.theme_button.configure(text="Dark mode" if self.theme_name == "light" else "Light mode")
 
     def _browse_source(self) -> None:
         selected = filedialog.askdirectory() if self.folder_mode.get() else filedialog.askopenfilename(filetypes=[("Smokeview cases", "*.smv"), ("All files", "*.*")])
         if selected:
             self.source.set(selected)
+            if self.limit_planes.get():
+                self._scan_planes()
 
     def _browse_output(self) -> None:
         selected = filedialog.askdirectory()
@@ -173,6 +296,9 @@ class CaptureWindow:
             quantities = [name for name in QUANTITIES if self.quantities[name].get()]
             if not quantities:
                 raise ValueError("Select at least one slice type.")
+            planes = parse_plane_selection(self.plane_value.get()) if self.limit_planes.get() else ""
+            if self.limit_planes.get() and not planes:
+                raise ValueError("Enter at least one slice position, such as Y=3.")
             root_text = self.output_root.get().strip()
             output_root = Path(root_text).expanduser().resolve() if root_text else None
             if output_root is not None and output_root.exists() and not output_root.is_dir():
@@ -190,12 +316,13 @@ class CaptureWindow:
         self.run_button.configure(state="disabled")
         self.cancel_button.configure(state="normal")
         self._write(f"Starting {len(cases)} case(s) at {len(times)} time(s).\n")
-        config = (cases, source, self.folder_mode.get(), output_root, times, quantities, self.crop.get(), self.overwrite.get())
+        config = (cases, source, self.folder_mode.get(), output_root, times, quantities, planes,
+                  self.crop.get(), self.overwrite.get())
         self.worker = threading.Thread(target=self._run, args=config, daemon=True)
         self.worker.start()
 
     def _run(self, cases: list[Path], source: Path, folder_mode: bool, output_root: Path | None,
-             times: list[float], quantities: list[str], crop: bool, overwrite: bool) -> None:
+             times: list[float], quantities: list[str], planes: str, crop: bool, overwrite: bool) -> None:
         failures = 0
         try:
             for case_number, case in enumerate(cases, 1):
@@ -213,6 +340,8 @@ class CaptureWindow:
                     else:
                         command = [sys.executable, "-u", str(CAPTURE_SCRIPT), str(case)]
                     command.extend(["-o", str(output), "--time", repr(time), "--quantities", *quantities])
+                    if planes:
+                        command.extend(["--planes", planes])
                     if not crop:
                         command.append("--no-crop")
                     if overwrite:
@@ -263,6 +392,22 @@ class CaptureWindow:
                     self.status.set(str(value))
                     self.run_button.configure(state="normal")
                     self.cancel_button.configure(state="disabled")
+                elif kind == "planes":
+                    generation, positions, count = value
+                    if generation != self.scan_generation:
+                        continue
+                    self.plane_entry.configure(values=positions)
+                    self.available_plane_text.set(
+                        f"Available in {count} case(s): {', '.join(positions)}" if positions
+                        else "No 2D slice positions found in the selected input."
+                    )
+                    self.scan_button.configure(state="normal")
+                elif kind == "plane_error":
+                    generation, error = value
+                    if generation != self.scan_generation:
+                        continue
+                    self.available_plane_text.set(f"Could not scan input: {error}")
+                    self.scan_button.configure(state="normal")
         except queue.Empty:
             pass
         self.root.after(100, self._drain_events)

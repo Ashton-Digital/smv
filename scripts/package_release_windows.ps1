@@ -152,6 +152,9 @@ $ObjectsFile = Join-Path $RepoRoot "Build/for_bundle/objects.svo"
 $RootMarkerFile = Join-Path $RepoRoot "Build/for_bundle/.smokeview_bin"
 $CaptureScript = Join-Path $RepoRoot "Utilities/Scripts/capture_result_slices.py"
 $CaptureUiScript = Join-Path $RepoRoot "Utilities/Scripts/capture_slices_ui.pyw"
+$PlaneScript = Join-Path $RepoRoot "Utilities/Scripts/smv_planes.py"
+$CaptureLogo = Join-Path $RepoRoot "Utilities/Scripts/capture_logo.png"
+$CaptureIcon = Join-Path $RepoRoot "Utilities/Scripts/capture_logo.ico"
 $HelpFile = Join-Path $RepoRoot "Utilities/Scripts/smv_help_windows.txt"
 $ColorbarsDir = Join-Path $RepoRoot "Build/for_bundle/colorbars"
 $TexturesDir = Join-Path $RepoRoot "Build/for_bundle/textures"
@@ -162,6 +165,9 @@ foreach ($RequiredPath in @(
     $RootMarkerFile,
     $CaptureScript,
     $CaptureUiScript,
+    $PlaneScript,
+    $CaptureLogo,
+    $CaptureIcon,
     $HelpFile,
     $ColorbarsDir,
     $TexturesDir
@@ -235,8 +241,12 @@ try {
         $PyArguments = $PythonPrefix + @(
             "-m", "PyInstaller", "--noconfirm", "--clean", "--onefile",
             $App.Mode, "--name", $App.Name, "--distpath", $PyDist,
-            "--workpath", $PyWork, "--specpath", $PySpec, $App.Script
+            "--workpath", $PyWork, "--specpath", $PySpec
         )
+        if ($App.Name -eq "capture_slices_ui") {
+            $PyArguments += @("--icon", $CaptureIcon)
+        }
+        $PyArguments += $App.Script
         Invoke-NativeCommand -Command $PythonCommand.Source -Arguments $PyArguments
     }
     $UiBinary = Join-Path $PyDist "capture_slices_ui.exe"
@@ -266,6 +276,8 @@ ImageMagick executable SHA-256: $((Get-FileHash -LiteralPath $PackagedMagick -Al
     Copy-Item -LiteralPath $RootMarkerFile -Destination (Join-Path $PackageDir ".smokeview_bin")
     Copy-Item -LiteralPath $CaptureScript -Destination (Join-Path $PackageDir "capture_result_slices.py")
     Copy-Item -LiteralPath $CaptureUiScript -Destination (Join-Path $PackageDir "capture_slices_ui.pyw")
+    Copy-Item -LiteralPath $PlaneScript -Destination (Join-Path $PackageDir "smv_planes.py")
+    Copy-Item -LiteralPath $CaptureLogo -Destination (Join-Path $PackageDir "capture_logo.png")
     Copy-Item -LiteralPath $ObjectsFile -Destination (Join-Path $PackageDir "objects.svo")
     Copy-Item -LiteralPath $ColorbarsDir -Destination (Join-Path $PackageDir "colorbars") -Recurse
     Copy-Item -LiteralPath $TexturesDir -Destination (Join-Path $PackageDir "textures") -Recurse
@@ -328,6 +340,8 @@ The packaged smokeview.ini and objects.svo files are loaded from this directory.
 Open Capture result slices from the Start menu to select one case or a folder,
 choose slice types and times, and set an output location. The window and
 capture engine include their Python runtime.
+The window opens in dark mode. Use Advanced slice positions to scan cases and
+capture only selected planes, such as Y=3 or Y=5.
 
 Capture every configured result-review slice with:
 
@@ -424,7 +438,8 @@ Contact the Ashton Digital internal support channel for help with this build.
         "smokeview.exe", "smokeview.ini", "objects.svo", ".smokeview_bin",
         "capture_slices_ui.exe", "capture_slices_ui.pyw",
         "capture_result_slices.exe", "capture_result_slices.py",
-        "capture_result_slices.cmd", "smvhelp.txt", "magick.exe",
+        "capture_result_slices.cmd", "smv_planes.py", "capture_logo.png",
+        "smvhelp.txt", "magick.exe",
         "PYTHON-LICENSE.txt", "DEPENDENCIES.txt"
     )) {
         if ($HarvestContents -notmatch [regex]::Escape($RequiredPayloadFile)) {

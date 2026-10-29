@@ -2,7 +2,7 @@
 
 This document defines how the Ashton custom Smokeview fork is built, tested,
 versioned, packaged, and distributed internally. The current release line is
-based on Smokeview 6.11.2. The current test build is `6.11.2-af2-rc2`;
+based on Smokeview 6.11.2. The current test build is `6.11.2-af2-rc3`;
 `6.11.2-af1` is the previous tagged release.
 
 ## Current Customisation
@@ -289,7 +289,10 @@ The Linux capture window also needs Tkinter (`python3-tk` on Ubuntu/Debian).
 On Windows, the installer adds **Capture result slices** to the Start menu and
 the `.smv` context menu, and installs `smvhelp.txt` beside `smokeview.exe`.
 The window can select a case or search a folder recursively, choose result
-quantities and capture times, and set an output folder. On Linux, the installer
+quantities and capture times, and set an output folder. It uses a capture logo
+and defaults to dark mode. The advanced slice-position control scans selected
+cases and passes axis/coordinate selections to Smokeview so only requested
+planes are rendered. On Linux, the installer
 adds the same window to the desktop menu as `smv-cap-ui` and
 installs the `af-smv` and `smv-cap` commands and registers **Capture result
 slices** as an `.smv` application under **Open With**. These actions start a
@@ -403,6 +406,8 @@ ashton-smokeview-v6.11.2-af1-linux-x64/
 |-- smokeview
 |-- capture_result_slices.py
 |-- capture_slices_ui.pyw
+|-- smv_planes.py
+|-- capture_logo.png
 |-- smv_help.sh
 |-- smokeview.ini
 |-- objects.svo

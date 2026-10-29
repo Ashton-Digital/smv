@@ -101,6 +101,8 @@ version="${version#v}"
 [[ -f "$repo_root/Build/for_bundle/objects.svo" ]] || fail "objects.svo is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_result_slices.py" ]] || fail "capture_result_slices.py is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" ]] || fail "capture_slices_ui.pyw is missing"
+[[ -f "$repo_root/Utilities/Scripts/smv_planes.py" ]] || fail "smv_planes.py is missing"
+[[ -f "$repo_root/Utilities/Scripts/capture_logo.png" ]] || fail "capture_logo.png is missing"
 [[ -f "$repo_root/Utilities/Scripts/smv_help.sh" ]] || fail "smv_help.sh is missing"
 [[ -d "$repo_root/Build/for_bundle/colorbars" ]] || fail "colorbars directory is missing"
 [[ -d "$repo_root/Build/for_bundle/textures" ]] || fail "textures directory is missing"
@@ -152,6 +154,8 @@ mkdir -p "$package_dir"
 install -m 0755 "$binary" "$package_dir/smokeview"
 install -m 0755 "$repo_root/Utilities/Scripts/capture_result_slices.py" "$package_dir/capture_result_slices.py"
 install -m 0755 "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" "$package_dir/capture_slices_ui.pyw"
+install -m 0644 "$repo_root/Utilities/Scripts/smv_planes.py" "$package_dir/smv_planes.py"
+install -m 0644 "$repo_root/Utilities/Scripts/capture_logo.png" "$package_dir/capture_logo.png"
 install -m 0755 "$repo_root/Utilities/Scripts/smv_help.sh" "$package_dir/smv_help.sh"
 install -m 0644 "$config_file" "$package_dir/smokeview.ini"
 install -m 0644 "$repo_root/Build/for_bundle/.smokeview_bin" "$package_dir/.smokeview_bin"
@@ -191,6 +195,9 @@ Capture every configured result-review slice with:
 Open the capture window with:
 
   ./capture_slices_ui.pyw
+
+The window opens in dark mode. Its advanced slice-position control scans a
+case or folder and can limit captures to positions such as Y=3 or Y=5.
 
 After installation, the equivalent commands are:
 
@@ -487,7 +494,7 @@ Type=Application
 Name=Capture result slices
 Comment=Select Smokeview cases, slice types and capture times
 Exec="$link_dir/smv-cap-ui"
-Icon=camera-photo
+Icon=$target/capture_logo.png
 Terminal=false
 Categories=Graphics;Science;
 DESKTOP_EOF

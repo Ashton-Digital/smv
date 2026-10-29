@@ -52,6 +52,7 @@ echo "${KEY}--overwrite${RESET} - replace images from a previous run instead of 
 echo "${KEY}--no-crop${RESET} - keep the full-size image instead of cropping tightly around the model"
 echo "${KEY}-o <directory>${RESET} - save images to a chosen folder instead of the default one"
 echo "${KEY}--time <seconds>${RESET} - capture a different simulation time instead of the default 150 s"
+echo "${KEY}--planes Y=3,Y=5${RESET} - capture only slices at the listed axis positions (metres)"
 echo "${KEY}--prefix <name>${RESET} - use a different filename prefix instead of the case name"
 echo "${KEY}--crop-padding <pixels>${RESET} - change the white border width around cropped images (default: 20)"
 echo

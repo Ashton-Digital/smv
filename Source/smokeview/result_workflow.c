@@ -79,12 +79,12 @@ static int last_view_axis = -1;
 static int next_view_stage = 0;
 
 const char *GetResultWorkflowCaptureFeature(void){
-  return "SMV_FEATURE_RENDERRESULTS_1";
+  return "SMV_FEATURE_RENDERRESULTS_1 SMV_FEATURE_CAPTURE_PLANES_1";
 }
 
 static void HideWorkflowPlane(const workflow_plane *plane);
 static void RestoreWorkflowCameraClip(void);
-static void SelectWorkflowPlane(int workflow_index, int apply_clip_view, int direction);
+static void SelectWorkflowPlane(int workflow_index, int apply_clip_view, int direction, int requested_plane);
 static void ApplyWorkflowClipView(const workflow_plane *plane);
 
 /* ------------------ SetResultWorkflowCaptureTime ------------------------ */
@@ -411,6 +411,28 @@ static int CaptureWorkflowEnabled(const char *name){
   return 0;
 }
 
+static int CapturePlaneEnabled(const workflow_plane *plane){
+  const char *filter = getenv("ASHTON_CAPTURE_PLANES");
+  const char *part;
+
+  if(filter == NULL || filter[0] == 0)return 1;
+  part = filter;
+  while(*part != 0){
+    char axis = 0;
+    float position = 0.0f;
+    int consumed = 0;
+
+    if(sscanf(part, " %c = %f %n", &axis, &position, &consumed) >= 2 && consumed > 0 &&
+       (part[consumed] == ',' || part[consumed] == 0)){
+      if(axis == (char)('x' + plane->idir - 1) && ABS(position - plane->position) <= 0.0005f)return 1;
+    }
+    part = strchr(part, ',');
+    if(part == NULL)break;
+    part++;
+  }
+  return 0;
+}
+
 int CaptureNextResultWorkflowPlane(int *workflow_index, int *plane_index,
                                    const char *prefix, char *render_base, int render_base_size){
   int i;
@@ -428,6 +450,7 @@ int CaptureNextResultWorkflowPlane(int *workflow_index, int *plane_index,
     }
     nplanes = BuildWorkflowPlanes(workflows + i, 0, &planes);
 
+    while(next_plane >= 0 && next_plane < nplanes && CapturePlaneEnabled(planes + next_plane) == 0)next_plane++;
     if(next_plane >= 0 && next_plane < nplanes){
       char position[64];
       int j;
@@ -443,7 +466,7 @@ int CaptureNextResultWorkflowPlane(int *workflow_index, int *plane_index,
                workflows[i].name, (char)('x' + planes[next_plane].idir - 1),
                next_plane + 1, position);
       FREEMEMORY(planes);
-      SelectWorkflowPlane(i, 1, 1);
+      SelectWorkflowPlane(i, 1, 1, next_plane);
       *workflow_index = i;
       *plane_index = next_plane;
       return active_workflow == i && active_plane.group_index >= 0;
@@ -920,7 +943,7 @@ static void ReportWorkflowMessage(const char *message){
 
 /* ------------------ SelectWorkflowPlane ------------------------ */
 
-static void SelectWorkflowPlane(int workflow_index, int apply_clip_view, int direction){
+static void SelectWorkflowPlane(int workflow_index, int apply_clip_view, int direction, int requested_plane){
   result_workflow *workflow = workflows + workflow_index;
   workflow_plane *planes = NULL;
   float selected_time = 0.0f;
@@ -958,7 +981,10 @@ static void SelectWorkflowPlane(int workflow_index, int apply_clip_view, int dir
   workflow_message[0] = 0;
   HideWorkflowPlane(&active_plane);
   if(apply_clip_view == 0)RestoreWorkflowCameraClip();
-  if(active_workflow == workflow_index){
+  if(requested_plane >= 0){
+    plane_index = requested_plane;
+  }
+  else if(active_workflow == workflow_index){
     plane_index = workflow->current_plane + direction;
   }
   else{
@@ -1045,16 +1071,16 @@ int HandleResultWorkflowShortcut(unsigned char key, int modifiers){
       /* 'l' is a collision-free backup for visibility: Ctrl+I shares its
          key code with TAB, which some window managers and remote-desktop
          clients intercept before Smokeview ever sees it. */
-      SelectWorkflowPlane(WORKFLOW_VISIBILITY, apply_clip_view, direction);
+      SelectWorkflowPlane(WORKFLOW_VISIBILITY, apply_clip_view, direction, -1);
       return 1;
     case 't':
-      SelectWorkflowPlane(WORKFLOW_TEMPERATURE, apply_clip_view, direction);
+      SelectWorkflowPlane(WORKFLOW_TEMPERATURE, apply_clip_view, direction, -1);
       return 1;
     case 'v':
-      SelectWorkflowPlane(WORKFLOW_VELOCITY, apply_clip_view, direction);
+      SelectWorkflowPlane(WORKFLOW_VELOCITY, apply_clip_view, direction, -1);
       return 1;
     case 'p':
-      SelectWorkflowPlane(WORKFLOW_PRESSURE, apply_clip_view, direction);
+      SelectWorkflowPlane(WORKFLOW_PRESSURE, apply_clip_view, direction, -1);
       return 1;
     case 'm':
       return FlipWorkflowClipSide();
