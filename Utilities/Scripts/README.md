@@ -120,8 +120,8 @@ run the packaged script without cloning or building the repository. Use
 
 The Ashton installers provide operating-system integrations for the matched
 capture utility. On Windows, right-click an `.smv` file and select **Capture
-result slices**. The Windows MSI also installs `smvhelp.txt` and a **Smokeview
-Help** Start menu shortcut for the result-review shortcuts and capture options.
+result slices**. The Windows MSI also installs `smvhelp.txt` beside
+`smokeview.exe` for the result-review shortcuts and capture options.
 The equivalent PowerShell command is:
 
 ```powershell

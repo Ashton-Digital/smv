@@ -311,9 +311,6 @@ Contact the Ashton Digital internal support channel for help with this build.
           <Directory Id="INSTALLDIR" Name="Smokeview" />
         </Directory>
       </Directory>
-      <Directory Id="ProgramMenuFolder">
-        <Directory Id="AshtonMenu" Name="Ashton Digital" />
-      </Directory>
     </Directory>
     <DirectoryRef Id="INSTALLDIR">
       <Component Id="SmvAssociation" Guid="A7F23B24-5D06-48F4-A953-2611D789A743">
@@ -328,18 +325,9 @@ Contact the Ashton Digital internal support channel for help with this build.
         <RemoveFolder Id="RemoveAshtonFolder" Directory="AshtonFolder" On="uninstall" />
       </Component>
     </DirectoryRef>
-    <DirectoryRef Id="AshtonMenu">
-      <Component Id="MenuShortcuts" Guid="7BA9925C-2052-4C4E-8B12-59149A43DE55">
-        <Shortcut Id="SmokeviewShortcut" Name="Ashton Smokeview" Target="[INSTALLDIR]smokeview.exe" WorkingDirectory="INSTALLDIR" />
-        <Shortcut Id="HelpShortcut" Name="Smokeview Help" Target="[INSTALLDIR]smvhelp.txt" />
-        <RemoveFolder Id="RemoveAshtonMenu" On="uninstall" />
-        <RegistryValue Root="HKLM" Key="Software\Ashton Digital\Smokeview" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
-      </Component>
-    </DirectoryRef>
     <Feature Id="MainFeature" Title="Ashton Smokeview" Level="1">
       <ComponentGroupRef Id="PayloadFiles" />
       <ComponentRef Id="SmvAssociation" />
-      <ComponentRef Id="MenuShortcuts" />
     </Feature>
   </Product>
 </Wix>

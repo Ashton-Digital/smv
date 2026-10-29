@@ -277,7 +277,7 @@ sudo apt-get install imagemagick
 ```
 
 On Windows, the installer adds **Capture result slices** to the `.smv` file
-context menu and a **Smokeview Help** Start menu shortcut. On Linux, it
+context menu and installs `smvhelp.txt` beside `smokeview.exe`. On Linux, it
 installs the `af-smv` and `smv-cap` commands and registers **Capture result
 slices** as an `.smv` application under **Open With**. These actions start a
 separate automated Smokeview process; an existing interactive window can
