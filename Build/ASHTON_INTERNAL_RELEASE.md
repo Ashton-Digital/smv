@@ -230,8 +230,8 @@ This prevents the package from referring to a library inside the developer's
 checkout.
 
 For normal releases, use the platform packaging scripts from the repository
-root. To match the official Smokeview distribution format, Linux produces a
-self-extracting `.sh` installer and Windows produces an NSIS `.exe` installer.
+root. Linux produces a self-extracting `.sh` installer and Windows produces a
+WiX `.msi` installer.
 
 ```bash
 ./scripts/package_release_linux.sh
@@ -251,8 +251,11 @@ Both scripts put the installer and a SHA-256 checksum in `dist/`. They accept
 `--help`/`Get-Help`-style parameter discovery and can package an existing build
 with `--skip-build`/`-SkipBuild`. The Windows package uses the static MSVC
 runtime so that installing the Visual C++ Redistributable is not a prerequisite.
-Creating the Windows installer also requires NSIS 3 and its `makensis.exe`
-compiler.
+Creating the Windows installer also requires WiX Toolset 3 (`heat.exe`,
+`candle.exe`, and `light.exe`). The MSI installs per user under
+`%LOCALAPPDATA%\Ashton Digital\Smokeview`; its numeric Windows Installer
+version uses the upstream version, while the full Ashton version appears in
+the product name, filename, and packaged `VERSION` file.
 
 The release version combines the upstream Smokeview version with the Ashton
 fork release, for example `6.11.2-af1`. Increment `ASHTON_RELEASE` in the root
@@ -273,10 +276,11 @@ sudo apt-get install imagemagick
 ```
 
 On Windows, the installer adds **Capture result slices** to the `.smv` file
-context menu. On Linux, it installs the `af-smv` and `smv-cap` commands and
-registers **Capture result slices** as an `.smv` application under **Open
-With**. These actions start a separate automated Smokeview process; an
-existing interactive window can remain open.
+context menu and a **Smokeview Help** Start menu shortcut. On Linux, it
+installs the `af-smv` and `smv-cap` commands and registers **Capture result
+slices** as an `.smv` application under **Open With**. These actions start a
+separate automated Smokeview process; an existing interactive window can
+remain open.
 
 The Linux installer also installs `smvhelp`, which prints a summary of the
 added shortcuts and `smv-cap` options for engineers unfamiliar with the fork —
@@ -408,7 +412,8 @@ installer also sweeps up any leftover directory from the old
 
 The Windows payload uses `smokeview.exe` and also includes
 `capture_result_slices.cmd`, which provides dependency checking and invokes the
-Python capture utility. `VERSION` contains the release version, Git commit,
+Python capture utility, and `smvhelp.txt`, which summarises the result shortcuts
+and capture options. `VERSION` contains the release version, Git commit,
 build date, platform and compiler. `README.txt` contains the launch and capture
 commands, dependency notes, configuration location and support information.
 
@@ -548,7 +553,7 @@ writable by them. This has not come up as a problem in practice, since the
 approved company default is meant to be used as shipped, but it is worth
 knowing if a user reports that "Save Settings" silently fails.
 
-Windows recipients run the `.exe` installer normally. The Linux installer cannot
+Windows recipients run the `.msi` installer normally. The Linux installer cannot
 be used natively on Windows; each platform needs its own build and acceptance-test
 pass.
 

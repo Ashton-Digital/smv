@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-Build Smokeview and create a Windows installer executable.
+Build Smokeview and create a Windows MSI installer.
 
 .DESCRIPTION
-Requires Visual Studio 2022 with C++ build tools, CMake, and NSIS 3.
+Requires Visual Studio 2022 with C++ build tools, CMake, and WiX Toolset 3.
 #>
 [CmdletBinding()]
 param(
@@ -67,22 +67,22 @@ function Find-CMakeCommand {
     throw "CMake was not found. Install the Visual Studio 'C++ CMake tools for Windows' component, then reopen PowerShell."
 }
 
-function Find-MakeNSISCommand {
-    $Command = Get-Command makensis.exe -ErrorAction SilentlyContinue
+function Find-WixTool {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    $Command = Get-Command "$Name.exe" -ErrorAction SilentlyContinue
     if ($Command) { return $Command.Source }
 
     $Candidates = @()
+    if ($env:WIX) { $Candidates += Join-Path $env:WIX "bin/$Name.exe" }
     if (${env:ProgramFiles(x86)}) {
-        $Candidates += Join-Path ${env:ProgramFiles(x86)} "NSIS/makensis.exe"
+        $Candidates += Join-Path ${env:ProgramFiles(x86)} "WiX Toolset v3.11/bin/$Name.exe"
+        $Candidates += Join-Path ${env:ProgramFiles(x86)} "WiX Toolset v3.14/bin/$Name.exe"
     }
-    if ($env:ProgramFiles) {
-        $Candidates += Join-Path $env:ProgramFiles "NSIS/makensis.exe"
-    }
-
     $Result = $Candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
     if ($Result) { return $Result }
 
-    throw "NSIS was not found. Install NSIS 3 from https://nsis.sourceforge.io, then reopen PowerShell."
+    throw "WiX Toolset 3 ($Name.exe) was not found. Install WiX Toolset 3 and add its bin directory to PATH."
 }
 
 $ConfigFile = Get-RepoPath $ConfigFile
@@ -115,6 +115,7 @@ if ($Version -notmatch '^[0-9A-Za-z][0-9A-Za-z._-]*$') {
 $ObjectsFile = Join-Path $RepoRoot "Build/for_bundle/objects.svo"
 $RootMarkerFile = Join-Path $RepoRoot "Build/for_bundle/.smokeview_bin"
 $CaptureScript = Join-Path $RepoRoot "Utilities/Scripts/capture_result_slices.py"
+$HelpFile = Join-Path $RepoRoot "Utilities/Scripts/smv_help_windows.txt"
 $ColorbarsDir = Join-Path $RepoRoot "Build/for_bundle/colorbars"
 $TexturesDir = Join-Path $RepoRoot "Build/for_bundle/textures"
 
@@ -123,6 +124,7 @@ foreach ($RequiredPath in @(
     $ObjectsFile,
     $RootMarkerFile,
     $CaptureScript,
+    $HelpFile,
     $ColorbarsDir,
     $TexturesDir
 )) {
@@ -134,7 +136,9 @@ foreach ($RequiredPath in @(
 if (-not $SkipBuild) {
     $CMakeCommand = Find-CMakeCommand
 }
-$MakeNSISCommand = Find-MakeNSISCommand
+$HeatCommand = Find-WixTool "heat"
+$CandleCommand = Find-WixTool "candle"
+$LightCommand = Find-WixTool "light"
 if (-not $SkipBuild) {
     Invoke-NativeCommand -Command $CMakeCommand -Arguments @(
         "-S", $RepoRoot,
@@ -191,6 +195,7 @@ try {
     Copy-Item -LiteralPath $ObjectsFile -Destination (Join-Path $PackageDir "objects.svo")
     Copy-Item -LiteralPath $ColorbarsDir -Destination (Join-Path $PackageDir "colorbars") -Recurse
     Copy-Item -LiteralPath $TexturesDir -Destination (Join-Path $PackageDir "textures") -Recurse
+    Copy-Item -LiteralPath $HelpFile -Destination (Join-Path $PackageDir "smvhelp.txt")
 
     @'
 @echo off
@@ -280,78 +285,95 @@ slice and data files must remain beside the .smv file.
 Contact the Ashton Digital internal support channel for help with this build.
 "@ | Set-Content -LiteralPath (Join-Path $PackageDir "README.txt") -Encoding UTF8
 
-    $InstallerPath = Join-Path $OutputDir "$PackageName.exe"
+    $InstallerPath = Join-Path $OutputDir "$PackageName.msi"
     $ChecksumPath = "$InstallerPath.sha256"
     if (Test-Path -LiteralPath $InstallerPath) {
         Remove-Item -LiteralPath $InstallerPath -Force
     }
 
-    $NsiPath = Join-Path $StageRoot "installer.nsi"
+    $WxsPath = Join-Path $StageRoot "installer.wxs"
+    $HarvestPath = Join-Path $StageRoot "payload.wxs"
     $IconPath = Join-Path $RepoRoot "Build/for_bundle/icon.ico"
-    $NsiTemplate = @'
-Unicode True
-!include "MUI2.nsh"
-
-Name "Ashton Smokeview v@VERSION@"
-OutFile "@OUTPUT@"
-InstallDir "$LOCALAPPDATA\Ashton Digital\Smokeview"
-InstallDirRegKey HKCU "Software\Ashton Digital\Smokeview" "InstallDir"
-RequestExecutionLevel user
-Icon "@ICON@"
-UninstallIcon "@ICON@"
-
-!define MUI_ABORTWARNING
-!insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_DIRECTORY
-!insertmacro MUI_PAGE_INSTFILES
-!insertmacro MUI_PAGE_FINISH
-!insertmacro MUI_UNPAGE_CONFIRM
-!insertmacro MUI_UNPAGE_INSTFILES
-!insertmacro MUI_LANGUAGE "English"
-
-Section "Smokeview" SEC_SMOKEVIEW
-    SetShellVarContext current
-    SetOutPath "$INSTDIR"
-    File /r "@PACKAGE@\*"
-
-    WriteRegStr HKCU "Software\Ashton Digital\Smokeview" "InstallDir" "$INSTDIR"
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\AshtonSmokeview" "DisplayName" "Ashton Smokeview"
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\AshtonSmokeview" "DisplayVersion" "@VERSION@"
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\AshtonSmokeview" "DisplayIcon" "$INSTDIR\smokeview.exe"
-    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\AshtonSmokeview" "UninstallString" '"$INSTDIR\Uninstall.exe"'
-
-    WriteRegStr HKCU "Software\Classes\.smv" "" "AshtonSmokeview.smv"
-    WriteRegStr HKCU "Software\Classes\AshtonSmokeview.smv" "" "Smokeview case"
-    WriteRegStr HKCU "Software\Classes\AshtonSmokeview.smv\DefaultIcon" "" "$INSTDIR\smokeview.exe,0"
-    WriteRegStr HKCU "Software\Classes\AshtonSmokeview.smv\shell\open\command" "" '"$INSTDIR\smokeview.exe" "%1"'
-
-    WriteRegStr HKCU "Software\Classes\AshtonSmokeview.smv\shell\capture" "" "Capture result slices"
-    WriteRegStr HKCU "Software\Classes\AshtonSmokeview.smv\shell\capture" "Icon" "$INSTDIR\smokeview.exe,0"
-    WriteRegStr HKCU "Software\Classes\AshtonSmokeview.smv\shell\capture\command" "" '"$INSTDIR\capture_result_slices.cmd" "%1"'
-    System::Call 'shell32.dll::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
-
-    CreateDirectory "$SMPROGRAMS\Ashton Digital"
-    CreateShortcut "$SMPROGRAMS\Ashton Digital\Smokeview.lnk" "$INSTDIR\smokeview.exe"
-    WriteUninstaller "$INSTDIR\Uninstall.exe"
-SectionEnd
-
-Section "Uninstall"
-    SetShellVarContext current
-    Delete "$SMPROGRAMS\Ashton Digital\Smokeview.lnk"
-    RMDir "$SMPROGRAMS\Ashton Digital"
-    DeleteRegKey HKCU "Software\Classes\AshtonSmokeview.smv"
-    System::Call 'shell32.dll::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
-    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\AshtonSmokeview"
-    DeleteRegKey HKCU "Software\Ashton Digital\Smokeview"
-    RMDir /r "$INSTDIR"
-SectionEnd
+    $WxsTemplate = @'
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="Ashton Smokeview @VERSION@" Language="1033"
+           Version="@MSI_VERSION@" Manufacturer="Ashton Digital"
+           UpgradeCode="1940D8A1-C842-442F-BF5D-00A570219BDB">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perUser" />
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="A newer Ashton Smokeview is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <Icon Id="SmokeviewIcon" SourceFile="@ICON@" />
+    <Property Id="ARPPRODUCTICON" Value="SmokeviewIcon" />
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="AshtonFolder" Name="Ashton Digital">
+          <Directory Id="INSTALLDIR" Name="Smokeview" />
+        </Directory>
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="AshtonMenu" Name="Ashton Digital" />
+      </Directory>
+    </Directory>
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Id="SmvAssociation" Guid="A7F23B24-5D06-48F4-A953-2611D789A743">
+        <RegistryValue Root="HKCU" Key="Software\Classes\.smv" Type="string" Value="AshtonSmokeview.smv" KeyPath="yes" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv" Type="string" Value="Smokeview case" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv\DefaultIcon" Type="string" Value="[INSTALLDIR]smokeview.exe,0" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv\shell\open\command" Type="string" Value="&quot;[INSTALLDIR]smokeview.exe&quot; &quot;%1&quot;" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv\shell\capture" Type="string" Value="Capture result slices" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv\shell\capture" Name="Icon" Type="string" Value="[INSTALLDIR]smokeview.exe,0" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\AshtonSmokeview.smv\shell\capture\command" Type="string" Value="&quot;[INSTALLDIR]capture_result_slices.cmd&quot; &quot;%1&quot;" />
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="AshtonMenu">
+      <Component Id="MenuShortcuts" Guid="7BA9925C-2052-4C4E-8B12-59149A43DE55">
+        <Shortcut Id="SmokeviewShortcut" Name="Ashton Smokeview" Target="[INSTALLDIR]smokeview.exe" WorkingDirectory="INSTALLDIR" />
+        <Shortcut Id="HelpShortcut" Name="Smokeview Help" Target="[INSTALLDIR]smvhelp.txt" />
+        <RemoveFolder Id="RemoveAshtonMenu" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\Ashton Digital\Smokeview" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+    <Feature Id="MainFeature" Title="Ashton Smokeview" Level="1">
+      <ComponentGroupRef Id="PayloadFiles" />
+      <ComponentRef Id="SmvAssociation" />
+      <ComponentRef Id="MenuShortcuts" />
+    </Feature>
+  </Product>
+</Wix>
 '@
-    $NsiContents = $NsiTemplate.Replace("@VERSION@", $Version)
-    $NsiContents = $NsiContents.Replace("@OUTPUT@", $InstallerPath)
-    $NsiContents = $NsiContents.Replace("@ICON@", $IconPath)
-    $NsiContents = $NsiContents.Replace("@PACKAGE@", $PackageDir)
-    $NsiContents | Set-Content -LiteralPath $NsiPath -Encoding UTF8
-    Invoke-NativeCommand -Command $MakeNSISCommand -Arguments @($NsiPath)
+    $MsiVersion = [regex]::Match($Version, '^[0-9]+\.[0-9]+\.[0-9]+').Value
+    if (-not $MsiVersion) { throw "MSI requires a numeric upstream version: $Version" }
+    $WxsContents = $WxsTemplate.Replace("@VERSION@", $Version)
+    $WxsContents = $WxsContents.Replace("@MSI_VERSION@", $MsiVersion)
+    $WxsContents = $WxsContents.Replace("@ICON@", [System.Security.SecurityElement]::Escape($IconPath))
+    $WxsContents | Set-Content -LiteralPath $WxsPath -Encoding UTF8
+
+    Invoke-NativeCommand -Command $HeatCommand -Arguments @(
+        "dir", $PackageDir, "-cg", "PayloadFiles", "-dr", "INSTALLDIR",
+        "-srd", "-sreg", "-sfrag", "-gg", "-var", "var.PayloadDir",
+        "-out", $HarvestPath
+    )
+    $HarvestContents = Get-Content -LiteralPath $HarvestPath -Raw
+    foreach ($RequiredPayloadFile in @(
+        "smokeview.exe", "smokeview.ini", "objects.svo", ".smokeview_bin",
+        "capture_result_slices.py", "capture_result_slices.cmd", "smvhelp.txt"
+    )) {
+        if ($HarvestContents -notmatch [regex]::Escape($RequiredPayloadFile)) {
+            throw "WiX payload does not include $RequiredPayloadFile."
+        }
+    }
+    Invoke-NativeCommand -Command $CandleCommand -Arguments @(
+        "-dPayloadDir=$PackageDir", "-out", (Join-Path $StageRoot "installer.wixobj"), $WxsPath
+    )
+    Invoke-NativeCommand -Command $CandleCommand -Arguments @(
+        "-dPayloadDir=$PackageDir", "-out", (Join-Path $StageRoot "payload.wixobj"), $HarvestPath
+    )
+    Invoke-NativeCommand -Command $LightCommand -Arguments @(
+        "-out", $InstallerPath,
+        (Join-Path $StageRoot "installer.wixobj"),
+        (Join-Path $StageRoot "payload.wixobj")
+    )
 
     $Hash = (Get-FileHash -LiteralPath $InstallerPath -Algorithm SHA256).Hash.ToLowerInvariant()
     "$Hash  $([IO.Path]::GetFileName($InstallerPath))" |

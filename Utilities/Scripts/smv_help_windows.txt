@@ -1,0 +1,34 @@
+Ashton Smokeview help (Windows)
+================================
+
+Open an FDS case by double-clicking its .smv file, or run:
+  smokeview.exe C:\path\to\case.smv
+
+Result-review shortcuts in the Smokeview window
+  Ctrl+I  Visibility slices (Ctrl+L is an alternative)
+  Ctrl+T  Temperature slices
+  Ctrl+V  Velocity slices
+  Ctrl+P  Pressure slices
+  Ctrl+U  Unload data and restore the previous view
+  Ctrl+X  X-minimum, X-maximum and exterior views
+  Ctrl+Y  Y-minimum, Y-maximum and exterior views
+  Ctrl+Z  Z-minimum, Z-maximum and exterior views
+
+Hold Shift with a slice shortcut to cycle backwards. Each slice shortcut
+loads the slice, sets its colourbar and bounds, clips the model at that
+plane, and fits the view. Ctrl+U restores the earlier camera and clipping.
+
+Capture result slices
+  Right-click a .smv file and choose Capture result slices, or run:
+  capture_result_slices.cmd C:\path\to\case.smv
+
+The capture launcher runs a separate Smokeview process. You can keep an
+interactive Smokeview window open. Images are saved beside the case in a
+folder named case_slice_captures. Python 3.10 or newer is required. Cropping
+also requires ImageMagick; use --no-crop if it is unavailable.
+
+For all capture options, run:
+  py -3 capture_result_slices.py --help
+
+Useful options: --overwrite, --no-crop, -o DIRECTORY, --time SECONDS,
+--prefix NAME, and --crop-padding PIXELS.
