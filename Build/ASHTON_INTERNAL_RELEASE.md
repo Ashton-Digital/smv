@@ -244,10 +244,11 @@ the [official portable static ImageMagick archive](https://imagemagick.org/downl
 .\scripts\package_release_windows.ps1 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
 ```
 
-This script prompts for the release version. Enter a suffix such as `af2-rc7`
-or a full version such as `6.11.2-af2-rc7`. It updates `CMakeLists.txt` and
-the current build references in this guide before building. Press Enter to
-keep the current version, or pass `-Version af2-rc7` for unattended builds.
+This script asks whether the next build is a test or live release. With the
+current `af2-rc6` value, test selects `af2-rc7` and live selects `af2`.
+It updates `CMakeLists.txt` and the current build references in this guide
+before building. Pass `-Version af2-rc7` for unattended builds or to choose a
+specific version.
 
 ### Build both installers on one Windows workstation
 
@@ -274,11 +275,13 @@ py -3 -m pip install pyinstaller
 .\scripts\package_release_all.ps1 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
 ```
 
-The script asks for the release version, showing the current value as the
-default. Enter a suffix such as `af2-rc7`, or the full version such as
-`6.11.2-af2-rc7`. It updates `ASHTON_RELEASE` in `CMakeLists.txt` and the
-current build references in this guide before building. Press Enter to reuse
-the current version. For unattended builds, pass `-Version af2-rc7`.
+The script uses the same test/live prompt as the Windows-only build and updates
+`ASHTON_RELEASE` in `CMakeLists.txt` and the current build references in this
+guide before building. For unattended builds, pass `-Version af2-rc7`.
+If the fork adopts a three-part Ashton release such as `af2.0.1`, the script
+increments its patch number for the next test or live build. The upstream
+Smokeview version (currently `6.11.2`) remains the value in `CMakeLists.txt`;
+update it there when the fork moves to a newer upstream Smokeview version.
 
 The script builds and checks both `dist/ashton-smokeview-v<version>-windows-x64.msi`
 and `dist/ashton-smokeview-v<version>-linux-x64.sh`, including their `.sha256`

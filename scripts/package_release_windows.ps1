@@ -125,50 +125,8 @@ if ($LASTEXITCODE -ne 0) {
     throw "PyInstaller is required on the build machine. Install it with: py -3 -m pip install pyinstaller"
 }
 
-$CMakePath = Join-Path $RepoRoot "CMakeLists.txt"
-$GuidePath = Join-Path $RepoRoot "Build/ASHTON_INTERNAL_RELEASE.md"
-$CMakeContents = Get-Content -LiteralPath $CMakePath -Raw
-$GuideContents = Get-Content -LiteralPath $GuidePath -Raw
-$UpstreamVersion = [regex]::Match($CMakeContents, 'project\(smv .*VERSION ([0-9]+\.[0-9]+\.[0-9]+)').Groups[1].Value
-$ReleaseMatch = [regex]::Match($CMakeContents, 'set\(ASHTON_RELEASE\s+"([^"]+)"\)')
-if (-not $UpstreamVersion -or -not $ReleaseMatch.Success) {
-    throw "Could not determine the release version from CMakeLists.txt."
-}
-$OldRelease = $ReleaseMatch.Groups[1].Value
-$OldVersion = "$UpstreamVersion-$OldRelease"
-if (-not $Version) {
-    if ([Console]::IsInputRedirected) {
-        throw "Pass -Version for a non-interactive build (for example, -Version af2-rc7)."
-    }
-    $Version = Read-Host "Release version [$OldVersion]"
-    if (-not $Version) { $Version = $OldVersion }
-}
-$Version = $Version.Trim()
-if ($Version -match '^[0-9]+\.[0-9]+\.[0-9]+-' -and -not $Version.StartsWith("$UpstreamVersion-")) {
-    throw "Version $Version does not match upstream Smokeview version $UpstreamVersion."
-}
-if ($Version.StartsWith("$UpstreamVersion-")) {
-    $NewRelease = $Version.Substring($UpstreamVersion.Length + 1)
-} else {
-    $NewRelease = $Version
-}
-if ($NewRelease -notmatch '^[0-9A-Za-z][0-9A-Za-z._-]*$') {
-    throw "Invalid release version: $Version"
-}
-$Version = "$UpstreamVersion-$NewRelease"
-if ($NewRelease -ne $OldRelease) {
-    $OldSetting = 'set(ASHTON_RELEASE "' + $OldRelease + '")'
-    $NewSetting = 'set(ASHTON_RELEASE "' + $NewRelease + '")'
-    if ($CMakeContents.Split(@($OldSetting), [StringSplitOptions]::None).Count -ne 2) {
-        throw "Expected exactly one ASHTON_RELEASE setting in CMakeLists.txt."
-    }
-    if (-not $GuideContents.Contains("The current build is ``$OldVersion``;")) {
-        throw "The release guide's current version does not match CMakeLists.txt. Update it before building."
-    }
-    [IO.File]::WriteAllText($CMakePath, $CMakeContents.Replace($OldSetting, $NewSetting))
-    [IO.File]::WriteAllText($GuidePath, $GuideContents.Replace($OldVersion, $Version))
-    Write-Host "Updated CMakeLists.txt and release guide: $OldVersion -> $Version"
-}
+. (Join-Path $PSScriptRoot "select_release_version.ps1")
+$Version = Select-ReleaseVersion -RepoRoot $RepoRoot -Version $Version
 
 $ObjectsFile = Join-Path $RepoRoot "Build/for_bundle/objects.svo"
 $RootMarkerFile = Join-Path $RepoRoot "Build/for_bundle/.smokeview_bin"
