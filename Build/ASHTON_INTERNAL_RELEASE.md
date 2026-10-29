@@ -2,7 +2,7 @@
 
 This document defines how the Ashton custom Smokeview fork is built, tested,
 versioned, packaged, and distributed internally. The current release line is
-based on Smokeview 6.11.2. The current test build is `6.11.2-af2-rc6`;
+based on Smokeview 6.11.2. The current build is `6.11.2-af2-rc6`;
 `6.11.2-af1` is the previous tagged release.
 
 ## Current Customisation
@@ -253,12 +253,25 @@ the extracted portable ImageMagick folder described below. Docker builds the
 Linux binary in Ubuntu 22.04; Visual Studio and WiX build the MSI on Windows.
 Both builds use the same checkout, with separate CMake build directories.
 
+To set up Docker Desktop, enable WSL 2 in an Administrator PowerShell with
+`wsl --install` (restart if prompted), then install Docker Desktop from the
+linked official page. Start Docker Desktop and select its WSL 2 engine. In a
+PowerShell terminal, check `docker info --format '{{.OSType}}'` prints `linux`.
+The Docker build runs from Windows PowerShell; a separate Ubuntu installation
+inside WSL is not required.
+
 Run this from the repository root in an x64 Visual Studio Developer PowerShell:
 
 ```powershell
 py -3 -m pip install pyinstaller
 .\scripts\package_release_all.ps1 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
 ```
+
+The script asks for the release version, showing the current value as the
+default. Enter a suffix such as `af2-rc7`, or the full version such as
+`6.11.2-af2-rc7`. It updates `ASHTON_RELEASE` in `CMakeLists.txt` and the
+current build references in this guide before building. Press Enter to reuse
+the current version. For unattended builds, pass `-Version af2-rc7`.
 
 The script builds and checks both `dist/ashton-smokeview-v<version>-windows-x64.msi`
 and `dist/ashton-smokeview-v<version>-linux-x64.sh`, including their `.sha256`
