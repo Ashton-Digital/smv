@@ -101,7 +101,7 @@ function Invoke-NativeCommand {
 
 $WindowsScript = Join-Path $PSScriptRoot "package_release_windows.ps1"
 Write-Host "Building Windows MSI..."
-& $WindowsScript -ImageMagickDir $ImageMagickDir
+& $WindowsScript -ImageMagickDir $ImageMagickDir -Version $Version
 
 $Dockerfile = Join-Path $PSScriptRoot "Dockerfile.release-linux"
 Write-Host "Preparing Ubuntu 22.04 Linux builder..."

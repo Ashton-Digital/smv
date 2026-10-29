@@ -244,6 +244,11 @@ the [official portable static ImageMagick archive](https://imagemagick.org/downl
 .\scripts\package_release_windows.ps1 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
 ```
 
+This script prompts for the release version. Enter a suffix such as `af2-rc7`
+or a full version such as `6.11.2-af2-rc7`. It updates `CMakeLists.txt` and
+the current build references in this guide before building. Press Enter to
+keep the current version, or pass `-Version af2-rc7` for unattended builds.
+
 ### Build both installers on one Windows workstation
 
 Install and start [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
