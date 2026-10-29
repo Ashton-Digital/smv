@@ -17,7 +17,7 @@ if(NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 project(smv LANGUAGES C CXX VERSION 6.11.2)
-set(ASHTON_RELEASE "af1")
+set(ASHTON_RELEASE "af2-rc1")
 set(ASHTON_VERSION "${PROJECT_VERSION}-${ASHTON_RELEASE}")
 # Use C99
 set(CMAKE_C_STANDARD 99)
@@ -211,6 +211,9 @@ add_subdirectory(Source/wind2fds)
 # The programs to build on Windows only
 if(WIN32)
     add_subdirectory(Source/set_path)
+    add_executable(capture_slices_ui WIN32 Source/smokeview/capture_ui_launcher.c)
+    target_compile_definitions(capture_slices_ui PRIVATE UNICODE _UNICODE)
+    target_link_libraries(capture_slices_ui PRIVATE shell32 user32)
 endif()
 
 # Install config files

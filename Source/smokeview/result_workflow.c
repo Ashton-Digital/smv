@@ -392,6 +392,25 @@ static int BuildWorkflowPlanes(const result_workflow *workflow, int is_vector, w
 
 /* ------------------ CaptureNextResultWorkflowPlane ------------------------ */
 
+static int CaptureWorkflowEnabled(const char *name){
+  const char *filter = getenv("ASHTON_CAPTURE_QUANTITIES");
+  const char *part;
+  size_t name_len;
+
+  if(filter == NULL || filter[0] == 0)return 1;
+  name_len = strlen(name);
+  part = filter;
+  while(*part != 0){
+    const char *end = strchr(part, ',');
+    size_t part_len = end == NULL ? strlen(part) : (size_t)(end - part);
+
+    if(part_len == name_len && strncmp(part, name, name_len) == 0)return 1;
+    if(end == NULL)break;
+    part = end + 1;
+  }
+  return 0;
+}
+
 int CaptureNextResultWorkflowPlane(int *workflow_index, int *plane_index,
                                    const char *prefix, char *render_base, int render_base_size){
   int i;
@@ -401,7 +420,13 @@ int CaptureNextResultWorkflowPlane(int *workflow_index, int *plane_index,
   for(i = MAX(*workflow_index, 0); i < NRESULT_WORKFLOWS; i++){
     workflow_plane *planes = NULL;
     int next_plane = i == *workflow_index ? *plane_index + 1 : 0;
-    int nplanes = BuildWorkflowPlanes(workflows + i, 0, &planes);
+    int nplanes;
+
+    if(CaptureWorkflowEnabled(workflows[i].name) == 0){
+      *plane_index = -1;
+      continue;
+    }
+    nplanes = BuildWorkflowPlanes(workflows + i, 0, &planes);
 
     if(next_plane >= 0 && next_plane < nplanes){
       char position[64];

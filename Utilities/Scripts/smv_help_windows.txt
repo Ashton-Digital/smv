@@ -19,7 +19,10 @@ loads the slice, sets its colourbar and bounds, clips the model at that
 plane, and fits the view. Ctrl+U restores the earlier camera and clipping.
 
 Capture result slices
-  Right-click a .smv file and choose Capture result slices, or run:
+  Open Capture result slices from the Start menu, or right-click a .smv file
+  and choose Capture result slices. The window lets you choose one case or
+  all cases in a folder, slice types, one or more times, and an output folder.
+  For command-line capture, run:
   capture_result_slices.cmd C:\path\to\case.smv
 
 The capture launcher runs a separate Smokeview process. You can keep an

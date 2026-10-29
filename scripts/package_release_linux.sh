@@ -100,6 +100,7 @@ version="${version#v}"
 [[ -f "$repo_root/Build/for_bundle/.smokeview_bin" ]] || fail ".smokeview_bin is missing"
 [[ -f "$repo_root/Build/for_bundle/objects.svo" ]] || fail "objects.svo is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_result_slices.py" ]] || fail "capture_result_slices.py is missing"
+[[ -f "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" ]] || fail "capture_slices_ui.pyw is missing"
 [[ -f "$repo_root/Utilities/Scripts/smv_help.sh" ]] || fail "smv_help.sh is missing"
 [[ -d "$repo_root/Build/for_bundle/colorbars" ]] || fail "colorbars directory is missing"
 [[ -d "$repo_root/Build/for_bundle/textures" ]] || fail "textures directory is missing"
@@ -150,6 +151,7 @@ mkdir -p "$package_dir"
 
 install -m 0755 "$binary" "$package_dir/smokeview"
 install -m 0755 "$repo_root/Utilities/Scripts/capture_result_slices.py" "$package_dir/capture_result_slices.py"
+install -m 0755 "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" "$package_dir/capture_slices_ui.pyw"
 install -m 0755 "$repo_root/Utilities/Scripts/smv_help.sh" "$package_dir/smv_help.sh"
 install -m 0644 "$config_file" "$package_dir/smokeview.ini"
 install -m 0644 "$repo_root/Build/for_bundle/.smokeview_bin" "$package_dir/.smokeview_bin"
@@ -186,10 +188,15 @@ Capture every configured result-review slice with:
 
   ./capture_result_slices.py /absolute/path/to/case.smv --overwrite
 
+Open the capture window with:
+
+  ./capture_slices_ui.pyw
+
 After installation, the equivalent commands are:
 
   af-smv /absolute/path/to/case.smv
   smv-cap /absolute/path/to/case.smv
+  smv-cap-ui
 
 Run smvhelp for a summary of the added shortcuts and smv-cap options.
 
@@ -202,6 +209,8 @@ ImageMagick (either the "magick" or the "convert" command). On Ubuntu/Debian,
 install it with:
 
   sudo apt-get install imagemagick
+
+The capture window also needs Tkinter (python3-tk on Ubuntu/Debian).
 
 It launches a separate automated Smokeview process, so an interactive Smokeview
 window may remain open while capture runs.
@@ -400,6 +409,7 @@ mkdir -p "$staging_dir"
 cp -R "$temporary_dir/$package_name/." "$staging_dir/"
 chmod 0755 "$staging_dir/smokeview"
 chmod 0755 "$staging_dir/capture_result_slices.py"
+chmod 0755 "$staging_dir/capture_slices_ui.pyw"
 chmod 0755 "$staging_dir/smv_help.sh"
 chmod -R a+rX "$staging_dir"
 
@@ -413,6 +423,7 @@ mkdir -p "$link_dir"
 rm -f "$link_dir/ashton-smokeview" "$link_dir/ashton-capture-slices" "$link_dir/afm-smv"
 ln -sfn "$target/smokeview" "$link_dir/af-smv"
 ln -sfn "$target/capture_result_slices.py" "$link_dir/smv-cap"
+ln -sfn "$target/capture_slices_ui.pyw" "$link_dir/smv-cap-ui"
 ln -sfn "$target/smv_help.sh" "$link_dir/smvhelp"
 
 generic_launcher="$link_dir/smokeview"
@@ -470,7 +481,18 @@ NoDisplay=true
 MimeType=application/x-ashton-smokeview;
 DESKTOP_EOF
 
-chmod 0644 "$mime_dir/packages/af-smv.xml" "$applications_dir/af-smv.desktop" "$applications_dir/smv-cap.desktop"
+cat > "$applications_dir/smv-cap-ui.desktop" <<DESKTOP_EOF
+[Desktop Entry]
+Type=Application
+Name=Capture result slices
+Comment=Select Smokeview cases, slice types and capture times
+Exec="$link_dir/smv-cap-ui"
+Icon=camera-photo
+Terminal=false
+Categories=Graphics;Science;
+DESKTOP_EOF
+
+chmod 0644 "$mime_dir/packages/af-smv.xml" "$applications_dir/af-smv.desktop" "$applications_dir/smv-cap.desktop" "$applications_dir/smv-cap-ui.desktop"
 
 if command -v update-mime-database >/dev/null 2>&1; then
   update-mime-database "$mime_dir" >/dev/null 2>&1 || echo "Warning: could not update the MIME database."
@@ -504,6 +526,7 @@ echo
 echo "Installed Ashton Smokeview in $target"
 echo "Smokeview launcher: $link_dir/af-smv"
 echo "Capture launcher: $link_dir/smv-cap"
+echo "Capture window: $link_dir/smv-cap-ui"
 echo "Help launcher: $link_dir/smvhelp"
 echo "Run now: $link_dir/af-smv"
 echo "To capture: $link_dir/smv-cap /path/to/case.smv"

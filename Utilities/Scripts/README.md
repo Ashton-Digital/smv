@@ -54,6 +54,25 @@ Right-clicking a `.smv` file and choosing **Open With** gives two options:
 - **Capture result slices** — runs `smv-cap` (see below) without opening an
   interactive window.
 
+## Capture result slices window
+
+The Windows MSI installs **Capture result slices** in the Start menu. Open it
+to choose one `.smv` file or a folder of cases (searched recursively), select
+visibility, temperature, velocity and pressure slices, enter one or more
+simulation times separated by commas, and optionally choose an output folder.
+Right-clicking an `.smv` file and choosing **Capture result slices** opens the
+same window with that case preselected.
+
+On Linux, the installer adds the **Capture result slices** application to the
+desktop menu and the `smv-cap-ui` command. The window needs Python 3.10 or newer
+and Tkinter (`python3-tk` on Ubuntu/Debian). If ImageMagick is unavailable,
+cropping is disabled and full-size images are saved.
+
+By default, images go into `CASE_slice_captures` beside each `.smv` file. If
+several times are entered, each time gets its own subfolder. With a chosen
+output folder, the window creates a separate case folder there and preserves
+the source subfolder layout for recursive batches.
+
 ## capture_result_slices.py
 
 This script opens a Smokeview case and captures every slice configured for the
@@ -80,9 +99,12 @@ different directory, `--overwrite` to replace existing images,
 `--size WIDTHxHEIGHT` to use a windowed capture at an explicit resolution, or
 `--smokeview EXE` to select a Smokeview executable.  Use `--time SECONDS` to
 override the default capture time, `--crop-padding PIXELS` to change the white
-border, or `--no-crop` to retain the full render.  Cropping uses ImageMagick;
-the startup dependency check stops before rendering if ImageMagick is missing,
-unless `--no-crop` is used.  If an individual model cannot be identified
+border, or `--no-crop` to retain the full render. Use `--quantities visibility
+temperature` (or any subset of the four names) to render only selected result
+types. The desktop window uses this option so unchecked types are skipped by
+Smokeview. Cropping uses ImageMagick; the startup dependency check stops before
+rendering if ImageMagick is missing unless `--no-crop` is used. If an individual
+model cannot be identified
 confidently, that PNG is retained uncropped with a warning.  Use `--prefix
 NAME` to override the output filename prefix (default: the case name), and
 `--keep-script` to retain the generated `.ssf` script file in the output
@@ -106,6 +128,7 @@ build and resources:
 ```text
 ashton-smokeview-v6.11.2-af1-linux-x64/
 |-- capture_result_slices.py
+|-- capture_slices_ui.pyw
 |-- smokeview
 |-- smokeview.ini
 |-- objects.svo
@@ -120,8 +143,9 @@ run the packaged script without cloning or building the repository. Use
 
 The Ashton installers provide operating-system integrations for the matched
 capture utility. On Windows, right-click an `.smv` file and select **Capture
-result slices**. The Windows MSI also installs `smvhelp.txt` beside
-`smokeview.exe` for the result-review shortcuts and capture options.
+result slices** to open the window described above. The Windows MSI also
+installs `smvhelp.txt` beside `smokeview.exe` for the result-review shortcuts
+and capture options.
 The equivalent PowerShell command is:
 
 ```powershell

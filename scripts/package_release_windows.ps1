@@ -115,6 +115,7 @@ if ($Version -notmatch '^[0-9A-Za-z][0-9A-Za-z._-]*$') {
 $ObjectsFile = Join-Path $RepoRoot "Build/for_bundle/objects.svo"
 $RootMarkerFile = Join-Path $RepoRoot "Build/for_bundle/.smokeview_bin"
 $CaptureScript = Join-Path $RepoRoot "Utilities/Scripts/capture_result_slices.py"
+$CaptureUiScript = Join-Path $RepoRoot "Utilities/Scripts/capture_slices_ui.pyw"
 $HelpFile = Join-Path $RepoRoot "Utilities/Scripts/smv_help_windows.txt"
 $ColorbarsDir = Join-Path $RepoRoot "Build/for_bundle/colorbars"
 $TexturesDir = Join-Path $RepoRoot "Build/for_bundle/textures"
@@ -124,6 +125,7 @@ foreach ($RequiredPath in @(
     $ObjectsFile,
     $RootMarkerFile,
     $CaptureScript,
+    $CaptureUiScript,
     $HelpFile,
     $ColorbarsDir,
     $TexturesDir
@@ -152,7 +154,7 @@ if (-not $SkipBuild) {
     Invoke-NativeCommand -Command $CMakeCommand -Arguments @(
         "--build", $BuildDir,
         "--config", "Release",
-        "--target", "smokeview",
+        "--target", "smokeview", "capture_slices_ui",
         "--parallel"
     )
 }
@@ -164,6 +166,14 @@ $BinaryCandidates = @(
 $Binary = $BinaryCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 if (-not $Binary) {
     throw "Release executable not found under $BuildDir."
+}
+$UiBinaryCandidates = @(
+    (Join-Path $BuildDir "Release/capture_slices_ui.exe"),
+    (Join-Path $BuildDir "capture_slices_ui.exe")
+)
+$UiBinary = $UiBinaryCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+if (-not $UiBinary) {
+    throw "Capture UI launcher not found under $BuildDir."
 }
 
 $VersionOutput = (& $Binary "-version" 2>&1 | Out-String)
@@ -189,9 +199,11 @@ $PackageDir = Join-Path $StageRoot $PackageName
 try {
     New-Item -ItemType Directory -Force -Path $PackageDir | Out-Null
     Copy-Item -LiteralPath $Binary -Destination (Join-Path $PackageDir "smokeview.exe")
+    Copy-Item -LiteralPath $UiBinary -Destination (Join-Path $PackageDir "capture_slices_ui.exe")
     Copy-Item -LiteralPath $ConfigFile -Destination (Join-Path $PackageDir "smokeview.ini")
     Copy-Item -LiteralPath $RootMarkerFile -Destination (Join-Path $PackageDir ".smokeview_bin")
     Copy-Item -LiteralPath $CaptureScript -Destination (Join-Path $PackageDir "capture_result_slices.py")
+    Copy-Item -LiteralPath $CaptureUiScript -Destination (Join-Path $PackageDir "capture_slices_ui.pyw")
     Copy-Item -LiteralPath $ObjectsFile -Destination (Join-Path $PackageDir "objects.svo")
     Copy-Item -LiteralPath $ColorbarsDir -Destination (Join-Path $PackageDir "colorbars") -Recurse
     Copy-Item -LiteralPath $TexturesDir -Destination (Join-Path $PackageDir "textures") -Recurse
@@ -263,6 +275,10 @@ Keep this directory together. Run Smokeview with an absolute path to a case:
 
 The packaged smokeview.ini and objects.svo files are loaded from this directory.
 
+Open Capture result slices from the Start menu to select one case or a folder,
+choose slice types and times, and set an output location. Python 3.10 or newer
+with Tkinter is required for the capture window.
+
 Capture every configured result-review slice with:
 
   .\capture_result_slices.cmd C:\absolute\path\to\case.smv
@@ -270,6 +286,8 @@ Capture every configured result-review slice with:
 Alternatively, right-click an .smv file in File Explorer and select:
 
   Capture result slices
+
+This opens the capture window with that case selected.
 
 This starts a separate automated Smokeview process. An interactive Smokeview
 window may remain open while capture runs.
@@ -311,6 +329,9 @@ Contact the Ashton Digital internal support channel for help with this build.
           <Directory Id="INSTALLDIR" Name="Smokeview" />
         </Directory>
       </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="AshtonMenu" Name="Ashton Digital" />
+      </Directory>
     </Directory>
     <DirectoryRef Id="INSTALLDIR">
       <Component Id="SmvAssociation" Guid="A7F23B24-5D06-48F4-A953-2611D789A743">
@@ -320,14 +341,23 @@ Contact the Ashton Digital internal support channel for help with this build.
         <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv\shell\open\command" Type="string" Value="&quot;[INSTALLDIR]smokeview.exe&quot; &quot;%1&quot;" />
         <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv\shell\capture" Type="string" Value="Capture result slices" />
         <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv\shell\capture" Name="Icon" Type="string" Value="[INSTALLDIR]smokeview.exe,0" />
-        <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv\shell\capture\command" Type="string" Value="&quot;[INSTALLDIR]capture_result_slices.cmd&quot; &quot;%1&quot;" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\AshtonSmokeview.smv\shell\capture\command" Type="string" Value="&quot;[INSTALLDIR]capture_slices_ui.exe&quot; &quot;%1&quot;" />
         <RemoveFolder Id="RemoveInstallDir" Directory="INSTALLDIR" On="uninstall" />
         <RemoveFolder Id="RemoveAshtonFolder" Directory="AshtonFolder" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+    <DirectoryRef Id="AshtonMenu">
+      <Component Id="MenuShortcuts" Guid="7BA9925C-2052-4C4E-8B12-59149A43DE55">
+        <Shortcut Id="CaptureUIShortcut" Name="Capture result slices" Target="[INSTALLDIR]capture_slices_ui.exe" />
+        <Shortcut Id="SmokeviewShortcut" Name="Ashton Smokeview" Target="[INSTALLDIR]smokeview.exe" WorkingDirectory="INSTALLDIR" />
+        <RemoveFolder Id="RemoveAshtonMenu" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\Ashton Digital\Smokeview" Name="MenuInstalled" Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </DirectoryRef>
     <Feature Id="MainFeature" Title="Ashton Smokeview" Level="1">
       <ComponentGroupRef Id="PayloadFiles" />
       <ComponentRef Id="SmvAssociation" />
+      <ComponentRef Id="MenuShortcuts" />
     </Feature>
   </Product>
 </Wix>
@@ -347,6 +377,7 @@ Contact the Ashton Digital internal support channel for help with this build.
     $HarvestContents = Get-Content -LiteralPath $HarvestPath -Raw
     foreach ($RequiredPayloadFile in @(
         "smokeview.exe", "smokeview.ini", "objects.svo", ".smokeview_bin",
+        "capture_slices_ui.exe", "capture_slices_ui.pyw",
         "capture_result_slices.py", "capture_result_slices.cmd", "smvhelp.txt"
     )) {
         if ($HarvestContents -notmatch [regex]::Escape($RequiredPayloadFile)) {

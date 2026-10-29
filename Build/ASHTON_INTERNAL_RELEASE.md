@@ -2,8 +2,8 @@
 
 This document defines how the Ashton custom Smokeview fork is built, tested,
 versioned, packaged, and distributed internally. The current release line is
-based on Smokeview 6.11.2 and uses an Ashton suffix such as `af1`, producing the
-combined version `6.11.2-af1`.
+based on Smokeview 6.11.2. The current test build is `6.11.2-af2-rc1`;
+`6.11.2-af1` is the previous tagged release.
 
 ## Current Customisation
 
@@ -276,8 +276,15 @@ Ubuntu/Debian, install it with:
 sudo apt-get install imagemagick
 ```
 
-On Windows, the installer adds **Capture result slices** to the `.smv` file
-context menu and installs `smvhelp.txt` beside `smokeview.exe`. On Linux, it
+The capture window also needs Tkinter. On Windows, install Python with Tcl/Tk
+for all users on a shared workstation; on Ubuntu/Debian, install `python3-tk`.
+The MSI ships the window and a native launcher but does not bundle Python.
+
+On Windows, the installer adds **Capture result slices** to the Start menu and
+the `.smv` context menu, and installs `smvhelp.txt` beside `smokeview.exe`.
+The window can select a case or search a folder recursively, choose result
+quantities and capture times, and set an output folder. On Linux, the installer
+adds the same window to the desktop menu as `smv-cap-ui` and
 installs the `af-smv` and `smv-cap` commands and registers **Capture result
 slices** as an `.smv` application under **Open With**. These actions start a
 separate automated Smokeview process; an existing interactive window can
@@ -389,6 +396,7 @@ The Linux payload has this layout:
 ashton-smokeview-v6.11.2-af1-linux-x64/
 |-- smokeview
 |-- capture_result_slices.py
+|-- capture_slices_ui.pyw
 |-- smv_help.sh
 |-- smokeview.ini
 |-- objects.svo
@@ -412,9 +420,10 @@ installer also sweeps up any leftover directory from the old
 `ashton-smokeview-v<version>` scheme the first time it runs after this change.
 
 The Windows payload uses `smokeview.exe` and also includes
-`capture_result_slices.cmd`, which provides dependency checking and invokes the
-Python capture utility, and `smvhelp.txt`, which summarises the result shortcuts
-and capture options. `VERSION` contains the release version, Git commit,
+`capture_result_slices.cmd`, which invokes the Python capture utility,
+`capture_slices_ui.exe` and `capture_slices_ui.pyw`, which open the capture
+window, and `smvhelp.txt`, which summarises the result shortcuts and capture
+options. `VERSION` contains the release version, Git commit,
 build date, platform and compiler. `README.txt` contains the launch and capture
 commands, dependency notes, configuration location and support information.
 
@@ -484,8 +493,12 @@ Verify all of the following before distributing a release:
 - Capture can run in a separate automated process while an interactive
   Smokeview window remains open.
 - On Windows, double-clicking an `.smv` file opens Ashton Smokeview and the
-  **Capture result slices** File Explorer context action works.
-- On Linux, `af-smv`, `smv-cap` and `smvhelp` are available, an `.smv` file
+  **Capture result slices** File Explorer context action opens the window with
+  that case selected. The Start menu entry opens the same window with no case.
+- The capture window finds all `.smv` files recursively in a selected folder,
+  skips unchecked result types, separates captures from multiple requested
+  times, and writes beside each case or under a chosen output folder.
+- On Linux, `af-smv`, `smv-cap`, `smv-cap-ui` and `smvhelp` are available, an `.smv` file
   opens in Ashton Smokeview by default, and **Open With > Capture result
   slices** works in the desktop file manager.
 - On a shared Linux machine installed with `--system`, `af-smv`, `smv-cap` and

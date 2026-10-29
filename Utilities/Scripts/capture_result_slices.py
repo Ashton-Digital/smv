@@ -481,6 +481,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--prefix", help="output filename prefix (default: case name)")
     parser.add_argument(
+        "--quantities", nargs="+", choices=QUANTITIES, metavar="QUANTITY",
+        help="capture only selected quantities: visibility temperature velocity pressure",
+    )
+    parser.add_argument(
         "--size", type=render_size, metavar="WIDTHxHEIGHT",
         help="capture dimensions (default: current display resolution)",
     )
@@ -579,7 +583,12 @@ def main() -> int:
     print(f"Capture size: {width}x{height}")
     print(f"Using Smokeview: {smokeview}")
     try:
-        returncode = subprocess.run(command, cwd=case.parent, check=False).returncode
+        capture_env = os.environ.copy()
+        if args.quantities:
+            capture_env["ASHTON_CAPTURE_QUANTITIES"] = ",".join(args.quantities)
+        else:
+            capture_env.pop("ASHTON_CAPTURE_QUANTITIES", None)
+        returncode = subprocess.run(command, cwd=case.parent, env=capture_env, check=False).returncode
         if returncode != 0:
             return returncode
         captures = discover_captures(output, prefix, previous_captures)
