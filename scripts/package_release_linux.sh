@@ -101,6 +101,8 @@ version="${version#v}"
 [[ -f "$repo_root/Build/for_bundle/objects.svo" ]] || fail "objects.svo is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_result_slices.py" ]] || fail "capture_result_slices.py is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" ]] || fail "capture_slices_ui.pyw is missing"
+[[ -f "$repo_root/Utilities/Scripts/capture_ui_core.py" ]] || fail "capture_ui_core.py is missing"
+python3 -c 'import PySide6.QtWidgets, PyInstaller' >/dev/null 2>&1 || fail "PySide6 and PyInstaller are required to bundle the Linux capture window"
 [[ -f "$repo_root/Utilities/Scripts/smv_planes.py" ]] || fail "smv_planes.py is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_logo.png" ]] || fail "capture_logo.png is missing"
 [[ -f "$repo_root/Utilities/Scripts/smv_help.sh" ]] || fail "smv_help.sh is missing"
@@ -154,6 +156,13 @@ mkdir -p "$package_dir"
 install -m 0755 "$binary" "$package_dir/smokeview"
 install -m 0755 "$repo_root/Utilities/Scripts/capture_result_slices.py" "$package_dir/capture_result_slices.py"
 install -m 0755 "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" "$package_dir/capture_slices_ui.pyw"
+install -m 0644 "$repo_root/Utilities/Scripts/capture_ui_core.py" "$package_dir/capture_ui_core.py"
+python3 -m PyInstaller --noconfirm --clean --onefile --windowed \
+  --name capture_slices_ui --distpath "$stage_root/ui-dist" \
+  --workpath "$stage_root/ui-work" --specpath "$stage_root/ui-spec" \
+  "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" >/dev/null
+install -m 0755 "$stage_root/ui-dist/capture_slices_ui" "$package_dir/capture_slices_ui"
+QT_QPA_PLATFORM=offscreen "$package_dir/capture_slices_ui" --smoke-test >/dev/null || fail "bundled Linux capture window did not start"
 install -m 0644 "$repo_root/Utilities/Scripts/smv_planes.py" "$package_dir/smv_planes.py"
 install -m 0644 "$repo_root/Utilities/Scripts/capture_logo.png" "$package_dir/capture_logo.png"
 install -m 0755 "$repo_root/Utilities/Scripts/smv_help.sh" "$package_dir/smv_help.sh"
@@ -194,7 +203,7 @@ Capture every configured result-review slice with:
 
 Open the capture window with:
 
-  ./capture_slices_ui.pyw
+  ./capture_slices_ui
 
 The window opens in dark mode. Its advanced slice-position control scans a
 case or folder and can limit captures to positions such as Y=3 or Y=5.
@@ -205,7 +214,8 @@ After installation, the equivalent commands are:
   smv-cap /absolute/path/to/case.smv
   smv-cap-ui
 
-Run smvhelp for a summary of the added shortcuts and smv-cap options.
+Run smvhelp for the Smokeview shortcuts, capture window walkthrough, and
+smv-cap options.
 
 Desktop users can right-click an .smv file and choose
 Open With > Capture result slices.
@@ -217,7 +227,9 @@ install it with:
 
   sudo apt-get install imagemagick
 
-The capture window also needs Tkinter (python3-tk on Ubuntu/Debian).
+The capture window bundles PySide6 and Python; the capture engine still needs
+system Python 3.10 or newer. On minimal Linux desktops, Qt's xcb platform
+plugin may also need libxcb-cursor0 and libxkbcommon-x11-0.
 
 It launches a separate automated Smokeview process, so an interactive Smokeview
 window may remain open while capture runs.
@@ -417,6 +429,7 @@ cp -R "$temporary_dir/$package_name/." "$staging_dir/"
 chmod 0755 "$staging_dir/smokeview"
 chmod 0755 "$staging_dir/capture_result_slices.py"
 chmod 0755 "$staging_dir/capture_slices_ui.pyw"
+chmod 0755 "$staging_dir/capture_slices_ui"
 chmod 0755 "$staging_dir/smv_help.sh"
 chmod -R a+rX "$staging_dir"
 
@@ -430,7 +443,7 @@ mkdir -p "$link_dir"
 rm -f "$link_dir/ashton-smokeview" "$link_dir/ashton-capture-slices" "$link_dir/afm-smv"
 ln -sfn "$target/smokeview" "$link_dir/af-smv"
 ln -sfn "$target/capture_result_slices.py" "$link_dir/smv-cap"
-ln -sfn "$target/capture_slices_ui.pyw" "$link_dir/smv-cap-ui"
+ln -sfn "$target/capture_slices_ui" "$link_dir/smv-cap-ui"
 ln -sfn "$target/smv_help.sh" "$link_dir/smvhelp"
 
 generic_launcher="$link_dir/smokeview"

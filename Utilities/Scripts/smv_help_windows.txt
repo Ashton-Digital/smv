@@ -1,11 +1,15 @@
-Ashton Smokeview help (Windows)
-================================
+Ashton Smokeview — Quick help
+=============================
 
-Open an FDS case by double-clicking its .smv file, or run:
+Open a case
+-----------
+Double-click a .smv file, choose Ashton Smokeview from the Start menu, or run:
   smokeview.exe C:\path\to\case.smv
+Keep the case's associated slice and data files beside the .smv file.
 
-Result-review shortcuts in the Smokeview window
-  Ctrl+I  Visibility slices (Ctrl+L is an alternative)
+Result-review shortcuts (inside Smokeview)
+------------------------------------------
+  Ctrl+I  Visibility slices (Ctrl+L also works)
   Ctrl+T  Temperature slices
   Ctrl+V  Velocity slices
   Ctrl+P  Pressure slices
@@ -13,27 +17,33 @@ Result-review shortcuts in the Smokeview window
   Ctrl+X  X-minimum, X-maximum and exterior views
   Ctrl+Y  Y-minimum, Y-maximum and exterior views
   Ctrl+Z  Z-minimum, Z-maximum and exterior views
+Hold Shift with a slice shortcut to cycle backwards. Slice shortcuts load
+matching data, set the colourbar and bounds, clip the model, and fit the view.
 
-Hold Shift with a slice shortcut to cycle backwards. Each slice shortcut
-loads the slice, sets its colourbar and bounds, clips the model at that
-plane, and fits the view. Ctrl+U restores the earlier camera and clipping.
+Capture result slices (window)
+------------------------------
+Open Capture result slices from the Start menu or the .smv right-click menu.
+The right-click action fills in that case automatically.
 
-Capture result slices
-  Open Capture result slices from the Start menu, or right-click a .smv file
-  and choose Capture result slices. The window lets you choose one case or
-  all cases in a folder, slice types, one or more times, and an output folder.
-  For command-line capture, run:
+  1. Select one .smv file or a folder. Include subfolders is on by default.
+  2. Select the slice types and enter times in seconds, separated by commas
+     (for example 60, 120, 180).
+  3. Optionally choose an output folder. Blank saves beside each .smv file in
+     a new case_slice_captures folder.
+  4. Choose whether to crop images and replace existing captures.
+  5. If needed, expand Advanced to scan and select slice positions such as
+     Y=3 or Y=3,Y=5. Otherwise every matching plane is captured.
+  6. Click Capture slices. The Capture log shows progress; Cancel stops a run.
+
+The window opens in dark mode and can switch to light mode. Captures use a
+separate Smokeview process, so an interactive Smokeview window may stay open.
+The MSI includes Python, PySide6 and ImageMagick for the capture window.
+
+Command-line capture
+--------------------
   capture_result_slices.cmd C:\path\to\case.smv
-
-The capture launcher runs a separate Smokeview process. You can keep an
-interactive Smokeview window open. Images are saved beside the case in a
-folder named case_slice_captures. The MSI includes Python and ImageMagick
-for capture; no separate installation is needed.
-The capture window opens in dark mode. Its advanced slice-position control
-can scan a case and select planes such as Y=3 or Y=5.
-
-For all capture options, run:
   capture_result_slices.exe --help
+Useful options: --planes Y=3,Y=5, --overwrite, --no-crop, -o DIRECTORY,
+--time SECONDS, --prefix NAME, and --crop-padding PIXELS.
 
-Useful options: --planes Y=3,Y=5, --overwrite, --no-crop, -o DIRECTORY, --time SECONDS,
---prefix NAME, and --crop-padding PIXELS.
+For help with this build, contact Ashton Digital internal support.

@@ -6,9 +6,11 @@ RUN apt-get update -qq && \
     apt-get install -y -qq --no-install-recommends \
       build-essential binutils git python3-pip \
       freeglut3-dev libx11-dev libxmu-dev libxi-dev \
-      libglew-dev libgd-dev libjson-c-dev >/dev/null && \
+      libglew-dev libgd-dev libjson-c-dev \
+      libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+      libxcb-render-util0 libxkbcommon-x11-0 >/dev/null && \
     rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --no-cache-dir 'cmake>=3.24,<4'
+RUN python3 -m pip install --no-cache-dir 'cmake>=3.24,<4' 'PyInstaller>=6,<7' 'PySide6-Essentials>=6.6,<7'
 
 WORKDIR /src
