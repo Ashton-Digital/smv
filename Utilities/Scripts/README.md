@@ -64,7 +64,10 @@ simulation times separated by commas, and optionally choose an output folder.
 Right-clicking an `.smv` file and choosing **Capture result slices** opens the
 same window with that case preselected.
 The window opens in dark mode with rounded buttons, a resizable capture log,
-and a light-mode button. Under **Advanced — slice
+and a light-mode button. Its **Help** button summarizes the capture workflow;
+the Windows MSI also installs **Ashton Smokeview Help** in the Start menu for
+Smokeview shortcuts and capture instructions. On Linux, run `smvhelp` for the
+same workflow summary. Under **Advanced — slice
 positions**, enable the position filter, scan the selected input to see
 available planes, then choose or type positions
 such as `Y=3` or `Y=3,Y=5`. Leave the filter off to capture every plane.

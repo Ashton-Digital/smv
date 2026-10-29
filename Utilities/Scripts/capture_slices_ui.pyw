@@ -102,6 +102,10 @@ class CaptureWindow(QWidget):
         title = self._label("Capture result slices", "title")
         header.addWidget(title)
         header.addStretch()
+        help_button = QPushButton("Help")
+        help_button.setObjectName("quietButton")
+        help_button.clicked.connect(self._show_help)
+        header.addWidget(help_button)
         self.theme_button = QPushButton("Light mode")
         self.theme_button.setObjectName("quietButton")
         self.theme_button.clicked.connect(self._toggle_theme)
@@ -328,6 +332,18 @@ class CaptureWindow(QWidget):
     def _toggle_theme(self) -> None:
         self.theme = "light" if self.theme == "dark" else "dark"
         self._apply_theme()
+
+    def _show_help(self) -> None:
+        QMessageBox.information(
+            self, "Capture result slices — Help",
+            "Choose one .smv file or a folder. Include subfolders is on by default.\n\n"
+            "Select slice types and enter times in seconds, separated by commas. "
+            "Leave Output folder blank to save beside each case.\n\n"
+            "Advanced lets you scan and select slice positions such as Y=3,Y=5. "
+            "Click Capture slices to run; watch the log or use Cancel to stop.\n\n"
+            "For Smokeview keyboard shortcuts, open Ashton Smokeview Help from "
+            "the Windows Start menu, or run smvhelp on Linux.",
+        )
 
     def _set_status(self, text: str, state: str = "muted") -> None:
         self.last_state = state

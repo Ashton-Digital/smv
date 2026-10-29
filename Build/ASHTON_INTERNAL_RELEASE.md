@@ -338,8 +338,9 @@ sudo apt-get install imagemagick
 The Linux installer bundles the PySide6 capture window and its Python runtime.
 System Python 3.10+ remains necessary for the capture engine script.
 
-On Windows, the installer adds **Capture result slices** to the Start menu and
-the `.smv` context menu, and installs `smvhelp.txt` beside `smokeview.exe`.
+On Windows, the installer adds **Capture result slices** and **Ashton Smokeview
+Help** to the Start menu, adds capture to the `.smv` context menu, and installs
+`smvhelp.txt` beside `smokeview.exe`.
 The window can select a case or search a folder recursively, choose result
 quantities and capture times, and set an output folder. It uses a capture logo
 and defaults to dark mode. The advanced slice-position control scans selected

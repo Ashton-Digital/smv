@@ -331,6 +331,8 @@ choose slice types and times, and set an output location. The window and
 capture engine include their Python runtime.
 The window opens in dark mode. Use Advanced slice positions to scan cases and
 capture only selected planes, such as Y=3 or Y=5.
+Open Ashton Smokeview Help from the Start menu (or smvhelp.txt beside this
+executable) for shortcuts and step-by-step capture instructions.
 
 Capture every configured result-review slice with:
 
@@ -397,6 +399,7 @@ Contact the Ashton Digital internal support channel for help with this build.
     <DirectoryRef Id="AshtonMenu">
       <Component Id="MenuShortcuts" Guid="7BA9925C-2052-4C4E-8B12-59149A43DE55">
         <Shortcut Id="CaptureUIShortcut" Name="Capture result slices" Target="[INSTALLDIR]capture_slices_ui.exe" />
+        <Shortcut Id="SmokeviewHelpShortcut" Name="Ashton Smokeview Help" Target="[INSTALLDIR]smvhelp.txt" />
         <Shortcut Id="SmokeviewShortcut" Name="Ashton Smokeview" Target="[INSTALLDIR]smokeview.exe" WorkingDirectory="INSTALLDIR" />
         <RemoveFolder Id="RemoveAshtonMenu" On="uninstall" />
         <RegistryValue Root="HKCU" Key="Software\Ashton Digital\Smokeview" Name="MenuInstalled" Type="integer" Value="1" KeyPath="yes" />

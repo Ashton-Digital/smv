@@ -214,7 +214,8 @@ After installation, the equivalent commands are:
   smv-cap /absolute/path/to/case.smv
   smv-cap-ui
 
-Run smvhelp for a summary of the added shortcuts and smv-cap options.
+Run smvhelp for the Smokeview shortcuts, capture window walkthrough, and
+smv-cap options.
 
 Desktop users can right-click an .smv file and choose
 Open With > Capture result slices.
