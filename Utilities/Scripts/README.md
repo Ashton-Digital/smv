@@ -70,11 +70,15 @@ available planes, then choose or type positions
 such as `Y=3` or `Y=3,Y=5`. Leave the filter off to capture every plane.
 
 On Linux, the installer adds the **Capture result slices** application to the
-desktop menu and the `smv-cap-ui` command. The Linux window needs Python 3.10
-or newer and Tkinter (`python3-tk` on Ubuntu/Debian). The Windows MSI bundles
-Python, Tk and a private ImageMagick copy, so Windows users do not need to
-install those separately. If ImageMagick is unavailable on Linux, cropping is
+desktop menu and the `smv-cap-ui` command. Both installers bundle the PySide6
+window and its Python runtime. The capture engine on Linux still needs system
+Python 3.10 or newer. The Windows MSI also includes a private ImageMagick copy.
+If ImageMagick is unavailable on Linux, cropping is
 disabled and full-size images are saved.
+
+To run the window directly from a source checkout, install the Qt Widgets
+binding with `python3 -m pip install PySide6-Essentials`, then run
+`python3 Utilities/Scripts/capture_slices_ui.pyw` from the repository root.
 
 By default, images go into `CASE_slice_captures` beside each `.smv` file. If
 several times are entered, each time gets its own subfolder. With a chosen
@@ -138,7 +142,9 @@ build and resources:
 ```text
 ashton-smokeview-v6.11.2-af1-linux-x64/
 |-- capture_result_slices.py
+|-- capture_slices_ui
 |-- capture_slices_ui.pyw
+|-- capture_ui_core.py
 |-- smokeview
 |-- smokeview.ini
 |-- objects.svo

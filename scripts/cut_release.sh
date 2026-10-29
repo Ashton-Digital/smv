@@ -106,8 +106,8 @@ echo "Building inside ubuntu:22.04..."
 "${docker_cmd[@]}" run --rm -v "$repo_root":/src -w /src ubuntu:22.04 bash -c "
 set -Eeuo pipefail
 apt-get update -qq
-apt-get install -y -qq build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev libgd-dev libjson-c-dev python3-pip >/dev/null
-pip3 install --quiet --upgrade cmake
+apt-get install -y -qq build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev libgd-dev libjson-c-dev python3-pip libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxkbcommon-x11-0 >/dev/null
+pip3 install --quiet --upgrade cmake 'PyInstaller>=6,<7' 'PySide6-Essentials>=6.6,<7'
 export PATH=/usr/local/bin:\$PATH
 hash -r
 ${build_step}

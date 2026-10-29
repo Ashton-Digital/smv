@@ -251,7 +251,8 @@ specific version.
 
 Install and start [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
 in **Linux containers** mode. The Windows host needs Visual Studio 2022 C++
-build tools, CMake, WiX Toolset 3, Python 3.10+ with Tk and PyInstaller, and
+build tools, CMake, WiX Toolset 3, Python 3.10+ with PyInstaller and
+PySide6-Essentials, and
 the extracted portable ImageMagick folder described below. Docker builds the
 Linux binary in Ubuntu 22.04; Visual Studio and WiX build the MSI on Windows.
 Both builds use the same checkout, with separate CMake build directories.
@@ -268,7 +269,7 @@ Windows PowerShell; no separate Ubuntu installation is required.
 Run this from the repository root in an x64 Visual Studio Developer PowerShell:
 
 ```powershell
-py -3 -m pip install pyinstaller
+py -3 -m pip install pyinstaller PySide6-Essentials
 .\scripts\package_release_all.ps1 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
 ```
 
@@ -303,10 +304,11 @@ its numeric Windows Installer
 version uses the upstream version, while the full Ashton version appears in
 the product name, filename, and packaged `VERSION` file.
 
-The Windows packaging machine also needs Python 3.10+ with PyInstaller
-(`py -3 -m pip install pyinstaller`) and an extracted, official ImageMagick
+The Windows packaging machine also needs Python 3.10+ with PyInstaller and
+PySide6-Essentials (`py -3 -m pip install pyinstaller PySide6-Essentials`)
+and an extracted, official ImageMagick
 portable Q16 x64 static archive. Pass the folder containing `magick.exe` with
-`-ImageMagickDir`. PyInstaller embeds Python and Tk in
+`-ImageMagickDir`. PyInstaller embeds Python and PySide6 in
 the two capture executables; the MSI copies the portable ImageMagick tree
 beside them. Installed Windows users do not need separate Python or
 ImageMagick installations. The packaged `DEPENDENCIES.txt` records the build
@@ -333,7 +335,8 @@ install it with:
 sudo apt-get install imagemagick
 ```
 
-The Linux capture window also needs Tkinter (`python3-tk` on Ubuntu/Debian).
+The Linux installer bundles the PySide6 capture window and its Python runtime.
+System Python 3.10+ remains necessary for the capture engine script.
 
 On Windows, the installer adds **Capture result slices** to the Start menu and
 the `.smv` context menu, and installs `smvhelp.txt` beside `smokeview.exe`.
@@ -455,6 +458,8 @@ ashton-smokeview-v6.11.2-af1-linux-x64/
 |-- smokeview
 |-- capture_result_slices.py
 |-- capture_slices_ui.pyw
+|-- capture_slices_ui
+|-- capture_ui_core.py
 |-- smv_planes.py
 |-- capture_logo.png
 |-- smv_help.sh
@@ -482,7 +487,7 @@ installer also sweeps up any leftover directory from the old
 The Windows payload uses `smokeview.exe` and also includes
 `capture_result_slices.exe` and `capture_result_slices.cmd`, which run the
 capture engine with bundled Python, `capture_slices_ui.exe`, which opens the
-capture window with bundled Tk, and a private `imagemagick/` directory for
+capture window with bundled PySide6, and a private `imagemagick/` directory for
 cropping. The source scripts remain beside these executables. `smvhelp.txt`
 summarises the result shortcuts and capture
 options. `VERSION` contains the release version, Git commit,
@@ -587,7 +592,8 @@ mode (adjust package names for other distributions):
 
 ```bash
 sudo apt-get install libglew2.2 libgd3 libgl1 libglu1-mesa libxmu6 libx11-6 \
-  libxext6 libxt6 imagemagick python3 python3-tk
+  libxext6 libxt6 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 \
+  libxcb-image0 libxcb-keysyms1 libxcb-render-util0 imagemagick python3
 ```
 
 Linux recipients installing only for themselves should make the downloaded

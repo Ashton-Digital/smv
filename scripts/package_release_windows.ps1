@@ -111,11 +111,12 @@ if (-not $PythonCommand) {
 if ($LASTEXITCODE -ne 0) {
     throw "Python 3.10 or newer is required on the build machine."
 }
-& $PythonCommand.Source @PythonPrefix -c "import tkinter"
+& $PythonCommand.Source @PythonPrefix -c "import PySide6.QtWidgets"
 if ($LASTEXITCODE -ne 0) {
-    throw "The build machine's Python must include Tcl/Tk so PyInstaller can bundle the capture window."
+    throw "PySide6 is required on the build machine. Install it with: py -3 -m pip install PySide6-Essentials"
 }
 $PythonVersion = (& $PythonCommand.Source @PythonPrefix -c "import sys; print(sys.version.split()[0])" | Out-String).Trim()
+$PySideVersion = (& $PythonCommand.Source @PythonPrefix -c "import PySide6; print(PySide6.__version__)" | Out-String).Trim()
 $PythonLicense = (& $PythonCommand.Source @PythonPrefix -c "import pathlib, sys; print(pathlib.Path(sys.base_prefix, 'LICENSE.txt'))" | Out-String).Trim()
 if (-not (Test-Path -LiteralPath $PythonLicense)) {
     throw "Python's LICENSE.txt was not found beside the build interpreter: $PythonLicense"
@@ -132,6 +133,7 @@ $ObjectsFile = Join-Path $RepoRoot "Build/for_bundle/objects.svo"
 $RootMarkerFile = Join-Path $RepoRoot "Build/for_bundle/.smokeview_bin"
 $CaptureScript = Join-Path $RepoRoot "Utilities/Scripts/capture_result_slices.py"
 $CaptureUiScript = Join-Path $RepoRoot "Utilities/Scripts/capture_slices_ui.pyw"
+$CaptureUiCore = Join-Path $RepoRoot "Utilities/Scripts/capture_ui_core.py"
 $PlaneScript = Join-Path $RepoRoot "Utilities/Scripts/smv_planes.py"
 $CaptureLogo = Join-Path $RepoRoot "Utilities/Scripts/capture_logo.png"
 $CaptureIcon = Join-Path $RepoRoot "Utilities/Scripts/capture_logo.ico"
@@ -145,6 +147,7 @@ foreach ($RequiredPath in @(
     $RootMarkerFile,
     $CaptureScript,
     $CaptureUiScript,
+    $CaptureUiCore,
     $PlaneScript,
     $CaptureLogo,
     $CaptureIcon,
@@ -236,6 +239,10 @@ try {
             throw "PyInstaller output is missing: $RequiredBinary"
         }
     }
+    $UiSmoke = Start-Process -FilePath $UiBinary -ArgumentList "--smoke-test" -Wait -PassThru
+    if ($UiSmoke.ExitCode -ne 0) {
+        throw "Bundled capture window did not start (exit code $($UiSmoke.ExitCode))."
+    }
     Copy-Item -LiteralPath $Binary -Destination (Join-Path $PackageDir "smokeview.exe")
     Copy-Item -LiteralPath $UiBinary -Destination (Join-Path $PackageDir "capture_slices_ui.exe")
     Copy-Item -LiteralPath $CaptureBinary -Destination (Join-Path $PackageDir "capture_result_slices.exe")
@@ -249,6 +256,7 @@ try {
     $MagickVersion = ($MagickOutput -split '\r?\n')[0]
     @"
 Python: $PythonVersion (embedded by PyInstaller $PyInstallerVersion)
+PySide6: $PySideVersion
 ImageMagick: $MagickVersion
 ImageMagick executable SHA-256: $((Get-FileHash -LiteralPath $PackagedMagick -Algorithm SHA256).Hash.ToLowerInvariant())
 "@ | Set-Content -LiteralPath (Join-Path $PackageDir "DEPENDENCIES.txt") -Encoding UTF8
@@ -256,6 +264,7 @@ ImageMagick executable SHA-256: $((Get-FileHash -LiteralPath $PackagedMagick -Al
     Copy-Item -LiteralPath $RootMarkerFile -Destination (Join-Path $PackageDir ".smokeview_bin")
     Copy-Item -LiteralPath $CaptureScript -Destination (Join-Path $PackageDir "capture_result_slices.py")
     Copy-Item -LiteralPath $CaptureUiScript -Destination (Join-Path $PackageDir "capture_slices_ui.pyw")
+    Copy-Item -LiteralPath $CaptureUiCore -Destination (Join-Path $PackageDir "capture_ui_core.py")
     Copy-Item -LiteralPath $PlaneScript -Destination (Join-Path $PackageDir "smv_planes.py")
     Copy-Item -LiteralPath $CaptureLogo -Destination (Join-Path $PackageDir "capture_logo.png")
     Copy-Item -LiteralPath $ObjectsFile -Destination (Join-Path $PackageDir "objects.svo")
@@ -417,6 +426,7 @@ Contact the Ashton Digital internal support channel for help with this build.
     foreach ($RequiredPayloadFile in @(
         "smokeview.exe", "smokeview.ini", "objects.svo", ".smokeview_bin",
         "capture_slices_ui.exe", "capture_slices_ui.pyw",
+        "capture_ui_core.py",
         "capture_result_slices.exe", "capture_result_slices.py",
         "capture_result_slices.cmd", "smv_planes.py", "capture_logo.png",
         "smvhelp.txt", "magick.exe",
