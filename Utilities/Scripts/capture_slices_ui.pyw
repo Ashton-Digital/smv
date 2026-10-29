@@ -12,6 +12,7 @@ import signal
 import subprocess
 import sys
 import threading
+from typing import Callable
 try:
     import tkinter as tk
     from tkinter import filedialog, messagebox, ttk
@@ -35,11 +36,103 @@ CAPTURE_SCRIPT = Path(__file__).resolve().with_name("capture_result_slices.py")
 LOGO_FILE = Path(sys.executable).resolve().parent / "capture_logo.png" if getattr(sys, "frozen", False) else Path(__file__).resolve().with_name("capture_logo.png")
 
 THEMES = {
-    "dark": {"background": "#14212b", "surface": "#1e303d", "field": "#101d27",
-             "foreground": "#edf4f5", "muted": "#a9c0c9", "accent": "#53c4c5", "border": "#385361"},
-    "light": {"background": "#f2f7f8", "surface": "#ffffff", "field": "#ffffff",
-              "foreground": "#192d38", "muted": "#526c78", "accent": "#087f86", "border": "#c6d8dd"},
+    "dark": {"background": "#0d1722", "surface": "#172635", "field": "#101e2c",
+             "foreground": "#e1ebee", "muted": "#91a8b4", "accent": "#67d2ce",
+             "accent_hover": "#8ae5df", "border": "#2b4150", "hover": "#294355",
+             "disabled": "#5f7480", "selection": "#327a83"},
+    "light": {"background": "#edf3f5", "surface": "#ffffff", "field": "#f5f9fa",
+              "foreground": "#192d38", "muted": "#5b727c", "accent": "#087f86",
+              "accent_hover": "#0b989e", "border": "#c6d8dd", "hover": "#e0eef0",
+              "disabled": "#8b9ba2", "selection": "#aedfe0"},
 }
+
+
+class RoundedButton(tk.Canvas):
+    """A focusable, keyboard-operable rounded action button."""
+
+    def __init__(self, parent: tk.Misc, text: str, command: Callable[[], None], *, width: int,
+                 kind: str = "secondary", on_card: bool = False) -> None:
+        super().__init__(parent, width=width, height=38, highlightthickness=0,
+                         borderwidth=0, takefocus=1, cursor="hand2")
+        self.label = text
+        self.command = command
+        self.kind = kind
+        self.on_card = on_card
+        self.enabled = True
+        self.hovered = False
+        self.focused = False
+        self.colors = THEMES["dark"]
+        self.bind("<Button-1>", self._click)
+        self.bind("<Return>", self._click)
+        self.bind("<space>", self._click)
+        self.bind("<Enter>", self._enter)
+        self.bind("<Leave>", self._leave)
+        self.bind("<FocusIn>", self._focus_in)
+        self.bind("<FocusOut>", self._focus_out)
+
+    def set_theme(self, colors: dict[str, str]) -> None:
+        self.colors = colors
+        self.configure(background=colors["surface" if self.on_card else "background"])
+        self._draw()
+
+    def set_state(self, state: str) -> None:
+        self.enabled = state != "disabled"
+        self.configure(cursor="hand2" if self.enabled else "arrow")
+        self._draw()
+
+    def set_text(self, text: str) -> None:
+        self.label = text
+        self._draw()
+
+    def _click(self, _event: object) -> None:
+        if self.enabled:
+            self.focus_set()
+            self.command()
+
+    def _enter(self, _event: object) -> None:
+        self.hovered = True
+        self._draw()
+
+    def _leave(self, _event: object) -> None:
+        self.hovered = False
+        self._draw()
+
+    def _focus_in(self, _event: object) -> None:
+        self.focused = True
+        self._draw()
+
+    def _focus_out(self, _event: object) -> None:
+        self.focused = False
+        self._draw()
+
+    def _round_rect(self, inset: int, radius: int, color: str) -> None:
+        width = int(self.cget("width"))
+        height = int(self.cget("height"))
+        x1, y1, x2, y2 = inset, inset, width - inset, height - inset
+        self.create_rectangle(x1 + radius, y1, x2 - radius, y2, fill=color, outline=color)
+        self.create_rectangle(x1, y1 + radius, x2, y2 - radius, fill=color, outline=color)
+        for left, top in ((x1, y1), (x2 - 2 * radius, y1),
+                          (x1, y2 - 2 * radius), (x2 - 2 * radius, y2 - 2 * radius)):
+            self.create_oval(left, top, left + 2 * radius, top + 2 * radius,
+                            fill=color, outline=color)
+
+    def _draw(self) -> None:
+        colors = self.colors
+        self.delete("all")
+        if self.kind == "primary":
+            fill = colors["accent_hover"] if self.hovered and self.enabled else colors["accent"]
+            foreground = colors["background"]
+        else:
+            fill = colors["hover"] if self.hovered and self.enabled else colors["field"]
+            foreground = colors["foreground"]
+        if not self.enabled:
+            foreground = colors["disabled"]
+            fill = colors["field"]
+        border = colors["accent"] if self.focused and self.enabled else colors["border"]
+        self._round_rect(0, 12, border)
+        self._round_rect(1, 11, fill)
+        self.create_text(int(self.cget("width")) // 2, int(self.cget("height")) // 2,
+                         text=self.label, fill=foreground, font=("Segoe UI", 10, "bold"))
 
 
 def parse_times(text: str) -> list[float]:
@@ -98,7 +191,8 @@ class CaptureWindow:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         root.title("Ashton Smokeview — Capture result slices")
-        root.minsize(680, 560)
+        root.minsize(760, 620)
+        root.geometry("850x710")
         self.events: queue.Queue[tuple[str, object]] = queue.Queue()
         self.cancelled = threading.Event()
         self.process: subprocess.Popen[str] | None = None
@@ -120,6 +214,7 @@ class CaptureWindow:
         self.scan_generation = 0
         self.status = tk.StringVar(value="Choose a case or folder to begin.")
         self.theme_name = "dark"
+        self.buttons: list[RoundedButton] = []
         self.style = ttk.Style(root)
         self.style.theme_use("clam")
         self._apply_theme()
@@ -128,10 +223,10 @@ class CaptureWindow:
         root.protocol("WM_DELETE_WINDOW", self._close)
 
     def _build(self) -> None:
-        frame = ttk.Frame(self.root, padding=14)
+        frame = ttk.Frame(self.root, padding=20)
         frame.pack(fill="both", expand=True)
         header = ttk.Frame(frame)
-        header.pack(fill="x", pady=(0, 12))
+        header.pack(fill="x", pady=(0, 18))
         if LOGO_FILE.is_file():
             self.window_icon = tk.PhotoImage(file=str(LOGO_FILE))
             self.root.iconphoto(True, self.window_icon)
@@ -141,62 +236,78 @@ class CaptureWindow:
         title.pack(side="left", fill="x", expand=True)
         ttk.Label(title, text="Capture result slices", style="Heading.TLabel").pack(anchor="w")
         ttk.Label(title, text="ASHTON SMOKEVIEW", style="Muted.TLabel").pack(anchor="w")
-        self.theme_button = ttk.Button(header, text="Light mode", command=self._toggle_theme)
+        self.theme_button = self._button(header, "Light mode", self._toggle_theme, width=112)
         self.theme_button.pack(side="right")
-        source_group = ttk.LabelFrame(frame, text="Input", padding=10)
+        source_group = ttk.LabelFrame(frame, text="Input", padding=14, style="Card.TLabelframe")
         source_group.pack(fill="x")
-        ttk.Radiobutton(source_group, text="One .smv file", variable=self.folder_mode, value=False).grid(row=0, column=0, sticky="w")
-        ttk.Radiobutton(source_group, text="All .smv files in a folder (including subfolders)", variable=self.folder_mode, value=True).grid(row=1, column=0, columnspan=2, sticky="w")
-        ttk.Entry(source_group, textvariable=self.source).grid(row=2, column=0, sticky="ew", pady=(8, 0))
-        ttk.Button(source_group, text="Browse…", command=self._browse_source).grid(row=2, column=1, padx=(8, 0), pady=(8, 0))
+        ttk.Radiobutton(source_group, text="One .smv file", variable=self.folder_mode, value=False,
+                        style="Card.TRadiobutton").grid(row=0, column=0, sticky="w")
+        ttk.Radiobutton(source_group, text="All .smv files in a folder (including subfolders)",
+                        variable=self.folder_mode, value=True, style="Card.TRadiobutton").grid(
+                            row=1, column=0, columnspan=2, sticky="w", pady=(4, 0))
+        ttk.Entry(source_group, textvariable=self.source, style="Card.TEntry").grid(
+            row=2, column=0, sticky="ew", pady=(10, 0), ipady=5)
+        self._button(source_group, "Browse…", self._browse_source, width=104, on_card=True).grid(
+            row=2, column=1, padx=(10, 0), pady=(10, 0))
         source_group.columnconfigure(0, weight=1)
 
-        output_group = ttk.LabelFrame(frame, text="Output", padding=10)
-        output_group.pack(fill="x", pady=(10, 0))
-        ttk.Label(output_group, text="Leave blank to make a capture folder beside each .smv file.").grid(row=0, column=0, columnspan=2, sticky="w")
-        ttk.Entry(output_group, textvariable=self.output_root).grid(row=1, column=0, sticky="ew", pady=(6, 0))
-        ttk.Button(output_group, text="Choose folder…", command=self._browse_output).grid(row=1, column=1, padx=(8, 0), pady=(6, 0))
+        output_group = ttk.LabelFrame(frame, text="Output", padding=14, style="Card.TLabelframe")
+        output_group.pack(fill="x", pady=(14, 0))
+        ttk.Label(output_group, text="Leave blank to save beside each .smv file.",
+                  style="CardMuted.TLabel").grid(row=0, column=0, columnspan=2, sticky="w")
+        ttk.Entry(output_group, textvariable=self.output_root, style="Card.TEntry").grid(
+            row=1, column=0, sticky="ew", pady=(8, 0), ipady=5)
+        self._button(output_group, "Choose folder…", self._browse_output, width=140, on_card=True).grid(
+            row=1, column=1, padx=(10, 0), pady=(8, 0))
         output_group.columnconfigure(0, weight=1)
 
-        options = ttk.LabelFrame(frame, text="Capture options", padding=10)
-        options.pack(fill="x", pady=(10, 0))
-        ttk.Label(options, text="Slice types:").grid(row=0, column=0, sticky="w")
+        options = ttk.LabelFrame(frame, text="Capture options", padding=14, style="Card.TLabelframe")
+        options.pack(fill="x", pady=(14, 0))
+        ttk.Label(options, text="Slice types", style="Card.TLabel").grid(row=0, column=0, sticky="w")
         for index, name in enumerate(QUANTITIES):
-            ttk.Checkbutton(options, text=name.title(), variable=self.quantities[name]).grid(row=0, column=index + 1, padx=(8, 0), sticky="w")
-        ttk.Label(options, text="Time(s), seconds:").grid(row=1, column=0, sticky="w", pady=(9, 0))
-        ttk.Entry(options, textvariable=self.times, width=35).grid(row=1, column=1, columnspan=4, sticky="ew", pady=(9, 0))
-        ttk.Label(options, text="For multiple times, use commas: 60, 120, 180").grid(row=2, column=1, columnspan=4, sticky="w")
-        crop_box = ttk.Checkbutton(options, text="Crop images to the model (requires ImageMagick)", variable=self.crop)
-        crop_box.grid(row=3, column=0, columnspan=5, sticky="w", pady=(8, 0))
+            ttk.Checkbutton(options, text=name.title(), variable=self.quantities[name],
+                            style="Card.TCheckbutton").grid(row=0, column=index + 1, padx=(10, 0), sticky="w")
+        ttk.Label(options, text="Time(s), seconds", style="Card.TLabel").grid(row=1, column=0, sticky="w", pady=(12, 0))
+        ttk.Entry(options, textvariable=self.times, width=35, style="Card.TEntry").grid(
+            row=1, column=1, columnspan=4, sticky="ew", pady=(12, 0), ipady=5)
+        ttk.Label(options, text="Multiple times: 60, 120, 180", style="CardMuted.TLabel").grid(
+            row=2, column=1, columnspan=4, sticky="w", pady=(3, 0))
+        crop_box = ttk.Checkbutton(options, text="Crop images to the model", variable=self.crop,
+                                   style="Card.TCheckbutton")
+        crop_box.grid(row=3, column=0, columnspan=5, sticky="w", pady=(10, 0))
         if not crop_tool_available():
             crop_box.state(["disabled"])
-            ttk.Label(options, text="ImageMagick was not found; full-size images will be saved.").grid(row=4, column=0, columnspan=5, sticky="w")
-        ttk.Checkbutton(options, text="Replace existing captures", variable=self.overwrite).grid(row=5, column=0, columnspan=5, sticky="w", pady=(5, 0))
+            ttk.Label(options, text="ImageMagick unavailable; full-size images will be saved.",
+                      style="CardMuted.TLabel").grid(row=4, column=0, columnspan=5, sticky="w")
+        ttk.Checkbutton(options, text="Replace existing captures", variable=self.overwrite,
+                        style="Card.TCheckbutton").grid(row=5, column=0, columnspan=5, sticky="w", pady=(5, 0))
 
-        advanced = ttk.LabelFrame(frame, text="Advanced · slice positions", padding=10)
-        advanced.pack(fill="x", pady=(10, 0))
+        advanced = ttk.LabelFrame(frame, text="Advanced · slice positions", padding=14, style="Card.TLabelframe")
+        advanced.pack(fill="x", pady=(14, 0))
         ttk.Checkbutton(advanced, text="Capture only selected slice positions", variable=self.limit_planes,
-                        command=self._toggle_plane_details).pack(anchor="w")
-        self.plane_details = ttk.Frame(advanced)
-        ttk.Label(self.plane_details, text="Positions (metres), for example Y=3 or Y=3,Y=5:").pack(anchor="w", pady=(6, 2))
-        plane_row = ttk.Frame(self.plane_details)
+                        command=self._toggle_plane_details, style="Card.TCheckbutton").pack(anchor="w")
+        self.plane_details = ttk.Frame(advanced, style="Card.TFrame")
+        ttk.Label(self.plane_details, text="Positions in metres · for example Y=3 or Y=3,Y=5",
+                  style="CardMuted.TLabel").pack(anchor="w", pady=(8, 4))
+        plane_row = ttk.Frame(self.plane_details, style="Card.TFrame")
         plane_row.pack(fill="x")
-        self.plane_entry = ttk.Combobox(plane_row, textvariable=self.plane_value)
-        self.plane_entry.pack(side="left", fill="x", expand=True)
-        self.scan_button = ttk.Button(plane_row, text="Scan input", command=self._scan_planes)
-        self.scan_button.pack(side="left", padx=(8, 0))
-        ttk.Label(self.plane_details, textvariable=self.available_plane_text, style="Muted.TLabel",
+        self.plane_entry = ttk.Combobox(plane_row, textvariable=self.plane_value, style="Card.TCombobox")
+        self.plane_entry.pack(side="left", fill="x", expand=True, ipady=5)
+        self.scan_button = self._button(plane_row, "Scan input", self._scan_planes, width=116, on_card=True)
+        self.scan_button.pack(side="left", padx=(10, 0))
+        ttk.Label(self.plane_details, textvariable=self.available_plane_text, style="CardMuted.TLabel",
                   wraplength=600).pack(anchor="w", pady=(5, 0))
 
         controls = ttk.Frame(frame)
-        controls.pack(fill="x", pady=(10, 0))
-        self.run_button = ttk.Button(controls, text="Capture slices", command=self._start, style="Accent.TButton")
+        controls.pack(fill="x", pady=(16, 0))
+        self.run_button = self._button(controls, "Capture slices", self._start, width=170, kind="primary")
         self.run_button.pack(side="left")
-        self.cancel_button = ttk.Button(controls, text="Cancel", command=self._cancel, state="disabled")
+        self.cancel_button = self._button(controls, "Cancel", self._cancel, width=92)
+        self.cancel_button.set_state("disabled")
         self.cancel_button.pack(side="left", padx=8)
-        ttk.Label(controls, textvariable=self.status).pack(side="left", padx=12)
+        ttk.Label(controls, textvariable=self.status, style="Muted.TLabel").pack(side="left", padx=12)
         log_frame = ttk.Frame(frame)
-        log_frame.pack(fill="both", expand=True, pady=(10, 0))
+        log_frame.pack(fill="both", expand=True, pady=(14, 0))
         self.log = tk.Text(log_frame, height=12, wrap="word", state="disabled")
         self.log.pack(side="left", fill="both", expand=True)
         scrollbar = ttk.Scrollbar(log_frame, orient="vertical", command=self.log.yview)
@@ -205,6 +316,13 @@ class CaptureWindow:
         self._apply_theme()
         if self.source.get():
             self.root.after(200, self._scan_planes)
+
+    def _button(self, parent: tk.Misc, text: str, command: Callable[[], None], *, width: int,
+                kind: str = "secondary", on_card: bool = False) -> RoundedButton:
+        button = RoundedButton(parent, text, command, width=width, kind=kind, on_card=on_card)
+        self.buttons.append(button)
+        button.set_theme(THEMES[self.theme_name])
+        return button
 
     def _toggle_plane_details(self) -> None:
         if self.limit_planes.get():
@@ -220,7 +338,7 @@ class CaptureWindow:
             return
         self.scan_generation += 1
         generation = self.scan_generation
-        self.scan_button.configure(state="disabled")
+        self.scan_button.set_state("disabled")
         self.available_plane_text.set("Scanning slice positions…")
 
         def scan() -> None:
@@ -239,36 +357,61 @@ class CaptureWindow:
         colors = THEMES[self.theme_name]
         self.root.configure(background=colors["background"])
         self.style.configure("TFrame", background=colors["background"])
-        self.style.configure("TLabel", background=colors["background"], foreground=colors["foreground"])
-        self.style.configure("Heading.TLabel", background=colors["background"], foreground=colors["foreground"], font=("Segoe UI", 16, "bold"))
-        self.style.configure("Muted.TLabel", background=colors["background"], foreground=colors["muted"], font=("Segoe UI", 9, "bold"))
-        self.style.configure("TLabelframe", background=colors["background"], foreground=colors["foreground"], bordercolor=colors["border"])
-        self.style.configure("TLabelframe.Label", background=colors["background"], foreground=colors["foreground"])
+        self.style.configure("Card.TFrame", background=colors["surface"])
+        self.style.configure("TLabel", background=colors["background"],
+                             foreground=colors["foreground"], font=("Segoe UI", 10))
+        self.style.configure("Heading.TLabel", background=colors["background"],
+                             foreground=colors["foreground"], font=("Segoe UI", 19, "bold"))
+        self.style.configure("Muted.TLabel", background=colors["background"],
+                             foreground=colors["muted"], font=("Segoe UI", 9))
+        self.style.configure("Card.TLabel", background=colors["surface"],
+                             foreground=colors["foreground"], font=("Segoe UI", 10))
+        self.style.configure("CardMuted.TLabel", background=colors["surface"],
+                             foreground=colors["muted"], font=("Segoe UI", 9))
+        self.style.configure("Card.TLabelframe", background=colors["surface"],
+                             foreground=colors["foreground"], bordercolor=colors["surface"], relief="flat")
+        self.style.configure("Card.TLabelframe.Label", background=colors["surface"],
+                             foreground=colors["accent"], font=("Segoe UI", 10, "bold"))
         for widget in ("TCheckbutton", "TRadiobutton"):
-            self.style.configure(widget, background=colors["background"], foreground=colors["foreground"])
-            self.style.map(widget, background=[("active", colors["background"])], foreground=[("disabled", colors["muted"])])
-        self.style.configure("TEntry", fieldbackground=colors["field"], foreground=colors["foreground"], insertcolor=colors["foreground"], bordercolor=colors["border"])
-        self.style.configure("TCombobox", fieldbackground=colors["field"], background=colors["surface"],
-                             foreground=colors["foreground"], arrowcolor=colors["foreground"], bordercolor=colors["border"])
-        self.style.map("TCombobox", fieldbackground=[("readonly", colors["field"])],
+            name = f"Card.{widget}"
+            self.style.configure(name, background=colors["surface"], foreground=colors["foreground"],
+                                 indicatorcolor=colors["field"], indicatormargin=4,
+                                 font=("Segoe UI", 10))
+            self.style.map(name,
+                           background=[("active", colors["surface"])],
+                           foreground=[("disabled", colors["disabled"])],
+                           indicatorcolor=[("selected", colors["selection"]),
+                                           ("active", colors["hover"])])
+        self.style.configure("Card.TEntry", fieldbackground=colors["field"],
+                             foreground=colors["foreground"], insertcolor=colors["foreground"],
+                             bordercolor=colors["border"], lightcolor=colors["border"],
+                             darkcolor=colors["border"], padding=5, font=("Segoe UI", 10))
+        self.style.configure("Card.TCombobox", fieldbackground=colors["field"],
+                             background=colors["field"], foreground=colors["foreground"],
+                             arrowcolor=colors["muted"], bordercolor=colors["border"],
+                             lightcolor=colors["border"], darkcolor=colors["border"], padding=5,
+                             font=("Segoe UI", 10))
+        self.style.map("Card.TCombobox", fieldbackground=[("readonly", colors["field"])],
                        foreground=[("readonly", colors["foreground"])])
         self.root.option_add("*TCombobox*Listbox.background", colors["field"])
         self.root.option_add("*TCombobox*Listbox.foreground", colors["foreground"])
-        self.style.configure("TScrollbar", background=colors["surface"], troughcolor=colors["field"],
-                             arrowcolor=colors["foreground"], bordercolor=colors["border"])
-        self.style.configure("TButton", background=colors["surface"], foreground=colors["foreground"], bordercolor=colors["border"], padding=(10, 6))
-        self.style.map("TButton", background=[("active", colors["border"])], foreground=[("disabled", colors["muted"])])
-        self.style.configure("Accent.TButton", background=colors["accent"], foreground=colors["background"], bordercolor=colors["accent"], font=("Segoe UI", 9, "bold"))
-        self.style.map("Accent.TButton", background=[("active", colors["border"])])
+        self.style.configure("TScrollbar", background=colors["surface"],
+                             troughcolor=colors["field"], arrowcolor=colors["muted"],
+                             bordercolor=colors["border"], lightcolor=colors["border"],
+                             darkcolor=colors["border"])
+        for button in self.buttons:
+            button.set_theme(colors)
         if hasattr(self, "log"):
             self.log.configure(background=colors["field"], foreground=colors["foreground"],
-                               insertbackground=colors["foreground"], selectbackground=colors["accent"],
-                               relief="flat", highlightthickness=1, highlightbackground=colors["border"])
+                               insertbackground=colors["foreground"], selectbackground=colors["selection"],
+                               relief="flat", highlightthickness=1, highlightbackground=colors["border"],
+                               highlightcolor=colors["accent"], padx=10, pady=10,
+                               font=("Consolas", 9))
 
     def _toggle_theme(self) -> None:
         self.theme_name = "light" if self.theme_name == "dark" else "dark"
         self._apply_theme()
-        self.theme_button.configure(text="Dark mode" if self.theme_name == "light" else "Light mode")
+        self.theme_button.set_text("Dark mode" if self.theme_name == "light" else "Light mode")
 
     def _browse_source(self) -> None:
         selected = filedialog.askdirectory() if self.folder_mode.get() else filedialog.askopenfilename(filetypes=[("Smokeview cases", "*.smv"), ("All files", "*.*")])
@@ -313,8 +456,8 @@ class CaptureWindow:
             messagebox.showerror("Capture setup", str(error), parent=self.root)
             return
         self.cancelled.clear()
-        self.run_button.configure(state="disabled")
-        self.cancel_button.configure(state="normal")
+        self.run_button.set_state("disabled")
+        self.cancel_button.set_state("normal")
         self._write(f"Starting {len(cases)} case(s) at {len(times)} time(s).\n")
         config = (cases, source, self.folder_mode.get(), output_root, times, quantities, planes,
                   self.crop.get(), self.overwrite.get())
@@ -390,8 +533,8 @@ class CaptureWindow:
                     self.status.set(str(value))
                 elif kind == "done":
                     self.status.set(str(value))
-                    self.run_button.configure(state="normal")
-                    self.cancel_button.configure(state="disabled")
+                    self.run_button.set_state("normal")
+                    self.cancel_button.set_state("disabled")
                 elif kind == "planes":
                     generation, positions, count = value
                     if generation != self.scan_generation:
@@ -401,13 +544,13 @@ class CaptureWindow:
                         f"Available in {count} case(s): {', '.join(positions)}" if positions
                         else "No 2D slice positions found in the selected input."
                     )
-                    self.scan_button.configure(state="normal")
+                    self.scan_button.set_state("normal")
                 elif kind == "plane_error":
                     generation, error = value
                     if generation != self.scan_generation:
                         continue
                     self.available_plane_text.set(f"Could not scan input: {error}")
-                    self.scan_button.configure(state="normal")
+                    self.scan_button.set_state("normal")
         except queue.Empty:
             pass
         self.root.after(100, self._drain_events)
