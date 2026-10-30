@@ -2,7 +2,7 @@
 
 This document defines how the Ashton custom Smokeview fork is built, tested,
 versioned, packaged, and distributed internally. The current release line is
-based on Smokeview 6.11.2. The current build is `6.11.2-af2.1.0-rc5`;
+based on Smokeview 6.11.2. The current build is `6.11.2-af2.1.0-rc6`;
 `6.11.2-af1` is the previous tagged release.
 
 ## Current Customisation
@@ -603,8 +603,8 @@ Linux recipients installing only for themselves should make the downloaded
 installer executable and run it:
 
 ```bash
-chmod +x ashton-smokeview-v6.11.2-af2.1.0-rc5-linux-x64.sh
-./ashton-smokeview-v6.11.2-af2.1.0-rc5-linux-x64.sh
+chmod +x ashton-smokeview-v6.11.2-af2.1.0-rc6-linux-x64.sh
+./ashton-smokeview-v6.11.2-af2.1.0-rc6-linux-x64.sh
 ```
 
 That installs under `$HOME/.local/opt/ashton-smokeview`, with the
@@ -619,8 +619,8 @@ sudo themselves, one administrator installs it once for everybody with
 `--system`:
 
 ```bash
-chmod +x ashton-smokeview-v6.11.2-af2.1.0-rc5-linux-x64.sh
-sudo ./ashton-smokeview-v6.11.2-af2.1.0-rc5-linux-x64.sh --system
+chmod +x ashton-smokeview-v6.11.2-af2.1.0-rc6-linux-x64.sh
+sudo ./ashton-smokeview-v6.11.2-af2.1.0-rc6-linux-x64.sh --system
 ```
 
 `--system` requires root and installs into `/opt/ashton-smokeview`, symlinks
