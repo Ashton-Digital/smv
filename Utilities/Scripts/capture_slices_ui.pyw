@@ -7,10 +7,11 @@ import threading
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QSize, Qt, QThread, QTimer, Signal, Slot
-from PySide6.QtGui import QColor, QFont, QIcon, QPalette, QTextCursor
+from PySide6.QtGui import (QBrush, QColor, QFont, QIcon, QPainter, QPainterPath,
+                         QPalette, QPen, QTextCursor)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
     QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
-    QPushButton, QRadioButton, QScrollArea, QSizePolicy, QToolButton,
+    QProxyStyle, QPushButton, QRadioButton, QScrollArea, QSizePolicy, QStyle, QToolButton,
     QVBoxLayout, QWidget, QButtonGroup)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -35,6 +36,54 @@ THEMES = {
 }
 
 
+class IndicatorStyle(QProxyStyle):
+    """Draw high contrast checkbox and radio indicators with the active palette."""
+
+    def __init__(self) -> None:
+        super().__init__("Fusion")
+        self.colors = THEMES["dark"]
+
+    def pixelMetric(self, metric, option=None, widget=None) -> int:
+        if metric in (QStyle.PM_IndicatorWidth, QStyle.PM_IndicatorHeight,
+                      QStyle.PM_ExclusiveIndicatorWidth, QStyle.PM_ExclusiveIndicatorHeight):
+            return 16
+        return super().pixelMetric(metric, option, widget)
+
+    def drawPrimitive(self, element, option, painter, widget=None) -> None:
+        if element not in (QStyle.PE_IndicatorCheckBox, QStyle.PE_IndicatorRadioButton):
+            super().drawPrimitive(element, option, painter, widget)
+            return
+        c = self.colors
+        enabled = bool(option.state & QStyle.State_Enabled)
+        checked = bool(option.state & QStyle.State_On)
+        active = bool(option.state & (QStyle.State_MouseOver | QStyle.State_HasFocus))
+        border = c["disabled"] if not enabled else c["accent"] if checked or active else c["muted"]
+        fill = c["surface"] if not enabled else c["accent"] if checked and element == QStyle.PE_IndicatorCheckBox else c["input"]
+        rect = option.rect.adjusted(1, 1, -1, -1)
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(QPen(QColor(border), 1.2))
+        painter.setBrush(QBrush(QColor(fill)))
+        if element == QStyle.PE_IndicatorRadioButton:
+            painter.drawEllipse(rect)
+            if checked:
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(QColor(c["accent"] if enabled else c["disabled"])))
+                painter.drawEllipse(rect.center(), 3, 3)
+        else:
+            painter.drawRoundedRect(rect, 3, 3)
+            if checked:
+                x, y, w, h = rect.x(), rect.y(), rect.width(), rect.height()
+                path = QPainterPath()
+                path.moveTo(x + 3, y + h * .52)
+                path.lineTo(x + w * .43, y + h - 3)
+                path.lineTo(x + w - 3, y + 3)
+                painter.setPen(QPen(QColor(c["bg"]), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+                painter.setBrush(Qt.NoBrush)
+                painter.drawPath(path)
+        painter.restore()
+
+
 class CaptureWorker(QObject):
     log = Signal(str)
     status = Signal(str)
@@ -53,7 +102,7 @@ class CaptureWorker(QObject):
 class SettingsScrollArea(QScrollArea):
     def sizeHint(self) -> QSize:
         hint = super().sizeHint()
-        return QSize(hint.width(), 360)
+        return QSize(hint.width(), 300)
 
 
 class CaptureWindow(QWidget):
@@ -61,7 +110,7 @@ class CaptureWindow(QWidget):
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Ashton Smokeview — Capture result slices")
+        self.setWindowTitle("Ashton Smokeview: Capture result slices")
         if LOGO_FILE.is_file():
             self.setWindowIcon(QIcon(str(LOGO_FILE)))
         self.job: CaptureJob | None = None
@@ -123,7 +172,7 @@ class CaptureWindow(QWidget):
         self.settings_scroll.setWidget(form)
         fields = QVBoxLayout(form)
         fields.setContentsMargins(0, 0, 5, 0)
-        fields.setSpacing(14)
+        fields.setSpacing(10)
 
         # Input and output share one aligned label/path/button grid.
         paths = QWidget()
@@ -209,7 +258,7 @@ class CaptureWindow(QWidget):
         fields.addWidget(settings)
 
         self.advanced_button = QToolButton()
-        self.advanced_button.setText("Advanced — slice positions")
+        self.advanced_button.setText("Advanced: slice positions")
         self.advanced_button.setCheckable(True)
         self.advanced_button.setArrowType(Qt.RightArrow)
         self.advanced_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
@@ -308,6 +357,10 @@ class CaptureWindow(QWidget):
 
     def _apply_theme(self) -> None:
         c = THEMES[self.theme]
+        app = QApplication.instance()
+        if not isinstance(app.style(), IndicatorStyle):
+            app.setStyle(IndicatorStyle())
+        app.style().colors = c
         palette = self.palette()
         palette.setColor(QPalette.Window, QColor(c['bg']))
         palette.setColor(QPalette.WindowText, QColor(c['text']))
@@ -319,7 +372,7 @@ class CaptureWindow(QWidget):
         palette.setColor(QPalette.HighlightedText, QColor(c['bg']))
         palette.setColor(QPalette.Disabled, QPalette.Text, QColor(c['disabled']))
         palette.setColor(QPalette.Disabled, QPalette.ButtonText, QColor(c['disabled']))
-        QApplication.instance().setPalette(palette)
+        app.setPalette(palette)
         self.setStyleSheet(self._stylesheet(c))
         self._update_status_color()
         self.theme_button.setText("Dark mode" if self.theme == "light" else "Light mode")
@@ -335,7 +388,7 @@ class CaptureWindow(QWidget):
 
     def _show_help(self) -> None:
         QMessageBox.information(
-            self, "Capture result slices — Help",
+            self, "Capture result slices: Help",
             "Choose one .smv file or a folder. Include subfolders is on by default.\n\n"
             "Select slice types and enter times in seconds, separated by commas. "
             "Leave Output folder blank to save beside each case.\n\n"
@@ -475,7 +528,7 @@ class CaptureWindow(QWidget):
                               self.crop.isChecked(), self.overwrite.isChecked())
         self.run_button.setEnabled(False)
         self.cancel_button.setEnabled(True)
-        self._set_status(f"Running · {len(cases)} case(s), {len(times)} time(s)", "running")
+        self._set_status(f"Running: {len(cases)} case(s), {len(times)} time(s)", "running")
         self.log.appendPlainText(f"Starting {len(cases)} case(s) at {len(times)} time(s).")
         self.thread = QThread(self)
         self.worker = CaptureWorker(self.job)
