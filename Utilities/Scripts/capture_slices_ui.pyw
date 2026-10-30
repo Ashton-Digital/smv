@@ -9,7 +9,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, QRectF, QSize, Qt, QThread, QTimer, Signal, Slot
 from PySide6.QtGui import (QBrush, QColor, QFont, QIcon, QPainter, QPainterPath,
                          QPalette, QPen, QTextCursor)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
+from PySide6.QtWidgets import (QApplication, QCheckBox, QFileDialog,
     QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
     QProxyStyle, QPushButton, QRadioButton, QScrollArea, QSizePolicy, QStyle, QToolButton,
     QVBoxLayout, QWidget, QButtonGroup)
@@ -123,7 +123,7 @@ class SettingsScrollArea(QScrollArea):
 
 
 class CaptureWindow(QWidget):
-    scan_result = Signal(int, list, int, str)
+    scan_result = Signal(int, list, str)
 
     def __init__(self) -> None:
         super().__init__()
@@ -134,8 +134,18 @@ class CaptureWindow(QWidget):
         self.thread: QThread | None = None
         self.pending_result: tuple[str, str] | None = None
         self.scan_generation = 0
+        self.scan_key: tuple[str, bool, bool] | None = None
+        self.scan_pending = False
+        self.scan_error = ""
+        self.case_positions: list[tuple[Path, list[str]]] = []
+        self.selected_planes: dict[Path, set[str]] = {}
+        self.custom_planes: dict[Path, set[str]] = {}
+        self.case_index = 0
         self.theme = "dark"
         self.last_state = "muted"
+        self.settings_height_timer = QTimer(self)
+        self.settings_height_timer.setSingleShot(True)
+        self.settings_height_timer.timeout.connect(self._settle_settings_height)
         self._build()
         self.scan_result.connect(self._scan_finished)
         self._apply_theme()
@@ -296,20 +306,57 @@ class CaptureWindow(QWidget):
         detail_layout = QVBoxLayout(self.plane_details)
         detail_layout.setContentsMargins(0, 0, 0, 0)
         detail_layout.setSpacing(5)
-        detail_layout.addWidget(self._label("Positions in metres · for example Y=3 or Y=3,Y=5", "helper"))
-        plane_row = QHBoxLayout()
-        plane_row.setSpacing(8)
-        self.plane_entry = QComboBox()
-        self.plane_entry.setEditable(True)
-        self.plane_entry.setAccessibleName("Selected slice positions")
-        plane_row.addWidget(self.plane_entry, 1)
+        detail_layout.addWidget(self._label("Positions in metres. Uncheck positions to omit them.", "helper"))
+        case_row = QHBoxLayout()
+        case_row.setSpacing(8)
+        self.case_label = self._label("Scan input to list .smv cases.")
+        self.case_label.setWordWrap(True)
+        case_row.addWidget(self.case_label, 1)
+        self.previous_case = QPushButton("Previous")
+        self.previous_case.clicked.connect(lambda: self._show_case(self.case_index - 1))
+        case_row.addWidget(self.previous_case)
+        self.next_case = QPushButton("Next")
+        self.next_case.clicked.connect(lambda: self._show_case(self.case_index + 1))
+        case_row.addWidget(self.next_case)
         self.scan_button = QPushButton("Scan input")
         self.scan_button.clicked.connect(self._scan_planes)
-        plane_row.addWidget(self.scan_button)
-        detail_layout.addLayout(plane_row)
-        self.available_planes = self._label("Scan a case to see its slice positions.", "helper")
-        self.available_planes.setWordWrap(True)
-        detail_layout.addWidget(self.available_planes)
+        case_row.addWidget(self.scan_button)
+        detail_layout.addLayout(case_row)
+        self.plane_grid_widget = QWidget()
+        self.plane_grid = QGridLayout(self.plane_grid_widget)
+        self.plane_grid.setContentsMargins(0, 0, 0, 0)
+        self.plane_grid.setHorizontalSpacing(16)
+        self.plane_grid.setVerticalSpacing(6)
+        self.plane_grid.setColumnStretch(3, 1)
+        detail_layout.addWidget(self.plane_grid_widget)
+        summary_row = QHBoxLayout()
+        summary_row.setSpacing(8)
+        self.plane_summary = self._label("Scan to list slice positions for each case.", "helper")
+        self.plane_summary.setWordWrap(True)
+        summary_row.addWidget(self.plane_summary, 1)
+        self.manual_button = QToolButton()
+        self.manual_button.setObjectName("smallToolButton")
+        self.manual_button.setText("Add position manually")
+        self.manual_button.setCheckable(True)
+        self.manual_button.setArrowType(Qt.RightArrow)
+        self.manual_button.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.manual_button.toggled.connect(self._toggle_manual_position)
+        summary_row.addWidget(self.manual_button)
+        detail_layout.addLayout(summary_row)
+        self.manual_row = QWidget()
+        manual_layout = QHBoxLayout(self.manual_row)
+        manual_layout.setContentsMargins(0, 0, 0, 0)
+        manual_layout.setSpacing(8)
+        manual_layout.addWidget(self._label("Position"))
+        self.manual_entry = QLineEdit()
+        self.manual_entry.setPlaceholderText("e.g. Y=3 or Y=3,Y=5")
+        self.manual_entry.setAccessibleName("Add slice position for this case")
+        manual_layout.addWidget(self.manual_entry, 1)
+        add_position = QPushButton("Add")
+        add_position.clicked.connect(self._add_manual_position)
+        manual_layout.addWidget(add_position)
+        detail_layout.addWidget(self.manual_row)
+        self.manual_row.setVisible(False)
         advanced_layout.addWidget(self.plane_details)
         fields.addWidget(self.advanced)
         self.advanced.setVisible(False)
@@ -336,11 +383,12 @@ class CaptureWindow(QWidget):
         self.log.setPlaceholderText("Capture progress will appear here.")
         outer.addWidget(self.log, 1)
 
-        for editor in (self.source, self.output, self.times, self.plane_entry.lineEdit()):
+        for editor in (self.output, self.times):
             editor.textChanged.connect(self._validate)
+        self.source.textChanged.connect(self._input_changed)
         for box in self.quantities.values():
             box.toggled.connect(self._validate)
-        self.subfolders.toggled.connect(self._validate)
+        self.subfolders.toggled.connect(self._input_changed)
         self.limit_planes.toggled.connect(self._validate)
 
     def _stylesheet(self, c: dict[str, str]) -> str:
@@ -350,11 +398,9 @@ class CaptureWindow(QWidget):
         QLabel#section {{ font-weight: 600; }}
         QLabel#helper {{ color: {c['muted']}; font-size: 8.5pt; }}
         QLabel#status {{ color: {c['muted']}; }}
-        QLineEdit, QComboBox, QPlainTextEdit {{ background: {c['input']}; color: {c['text']}; border: 1px solid {c['border']}; border-radius: 7px; selection-background-color: {c['selected']}; selection-color: {c['text']}; }}
-        QLineEdit, QComboBox {{ min-height: 32px; padding: 0 9px; }}
-        QLineEdit:focus, QComboBox:focus, QPlainTextEdit:focus {{ border: 1px solid {c['accent']}; }}
-        QComboBox QLineEdit {{ border: none; background: transparent; min-height: 0; padding: 0; }}
-        QComboBox QAbstractItemView {{ background: {c['surface']}; color: {c['text']}; selection-background-color: {c['selected']}; }}
+        QLineEdit, QPlainTextEdit {{ background: {c['input']}; color: {c['text']}; border: 1px solid {c['border']}; border-radius: 7px; selection-background-color: {c['selected']}; selection-color: {c['text']}; }}
+        QLineEdit {{ min-height: 32px; padding: 0 9px; }}
+        QLineEdit:focus, QPlainTextEdit:focus {{ border: 1px solid {c['accent']}; }}
         QPlainTextEdit {{ padding: 8px; }}
         QPushButton {{ background: {c['surface']}; color: {c['text']}; border: 1px solid {c['border']}; border-radius: 7px; min-height: 32px; padding: 0 13px; }}
         QPushButton:hover {{ background: {c['hover']}; border-color: {c['muted']}; }}
@@ -365,6 +411,7 @@ class CaptureWindow(QWidget):
         QPushButton#primaryButton:hover {{ background: {c['accent_hover']}; border-color: {c['accent_hover']}; }}
         QPushButton#primaryButton:disabled {{ background: {c['surface']}; color: {c['disabled']}; border-color: {c['border']}; }}
         QToolButton {{ background: transparent; color: {c['text']}; border: 1px solid transparent; border-radius: 6px; padding: 5px 7px; text-align: left; }}
+        QToolButton#smallToolButton {{ color: {c['muted']}; font-size: 8.5pt; padding: 2px 5px; }}
         QToolButton:hover {{ background: {c['hover']}; }}
         QToolButton:focus {{ border-color: {c['accent']}; }}
         QCheckBox, QRadioButton {{ spacing: 7px; }}
@@ -413,7 +460,9 @@ class CaptureWindow(QWidget):
             "Choose one .smv file or a folder. Include subfolders is on by default.\n\n"
             "Select slice types and enter times in seconds, separated by commas. "
             "Leave Output folder blank to save beside each case.\n\n"
-            "Advanced lets you scan and select slice positions such as Y=3,Y=5. "
+            "Advanced lists positions as checkboxes. In folder mode, use Previous "
+            "and Next to choose positions separately for each .smv case. Cases "
+            "with no checked positions are skipped. "
             "Click Capture slices to run; watch the log or use Cancel to stop.\n\n"
             "For Smokeview keyboard shortcuts, open Ashton Smokeview Help from "
             "the Windows Start menu, or run smvhelp on Linux.",
@@ -426,13 +475,117 @@ class CaptureWindow(QWidget):
 
     def _mode_changed(self) -> None:
         self.subfolders.setVisible(self.folder_radio.isChecked())
+        self._input_changed()
+        self._update_settings_height()
+
+    def _current_scan_key(self) -> tuple[str, bool, bool]:
+        return (self.source.text().strip(), self.folder_radio.isChecked(),
+                self.subfolders.isChecked())
+
+    def _input_changed(self) -> None:
+        self.scan_generation += 1
+        self.scan_key = None
+        self.scan_pending = False
+        self.scan_error = ""
+        self.case_positions = []
+        self.selected_planes = {}
+        self.custom_planes = {}
+        self.case_index = 0
+        self.manual_button.setChecked(False)
+        self.scan_button.setEnabled(True)
+        self._show_case(0)
+        self._validate()
+
+    def _show_case(self, index: int) -> None:
+        while self.plane_grid.count():
+            item = self.plane_grid.takeAt(0)
+            if item.widget():
+                item.widget().hide()
+                item.widget().deleteLater()
+        count = len(self.case_positions)
+        self.case_index = max(0, min(index, count - 1))
+        self.previous_case.setEnabled(count > 1 and self.case_index > 0)
+        self.next_case.setEnabled(count > 1 and self.case_index < count - 1)
+        self.manual_button.setEnabled(bool(count))
+        self.manual_entry.clear()
+        if not count:
+            self.case_label.setText("Scan input to list .smv cases.")
+            self.plane_summary.setText("Scan to list slice positions for each case.")
+        else:
+            case, positions = self.case_positions[self.case_index]
+            source = Path(self.scan_key[0]).expanduser().resolve()
+            name = case.relative_to(source) if self.scan_key[1] else Path(case.name)
+            self.case_label.setText(f"Case {self.case_index + 1} of {count}: {name}")
+            self.case_label.setToolTip(str(case))
+            for number, position in enumerate(positions):
+                box = QCheckBox(position)
+                box.setChecked(position in self.selected_planes[case])
+                box.toggled.connect(lambda checked, path=case, token=position:
+                                    self._plane_toggled(path, token, checked))
+                self.plane_grid.addWidget(box, number // 4, number % 4)
+            self._update_plane_summary()
+        self.plane_grid.activate()
+        self.plane_grid_widget.adjustSize()
+        self._update_settings_height()
+
+    def _update_plane_summary(self) -> None:
+        case, positions = self.case_positions[self.case_index]
+        if not positions:
+            self.plane_summary.setText(f"No 2D slice positions found in {case.name}; this case will be skipped.")
+        else:
+            selected_count = sum(len(self.selected_planes[path]) for path, _ in self.case_positions)
+            total_count = sum(len(found) for _, found in self.case_positions)
+            self.plane_summary.setText(
+                f"{selected_count} of {total_count} positions selected across "
+                f"{len(self.case_positions)} case(s). Cases with none selected are skipped.")
+
+    def _plane_toggled(self, case: Path, position: str, checked: bool) -> None:
+        if checked:
+            self.selected_planes[case].add(position)
+        else:
+            self.selected_planes[case].discard(position)
+        self._update_plane_summary()
         self._update_settings_height()
         self._validate()
 
+    def _toggle_manual_position(self, open_: bool) -> None:
+        self.manual_button.setArrowType(Qt.DownArrow if open_ else Qt.RightArrow)
+        self.manual_row.setVisible(open_)
+        self._update_settings_height()
+
+    def _add_manual_position(self) -> None:
+        if not self.case_positions:
+            return
+        try:
+            tokens = parse_plane_selection(self.manual_entry.text()).split(",")
+            if tokens == [""]:
+                raise ValueError("Enter a position such as Y=3.")
+        except ValueError as error:
+            QMessageBox.warning(self, "Slice position", str(error))
+            return
+        case, positions = self.case_positions[self.case_index]
+        custom = self.custom_planes.setdefault(case, set())
+        for token in tokens:
+            display = token[0].upper() + token[1:]
+            custom.add(display)
+            self.selected_planes[case].add(display)
+            if display not in positions:
+                positions.append(display)
+        positions.sort(key=lambda token: ("xyz".index(token[0].lower()), float(token[2:])))
+        self._show_case(self.case_index)
+        self._validate()
+
     def _update_settings_height(self) -> None:
+        self._settle_settings_height()
+        self.settings_height_timer.start(10)
+
+    def _settle_settings_height(self) -> None:
+        self.settings_scroll.widget().layout().invalidate()
+        self.settings_scroll.widget().layout().activate()
         self.settings_scroll.widget().adjustSize()
         self.settings_scroll.setMaximumHeight(max(240, self.settings_scroll.widget().sizeHint().height() + 4))
         self.settings_scroll.updateGeometry()
+        self.layout().activate()
         self.settings_scroll.scrollbar_timer.start(0)
 
     def _toggle_advanced(self, open_: bool) -> None:
@@ -480,11 +633,14 @@ class CaptureWindow(QWidget):
         if not any(box.isChecked() for box in self.quantities.values()):
             return "Select at least one slice type."
         if self.limit_planes.isChecked():
-            try:
-                if not parse_plane_selection(self.plane_entry.currentText()):
-                    return "Enter a slice position, such as Y=3."
-            except ValueError as error:
-                return str(error)
+            if self.scan_pending:
+                return "Scanning slice positions..."
+            if self.scan_error:
+                return self.scan_error
+            if self.scan_key != self._current_scan_key():
+                return "Scan input to choose slice positions."
+            if not any(self.selected_planes.values()):
+                return "Select at least one slice position."
         output = self.output.text().strip()
         if output and Path(output).expanduser().exists() and not Path(output).expanduser().is_dir():
             return "Output must be a folder."
@@ -500,41 +656,54 @@ class CaptureWindow(QWidget):
     def _scan_planes(self) -> None:
         source_text = self.source.text().strip()
         if not source_text:
-            self.available_planes.setText("Choose a .smv file or folder first.")
-            self._update_settings_height()
+            self._input_changed()
             return
         self.scan_generation += 1
         generation = self.scan_generation
         folder_mode = self.folder_radio.isChecked()
         recurse = self.subfolders.isChecked()
+        self.scan_pending = True
+        self.scan_error = ""
         self.scan_button.setEnabled(False)
-        self.available_planes.setText("Scanning slice positions…")
-        self._update_settings_height()
+        self.plane_summary.setText("Scanning .smv cases and slice positions...")
+        self._validate()
         def scan() -> None:
             try:
                 source = Path(source_text).expanduser().resolve()
                 cases = find_cases(source, folder_mode, recurse)
-                positions = {p for case in cases for p in available_planes(case)}
-                ordered = sorted(positions, key=lambda token: ("xyz".index(token[0].lower()), float(token[2:])))
-                self.scan_result.emit(generation, ordered, len(cases), "")
+                found = [(case, available_planes(case)) for case in cases]
+                self.scan_result.emit(generation, found, "")
             except (OSError, ValueError) as error:
-                self.scan_result.emit(generation, [], 0, str(error))
+                self.scan_result.emit(generation, [], str(error))
         threading.Thread(target=scan, daemon=True).start()
 
-    @Slot(int, list, int, str)
-    def _scan_finished(self, generation: int, positions: list, count: int, error: str) -> None:
+    @Slot(int, list, str)
+    def _scan_finished(self, generation: int, found: list, error: str) -> None:
         if generation != self.scan_generation:
             return
+        self.scan_pending = False
         self.scan_button.setEnabled(True)
         if error:
-            self.available_planes.setText(f"Could not scan input: {error}")
+            self.scan_key = None
+            self.scan_error = f"Could not scan input: {error}"
+            self.case_positions = []
+            self.selected_planes = {}
+            self._show_case(0)
+            self.plane_summary.setText(self.scan_error)
         else:
-            current = self.plane_entry.currentText()
-            self.plane_entry.clear()
-            self.plane_entry.addItems(positions)
-            self.plane_entry.setCurrentText(current)
-            self.available_planes.setText(f"Available in {count} case(s): {', '.join(positions)}" if positions else "No 2D slice positions found in the selected input.")
-        self._update_settings_height()
+            old_selected = self.selected_planes
+            self.case_positions = [
+                (case, sorted(set(positions) | self.custom_planes.get(case, set()),
+                              key=lambda token: ("xyz".index(token[0].lower()), float(token[2:]))))
+                for case, positions in found
+            ]
+            self.selected_planes = {
+                case: (old_selected[case] & set(positions) if case in old_selected
+                       else set(positions)) for case, positions in self.case_positions
+            }
+            self.scan_key = self._current_scan_key()
+            self._show_case(0)
+        self._validate()
 
     def _start(self) -> None:
         try:
@@ -543,7 +712,18 @@ class CaptureWindow(QWidget):
             cases = find_cases(source, folder_mode, self.subfolders.isChecked())
             times = parse_times(self.times.text().strip())
             quantities = [q for q, box in self.quantities.items() if box.isChecked()]
-            planes = parse_plane_selection(self.plane_entry.currentText()) if self.limit_planes.isChecked() else ""
+            if self.limit_planes.isChecked():
+                if self.scan_key != self._current_scan_key() or self.scan_pending:
+                    raise ValueError("Scan input to choose slice positions.")
+                if cases != [case for case, _ in self.case_positions]:
+                    raise ValueError("The folder contents changed. Scan input again.")
+                planes = {case: parse_plane_selection(",".join(
+                    position for position in positions if position in self.selected_planes[case]))
+                    for case, positions in self.case_positions}
+                if not any(planes.values()):
+                    raise ValueError("Select at least one slice position.")
+            else:
+                planes = ""
             output_text = self.output.text().strip()
             output = Path(output_text).expanduser().resolve() if output_text else None
             if output is not None and output.exists() and not output.is_dir():
@@ -561,8 +741,9 @@ class CaptureWindow(QWidget):
                               self.crop.isChecked(), self.overwrite.isChecked())
         self.run_button.setEnabled(False)
         self.cancel_button.setEnabled(True)
-        self._set_status(f"Running: {len(cases)} case(s), {len(times)} time(s)", "running")
-        self.log.appendPlainText(f"Starting {len(cases)} case(s) at {len(times)} time(s).")
+        active_count = sum(bool(value) for value in planes.values()) if isinstance(planes, dict) else len(cases)
+        self._set_status(f"Running: {active_count} case(s), {len(times)} time(s)", "running")
+        self.log.appendPlainText(f"Starting {active_count} case(s) at {len(times)} time(s).")
         self.thread = QThread(self)
         self.worker = CaptureWorker(self.job)
         self.worker.moveToThread(self.thread)

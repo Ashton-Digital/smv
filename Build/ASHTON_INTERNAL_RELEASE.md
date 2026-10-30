@@ -566,7 +566,9 @@ Verify all of the following before distributing a release:
   that case selected. The Start menu entry opens the same window with no case.
 - The capture window finds all `.smv` files recursively in a selected folder,
   skips unchecked result types, separates captures from multiple requested
-  times, and writes beside each case or under a chosen output folder.
+  times, and writes beside each case or under a chosen output folder. Its
+  advanced position checkboxes apply separately to each named `.smv` case;
+  cases with no selected positions are skipped.
 - On Linux, `af-smv`, `smv-cap`, `smv-cap-ui` and `smvhelp` are available, an `.smv` file
   opens in Ashton Smokeview by default, and **Open With > Capture result
   slices** works in the desktop file manager.

@@ -46,7 +46,10 @@ echo "from the desktop menu. Right-click a .smv file and choose Open With > Capt
 echo "Choose one .smv file, or choose a folder; Include subfolders is on by default. Select the slice types and"
 echo "enter one or more capture times in seconds, separated by commas (for example 60, 120, 180)."
 echo "Leave Output folder blank to save beside each case, or browse for a destination. Crop and Replace existing"
-echo "captures are separate options. Expand Advanced to scan and select slice positions such as Y=3,Y=5."
+echo "captures are separate options. Expand Advanced and scan the input to see checked slice positions."
+echo "Uncheck positions to omit them. In folder mode, Previous and Next show each .smv case separately."
+echo "Cases with no checked positions are skipped; with the filter off, every matching plane is captured."
+echo "Add position manually lets you enter a position missing from the scan for the case shown."
 echo "Click Capture slices to start. Progress appears in the Capture log; Cancel stops a running batch."
 echo "The window starts in dark mode and has a Light mode button."
 echo

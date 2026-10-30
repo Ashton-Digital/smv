@@ -72,7 +72,7 @@ def crop_tool_available() -> bool:
 class CaptureJob:
     def __init__(self, cases: list[Path], source: Path, folder_mode: bool,
                  output_root: Path | None, times: list[float], quantities: list[str],
-                 planes: str, crop: bool, overwrite: bool) -> None:
+                 planes: str | dict[Path, str], crop: bool, overwrite: bool) -> None:
         self.cases = cases
         self.source = source
         self.folder_mode = folder_mode
@@ -100,15 +100,19 @@ class CaptureJob:
 
     def run(self, log: Callable[[str], None], status: Callable[[str], None]) -> tuple[str, str]:
         failures = 0
-        total = len(self.cases) * len(self.times)
+        active_cases = ([case for case in self.cases if self.planes.get(case)]
+                        if isinstance(self.planes, dict) else self.cases)
+        total = len(active_cases) * len(self.times)
         try:
-            for case_number, case in enumerate(self.cases, 1):
+            if len(active_cases) < len(self.cases):
+                log(f"Skipping {len(self.cases) - len(active_cases)} case(s) with no selected slice positions.\n")
+            for case_number, case in enumerate(active_cases, 1):
                 for time in self.times:
                     if self.cancelled.is_set():
                         return "Cancelled.", "muted"
                     output = output_for_case(case, self.source, self.folder_mode,
                                              self.output_root, time, len(self.times) > 1)
-                    status(f"Case {case_number}/{len(self.cases)} · {time:g} s")
+                    status(f"Case {case_number}/{len(active_cases)} · {time:g} s")
                     log(f"\n{case} at {time:g} s → {output}\n")
                     if getattr(sys, "frozen", False) and os.name == "nt":
                         install_dir = Path(sys.executable).resolve().parent
@@ -121,8 +125,9 @@ class CaptureJob:
                         command = [python, "-u", str(CAPTURE_SCRIPT), str(case)]
                     command.extend(["-o", str(output), "--time", repr(time),
                                     "--quantities", *self.quantities])
-                    if self.planes:
-                        command.extend(["--planes", self.planes])
+                    planes = self.planes.get(case, "") if isinstance(self.planes, dict) else self.planes
+                    if planes:
+                        command.extend(["--planes", planes])
                     if not self.crop:
                         command.append("--no-crop")
                     if self.overwrite:
