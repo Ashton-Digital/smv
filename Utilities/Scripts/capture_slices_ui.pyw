@@ -6,7 +6,7 @@ import sys
 import threading
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QSize, Qt, QThread, QTimer, Signal, Slot
+from PySide6.QtCore import QObject, QRectF, QSize, Qt, QThread, QTimer, Signal, Slot
 from PySide6.QtGui import (QBrush, QColor, QFont, QIcon, QPainter, QPainterPath,
                          QPalette, QPen, QTextCursor)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
@@ -69,7 +69,7 @@ class IndicatorStyle(QProxyStyle):
             if checked:
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(QBrush(QColor(c["accent"] if enabled else c["disabled"])))
-                painter.drawEllipse(rect.center(), 3, 3)
+                painter.drawEllipse(QRectF(rect).center(), 3.0, 3.0)
         else:
             painter.drawRoundedRect(rect, 3, 3)
             if checked:
