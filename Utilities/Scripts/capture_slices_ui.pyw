@@ -100,9 +100,26 @@ class CaptureWorker(QObject):
 
 
 class SettingsScrollArea(QScrollArea):
+    def __init__(self) -> None:
+        super().__init__()
+        self.scrollbar_timer = QTimer(self)
+        self.scrollbar_timer.setSingleShot(True)
+        self.scrollbar_timer.timeout.connect(self.sync_scrollbar)
+
     def sizeHint(self) -> QSize:
         hint = super().sizeHint()
-        return QSize(hint.width(), 300)
+        content_height = self.widget().sizeHint().height() if self.widget() else 0
+        return QSize(hint.width(), max(240, content_height + 4))
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self.scrollbar_timer.start(0)
+
+    def sync_scrollbar(self) -> None:
+        content_height = self.widget().sizeHint().height() if self.widget() else 0
+        policy = (Qt.ScrollBarAsNeeded if content_height > self.viewport().height()
+                  else Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(policy)
 
 
 class CaptureWindow(QWidget):
@@ -136,6 +153,10 @@ class CaptureWindow(QWidget):
         label = QLabel(text)
         label.setObjectName(role)
         return label
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._update_settings_height()
 
     def _build(self) -> None:
         outer = QVBoxLayout(self)
@@ -405,16 +426,25 @@ class CaptureWindow(QWidget):
 
     def _mode_changed(self) -> None:
         self.subfolders.setVisible(self.folder_radio.isChecked())
+        self._update_settings_height()
         self._validate()
+
+    def _update_settings_height(self) -> None:
+        self.settings_scroll.widget().adjustSize()
+        self.settings_scroll.setMaximumHeight(max(240, self.settings_scroll.widget().sizeHint().height() + 4))
+        self.settings_scroll.updateGeometry()
+        self.settings_scroll.scrollbar_timer.start(0)
 
     def _toggle_advanced(self, open_: bool) -> None:
         self.advanced_button.setArrowType(Qt.DownArrow if open_ else Qt.RightArrow)
         self.advanced.setVisible(open_)
+        self._update_settings_height()
         if open_ and self.limit_planes.isChecked():
             self._scan_planes()
 
     def _toggle_plane_details(self, enabled: bool) -> None:
         self.plane_details.setVisible(enabled)
+        self._update_settings_height()
         if enabled:
             self._scan_planes()
 
@@ -471,6 +501,7 @@ class CaptureWindow(QWidget):
         source_text = self.source.text().strip()
         if not source_text:
             self.available_planes.setText("Choose a .smv file or folder first.")
+            self._update_settings_height()
             return
         self.scan_generation += 1
         generation = self.scan_generation
@@ -478,6 +509,7 @@ class CaptureWindow(QWidget):
         recurse = self.subfolders.isChecked()
         self.scan_button.setEnabled(False)
         self.available_planes.setText("Scanning slice positions…")
+        self._update_settings_height()
         def scan() -> None:
             try:
                 source = Path(source_text).expanduser().resolve()
@@ -502,6 +534,7 @@ class CaptureWindow(QWidget):
             self.plane_entry.addItems(positions)
             self.plane_entry.setCurrentText(current)
             self.available_planes.setText(f"Available in {count} case(s): {', '.join(positions)}" if positions else "No 2D slice positions found in the selected input.")
+        self._update_settings_height()
 
     def _start(self) -> None:
         try:
