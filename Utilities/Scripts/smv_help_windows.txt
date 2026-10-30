@@ -31,8 +31,11 @@ The right-click action fills in that case automatically.
   3. Optionally choose an output folder. Blank saves beside each .smv file in
      a new case_slice_captures folder.
   4. Choose whether to crop images and replace existing captures.
-  5. If needed, expand Advanced to scan and select slice positions such as
-     Y=3 or Y=3,Y=5. Otherwise every matching plane is captured.
+  5. If needed, expand Advanced and scan the input. Uncheck any slice positions
+     to omit them. For a folder, use Previous and Next to review each .smv
+     case separately. Cases with no checked positions are skipped. Otherwise
+     every matching plane is captured. Add position manually is available for
+     a position missing from the scan and applies to the case shown.
   6. Click Capture slices. The Capture log shows progress; Cancel stops a run.
 
 The window opens in dark mode and can switch to light mode. Captures use a

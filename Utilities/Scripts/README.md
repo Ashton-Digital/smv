@@ -67,10 +67,12 @@ The window opens in dark mode with rounded buttons, a resizable capture log,
 and a light-mode button. Its **Help** button summarizes the capture workflow;
 the Windows MSI also installs **Ashton Smokeview Help** in the Start menu for
 Smokeview shortcuts and capture instructions. On Linux, run `smvhelp` for the
-same workflow summary. Under **Advanced: slice
-positions**, enable the position filter, scan the selected input to see
-available planes, then choose or type positions
-such as `Y=3` or `Y=3,Y=5`. Leave the filter off to capture every plane.
+same workflow summary. Under **Advanced: slice positions**, enable the position
+filter and scan the input. Available positions appear as checked boxes; uncheck
+any you do not want. For a folder, **Previous** and **Next** show each `.smv`
+case and its own positions. A case with no positions checked is skipped. Leave
+the filter off to capture every plane. Use **Add position manually** for a
+position missing from the scan; the added position belongs to the case shown.
 
 On Linux, the installer adds the **Capture result slices** application to the
 desktop menu and the `smv-cap-ui` command. Both installers bundle the PySide6
