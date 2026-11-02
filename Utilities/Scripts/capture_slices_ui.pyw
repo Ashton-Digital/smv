@@ -7,6 +7,7 @@ import threading
 import json
 import math
 import os
+import subprocess
 from pathlib import Path
 
 from PySide6.QtCore import QObject, QSize, Qt, QThread, QTimer, Signal, Slot
@@ -20,7 +21,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 from capture_ui_core import (CAPTURE_SCRIPT, QUANTITIES, CaptureJob, CaseCaptureSettings, ClipVariant,
-    crop_tool_available, find_cases, parse_times)
+    crop_tool_available, external_process_env, find_cases, parse_times)
 from smv_planes import available_planes, parse_plane_selection
 
 LOGO_FILE = (Path(sys.executable).resolve().parent if getattr(sys, "frozen", False)
@@ -953,6 +954,13 @@ def main() -> None:
                 for _ in range(20):
                     window.theme_button.click()
                     app.processEvents()
+                if getattr(sys, "frozen", False) and sys.platform.startswith("linux"):
+                    smokeview = Path(sys.executable).resolve().parent / "smokeview"
+                    result = subprocess.run([str(smokeview), "-version"],
+                                            env=external_process_env(), capture_output=True,
+                                            text=True, timeout=15, check=False)
+                    if result.returncode != 0:
+                        raise RuntimeError(f"Smokeview failed from bundled UI: {result.stderr.strip()}")
             except Exception as error:
                 print(f"Capture UI smoke test failed: {error}", file=sys.stderr)
                 app.exit(1)

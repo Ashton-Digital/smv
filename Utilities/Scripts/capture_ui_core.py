@@ -86,6 +86,19 @@ def crop_tool_available() -> bool:
     return bool(shutil.which("magick") or (sys.platform != "win32" and shutil.which("convert")))
 
 
+def external_process_env() -> dict[str, str] | None:
+    """Restore the host library search path for programs launched by a frozen Linux UI."""
+    if not (getattr(sys, "frozen", False) and sys.platform.startswith("linux")):
+        return None
+    env = os.environ.copy()
+    original = env.pop("LD_LIBRARY_PATH_ORIG", None)
+    if original is None:
+        env.pop("LD_LIBRARY_PATH", None)
+    else:
+        env["LD_LIBRARY_PATH"] = original
+    return env
+
+
 class CaptureJob:
     def __init__(self, cases: list[Path], source: Path, folder_mode: bool,
                  output_root: Path | None, times: list[float], quantities: list[str],
@@ -169,6 +182,9 @@ class CaptureJob:
                         kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
                     else:
                         kwargs["start_new_session"] = True
+                        clean_env = external_process_env()
+                        if clean_env is not None:
+                            kwargs["env"] = clean_env
                     self.process = subprocess.Popen(command, **kwargs)
                     assert self.process.stdout is not None
                     for line in self.process.stdout:

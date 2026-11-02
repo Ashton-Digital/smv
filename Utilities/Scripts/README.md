@@ -56,8 +56,8 @@ Right-clicking a `.smv` file and choosing **Open With** gives two options:
 
 ## Capture result slices window
 
-The Windows MSI installs **Capture result slices** in the Start menu. Open it
-to choose one `.smv` file or a folder of cases (with **Include subfolders** on
+The Windows MSI installs **Capture result slices** in the Start menu and on the
+all-users desktop. Open it to choose one `.smv` file or a folder of cases (with **Include subfolders** on
 by default), select
 visibility, temperature, velocity and pressure slices, enter one or more
 simulation times separated by commas, and optionally choose an output folder.

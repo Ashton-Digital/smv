@@ -331,7 +331,7 @@ Keep this directory together. Run Smokeview with an absolute path to a case:
 
 The packaged smokeview.ini and objects.svo files are loaded from this directory.
 
-Open Capture result slices from the Start menu to select one case or a folder,
+Open Capture result slices from the Start menu or desktop to select one case or a folder,
 choose slice types and times, and set an output location. The window and
 capture engine include their Python runtime.
 The window opens in dark mode. Advanced slices and clipping scans each case,
@@ -388,6 +388,7 @@ Contact the Ashton Digital internal support channel for help with this build.
       <Directory Id="ProgramMenuFolder">
         <Directory Id="AshtonMenu" Name="Ashton Digital" />
       </Directory>
+      <Directory Id="DesktopFolder" Name="Desktop" />
     </Directory>
     <DirectoryRef Id="INSTALLDIR">
       <Component Id="SmvAssociation" Guid="A7F23B24-5D06-48F4-A953-2611D789A743">
@@ -405,6 +406,7 @@ Contact the Ashton Digital internal support channel for help with this build.
     <DirectoryRef Id="AshtonMenu">
       <Component Id="MenuShortcuts" Guid="7BA9925C-2052-4C4E-8B12-59149A43DE55">
         <Shortcut Id="CaptureUIShortcut" Name="Capture result slices" Target="[INSTALLDIR]capture_slices_ui.exe" />
+        <Shortcut Id="CaptureDesktopShortcut" Name="Capture result slices" Directory="DesktopFolder" Target="[INSTALLDIR]capture_slices_ui.exe" />
         <Shortcut Id="SmokeviewHelpShortcut" Name="Ashton Smokeview Help" Target="[INSTALLDIR]smvhelp.txt" />
         <Shortcut Id="SmokeviewShortcut" Name="Ashton Smokeview" Target="[INSTALLDIR]smokeview.exe" WorkingDirectory="INSTALLDIR" />
         <RemoveFolder Id="RemoveAshtonMenu" On="uninstall" />
