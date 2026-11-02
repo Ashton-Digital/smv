@@ -311,7 +311,7 @@ class CaptureWindow(QWidget):
         self.plane_summary.setWordWrap(True)
         case_row.addWidget(self.plane_summary, 1)
         self.add_variant = QPushButton("Add clip view")
-        self.add_variant.clicked.connect(self._add_variant_row)
+        self.add_variant.clicked.connect(lambda _checked=False: self._add_variant_row())
         case_row.addWidget(self.add_variant)
         self.save_job_button = QPushButton("Save job…")
         self.save_job_button.clicked.connect(self._save_job)
@@ -576,7 +576,8 @@ class CaptureWindow(QWidget):
         slice_box.currentTextChanged.connect(self._rows_changed)
         clip.textChanged.connect(self._rows_changed)
         side.currentTextChanged.connect(self._rows_changed)
-        remove.clicked.connect(lambda: self._remove_variant_row(widgets))
+        remove.clicked.connect(lambda _checked=False, row_widgets=widgets:
+                               self._remove_variant_row(row_widgets))
         self._rows_changed()
         self._update_settings_height()
 
@@ -977,7 +978,26 @@ def main() -> None:
     window = CaptureWindow()
     window.show()
     if smoke_test:
-        QTimer.singleShot(0, app.quit)
+        def exercise_controls() -> None:
+            try:
+                case = Path.cwd() / "smv-ui-smoke-test.smv"
+                window.case_positions = [(case, ["Y=5.000"])]
+                window.case_axes = {case: set("xyz")}
+                window.case_drafts = {case: []}
+                window.scan_key = (str(case), False, True)
+                window._show_case(0)
+                window.add_variant.click()
+                if len(window.row_widgets) != 1:
+                    raise RuntimeError("Add clip view did not create a row")
+                window.row_widgets[0][3].click()
+                if window.row_widgets:
+                    raise RuntimeError("Remove did not delete the clip view row")
+            except Exception as error:
+                print(f"Capture UI smoke test failed: {error}", file=sys.stderr)
+                app.exit(1)
+                return
+            app.quit()
+        QTimer.singleShot(0, exercise_controls)
     result = app.exec()
     window.close()
     window.deleteLater()
