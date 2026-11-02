@@ -156,7 +156,7 @@ The Ashton installers include the script with its matching custom Smokeview
 build and resources:
 
 ```text
-ashton-smokeview-v6.11.2-af1-linux-x64/
+ashton-smokeview-v6.11.2-af2-linux-x64/
 |-- capture_result_slices.py
 |-- capture_slices_ui
 |-- capture_slices_ui.pyw

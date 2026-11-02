@@ -54,7 +54,7 @@ function Select-ReleaseVersion {
         $Version.Substring($UpstreamVersion.Length + 1)
     } else { $Version }
     if ($NewRelease -notmatch '^af[0-9]+(?:\.[0-9]+\.[0-9]+)?(?:-rc[1-9][0-9]*)?$') {
-        throw "Invalid Ashton release: $NewRelease. Use af2.1.0 or af2.1.0-rc1."
+        throw "Invalid Ashton release: $NewRelease. Use af2, af2.1.0, or af2.1.0-rc1."
     }
     $SelectedVersion = "$UpstreamVersion-$NewRelease"
     $OldSetting = 'set(ASHTON_RELEASE "' + $OldRelease + '")'

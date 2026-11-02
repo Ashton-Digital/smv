@@ -14,7 +14,7 @@ Usage:
   scripts/cut_release.sh [ASHTON_RELEASE] [options]
 
 Arguments:
-  ASHTON_RELEASE     New release suffix, e.g. af3 or af3-rc1. Prompted for
+  ASHTON_RELEASE     New release suffix, e.g. af2 or af2-rc1. Prompted for
                      interactively if omitted and this is an interactive
                      terminal; required otherwise.
 

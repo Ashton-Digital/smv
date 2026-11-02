@@ -2,8 +2,9 @@
 
 This document defines how the Ashton custom Smokeview fork is built, tested,
 versioned, packaged, and distributed internally. The current release line is
-based on Smokeview 6.11.2. The current build is `6.11.2-af3`;
+based on Smokeview 6.11.2. The current build is `6.11.2-af2`;
 `6.11.2-af1` is the previous tagged release.
+The [af2 release notes](AF2_RELEASE_NOTES.md) summarise the candidate.
 
 ## Current Customisation
 
@@ -128,14 +129,16 @@ above) that shadowing happens silently.
 The internal repository is:
 
 ```text
-git@github.com:AshtonDigital/smv.git
+git@github.com:Ashton-Digital/smv.git
 ```
 
 Changes may be committed directly to the internal release branch without a
 pull request if that is the team's agreed process. Keep commits focused and do
 not commit generated files from `cbuild/` or packaged release archives.
 
-Before starting release work:
+Before starting release work, choose the exact source commit and make the
+release checkout clean. A local version edit or a previously built installer
+is not a substitute for a committed release version:
 
 ```bash
 git status --short --branch
@@ -146,22 +149,24 @@ Use annotated tags for distributed versions. The tag must match the version
 reported by `smokeview -version` and printed in the installer filename:
 
 ```bash
-git tag -a ashton-smv-v6.11.2-af1 -m "Ashton Smokeview 6.11.2-af1"
-git push origin ashton-smv-v6.11.2-af1
+git tag -a ashton-smv-v6.11.2-af2 -m "Ashton Smokeview 6.11.2-af2"
+git push origin ashton-smv-v6.11.2-af2
 ```
 
 Only tag a commit after its release package has passed the acceptance tests.
 
 ### Pre-release test builds
 
-The current build uses the short suffix `af3`. Pass `-Version af3` to rebuild
-that exact release. Without an explicit version, the next Windows build asks
-whether to start the three-part `af3.1.0` line as `af3.1.0-rc1` (test) or
-`af3.1.0` (live). Further test builds increment the candidate number.
+The Windows build prompt proposes a version based on the current
+`ASHTON_RELEASE` value. For an intentional release with the literal suffix
+`af2`, pass `-Version af2` explicitly; the prompt may otherwise propose a
+different three-part line. The Linux release script takes `af2` as its
+argument. Rebuild Smokeview after changing the release suffix because the
+revision is compiled into the executable.
 
-Once a test build passes acceptance testing, choose live to drop the `-rcN`
-suffix, rebuild and repackage so the final artefact's embedded version matches
-exactly, and only then create the annotated tag. Do not tag an `-rcN` build.
+For release candidates with an `-rcN` suffix, rebuild with the final version
+after acceptance testing. A literal `af2` build already carries its final
+version; create the annotated tag only after its installers pass testing.
 
 ## Configuration Files
 
@@ -170,14 +175,10 @@ Smokeview root directory. For the portable internal package, the executable,
 `smokeview.ini`, and `objects.svo` must be placed in the same top-level
 directory.
 
-The approved company-default configuration is maintained at:
-
-```text
-/home/tomcox/SharedFolder/VMLinux/smokeview.ini
-```
-
-`Build/for_bundle/smokeview.ini` is the version-controlled release snapshot of
-that file and is packaged on both platforms. The company default is a complete
+`Build/for_bundle/smokeview.ini` is the version-controlled company default and
+is packaged on both platforms. If a newer approved configuration is supplied,
+compare it with this file and commit the reviewed changes before building.
+The company default is a complete
 saved Smokeview configuration, not just a colourbar definition file. Review
 changes to it for:
 
@@ -206,7 +207,7 @@ For current development testing, place the required resources beside the
 executable:
 
 ```bash
-cp /home/tomcox/SharedFolder/VMLinux/smokeview.ini cbuild/review/smokeview.ini
+cp Build/for_bundle/smokeview.ini cbuild/review/smokeview.ini
 cp Build/for_bundle/objects.svo cbuild/review/objects.svo
 ```
 
@@ -229,21 +230,20 @@ root. Linux produces a self-extracting `.sh` installer and Windows produces a
 WiX `.msi` installer.
 
 ```bash
-./scripts/package_release_linux.sh
+./scripts/cut_release.sh af2
 ```
 
 From an x64 Visual Studio Developer PowerShell on Windows, after extracting
 the [official portable static ImageMagick archive](https://imagemagick.org/download/):
 
 ```powershell
-.\scripts\package_release_windows.ps1 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
+.\scripts\package_release_windows.ps1 -Version af2 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
 ```
 
-This script asks whether the next build is a test or live release. With the
-current `af3` value, test selects `af3.1.0-rc1` and live selects `af3.1.0`.
-It updates `CMakeLists.txt` and the current build references in this guide
-before building. Pass `-Version af3` to rebuild this exact release or to run an
-unattended build with the same version.
+This script asks whether the next build is a test or live release. It updates
+`CMakeLists.txt` and the current build references in this guide before building.
+Pass `-Version af2` for the intended literal af2 release or any unattended
+build of that version.
 
 ### Build both installers on one Windows workstation
 
@@ -268,12 +268,12 @@ Run this from the repository root in an x64 Visual Studio Developer PowerShell:
 
 ```powershell
 py -3 -m pip install pyinstaller PySide6-Essentials
-.\scripts\package_release_all.ps1 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
+.\scripts\package_release_all.ps1 -Version af2 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
 ```
 
 The script uses the same test/live prompt as the Windows-only build and updates
 `ASHTON_RELEASE` in `CMakeLists.txt` and the current build references in this
-guide before building. For this release, pass `-Version af3`.
+guide before building. For a literal af2 release, pass `-Version af2`.
 After a live three-part Ashton release, the script increments its patch number
 for the next test or live build. The upstream
 Smokeview version (currently `6.11.2`) remains the value in `CMakeLists.txt`;
@@ -301,6 +301,10 @@ Creating the Windows installer also requires WiX Toolset 3 (`heat.exe`,
 its numeric Windows Installer
 version uses the upstream version, while the full Ashton version appears in
 the product name, filename, and packaged `VERSION` file.
+Ashton releases on the same upstream version therefore share one MSI numeric
+version. The installer allows same-version upgrades; test replacement of any
+installed trial build before rolling out af2, or uninstall trial builds
+first. The MSI version alone cannot distinguish Ashton release order.
 
 The Windows packaging machine also needs Python 3.10+ with PyInstaller and
 PySide6-Essentials (`py -3 -m pip install pyinstaller PySide6-Essentials`)
@@ -318,7 +322,7 @@ and Linux desktop launcher use `capture_logo.png`, while the Windows capture
 executable embeds `capture_logo.ico`.
 
 The release version combines the upstream Smokeview version with the Ashton
-fork release, for example `6.11.2-af2.1.0`. The release selector updates
+fork release, for example `6.11.2-af2`. The release selector updates
 `ASHTON_RELEASE` in the root `CMakeLists.txt` when building a new version.
 The packaging scripts derive the version automatically and reject an installer
 whose package version does not match the revision embedded in its executable.
@@ -455,7 +459,7 @@ The Linux and Windows installers contain equivalent application resources.
 The Linux payload has this layout:
 
 ```text
-ashton-smokeview-v6.11.2-af1-linux-x64/
+ashton-smokeview-v6.11.2-af2-linux-x64/
 |-- smokeview
 |-- capture_result_slices.py
 |-- capture_slices_ui.pyw
@@ -499,7 +503,7 @@ The packaging scripts assemble these payloads automatically. The equivalent
 manual Linux staging commands are useful only for troubleshooting:
 
 ```bash
-version=6.11.2-af1
+version=6.11.2-af2
 package="dist/ashton-smokeview-v${version}-linux-x64"
 
 rm -rf "$package"
@@ -558,6 +562,9 @@ Verify all of the following before distributing a release:
 - The installed capture utility reports its bundled Python, Smokeview and
   ImageMagick dependencies clearly before rendering on Windows; the Linux
   package reports system dependencies.
+- The installed `smokeview.ini` contains the five approved `GCOLORBAR`
+  definitions, and the installed `colorbars/` directory contains the matching
+  CSV files on both platforms.
 - The capture utility renders, crops and renames all configured result slices.
 - Capture can run in a separate automated process while an interactive
   Smokeview window remains open.
@@ -569,6 +576,10 @@ Verify all of the following before distributing a release:
   times, and writes beside each case or under a chosen output folder. Its
   advanced X/Y/Z controls and extra clip views apply separately to each named
   `.smv` case. A case with no enabled normal axes or extra views is skipped.
+- A successful single-output capture opens that folder, and **Open captures**
+  reopens it or selects a folder from a multi-case or multi-time batch.
+- On Windows, the MSI creates the **Capture result slices** shortcut on the
+  all-users desktop and in the Start menu.
 - On Linux, `af-smv`, `smv-cap`, `smv-cap-ui` and `smvhelp` are available, an `.smv` file
   opens in Ashton Smokeview by default, and **Open With > Capture result
   slices** works in the desktop file manager.
@@ -603,8 +614,8 @@ Linux recipients installing only for themselves should make the downloaded
 installer executable and run it:
 
 ```bash
-chmod +x ashton-smokeview-v6.11.2-af3-linux-x64.sh
-./ashton-smokeview-v6.11.2-af3-linux-x64.sh
+chmod +x ashton-smokeview-v6.11.2-af2-linux-x64.sh
+./ashton-smokeview-v6.11.2-af2-linux-x64.sh
 ```
 
 That installs under `$HOME/.local/opt/ashton-smokeview`, with the
@@ -620,8 +631,8 @@ sudo themselves, one administrator installs it once for everybody with
 `--system`:
 
 ```bash
-chmod +x ashton-smokeview-v6.11.2-af3-linux-x64.sh
-sudo ./ashton-smokeview-v6.11.2-af3-linux-x64.sh --system
+chmod +x ashton-smokeview-v6.11.2-af2-linux-x64.sh
+sudo ./ashton-smokeview-v6.11.2-af2-linux-x64.sh --system
 ```
 
 `--system` requires root and installs into `/opt/ashton-smokeview`, symlinks
