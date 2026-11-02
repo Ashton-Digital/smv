@@ -936,6 +936,8 @@ def main() -> None:
     if smoke_test:
         def exercise_controls() -> None:
             try:
+                if not LOGO_FILE.is_file() or not CHECK_FILE.is_file():
+                    raise RuntimeError("Capture UI assets are missing")
                 case = Path.cwd() / "smv-ui-smoke-test.smv"
                 window.case_positions = [(case, ["Y=5.000"])]
                 window.case_axes = {case: set("xyz")}
