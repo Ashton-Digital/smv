@@ -116,6 +116,7 @@ class CaptureJob:
         self.case_settings = case_settings
         self.cancelled = threading.Event()
         self.process: subprocess.Popen[str] | None = None
+        self.completed_outputs: list[Path] = []
 
     def cancel(self) -> None:
         self.cancelled.set()
@@ -132,6 +133,7 @@ class CaptureJob:
 
     def run(self, log: Callable[[str], None], status: Callable[[str], None]) -> tuple[str, str]:
         failures = 0
+        self.completed_outputs.clear()
         if self.case_settings is not None:
             active_cases = [case for case in self.cases if
                             (settings := self.case_settings.get(case, CaseCaptureSettings())).axes
@@ -191,6 +193,8 @@ class CaptureJob:
                         log(line)
                     result = self.process.wait()
                     self.process = None
+                    if result == 0 and output.is_dir() and output not in self.completed_outputs:
+                        self.completed_outputs.append(output)
                     if result != 0 and not self.cancelled.is_set():
                         failures += 1
                         log(f"Capture failed (exit code {result}).\n")

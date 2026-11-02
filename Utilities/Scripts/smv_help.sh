@@ -51,6 +51,7 @@ echo "In folder mode, choose each case from the left list. X, Y and Z checkboxes
 echo "Add clip views to capture a selected slice again with an absolute clip coordinate and Min or Max view."
 echo "Save job and Load job use portable JSON files so you can return to a capture setup later."
 echo "Click Capture slices to start. Progress appears in the Capture log; Cancel stops a running batch."
+echo "A completed single output folder opens automatically. Use Open captures to reopen it or choose a batch folder."
 echo "The window starts in dark mode and has a Light mode button."
 echo
 echo "To capture images of these slices automatically instead of stepping through them by hand:"

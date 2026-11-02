@@ -37,6 +37,8 @@ The right-click action fills in that case automatically.
      absolute clip coordinate and Min or Max view. Type a position in the
      Slice field if needed. Save job and Load job use portable JSON files.
   6. Click Capture slices. The Capture log shows progress; Cancel stops a run.
+     One completed output folder opens automatically. Use Open captures to
+     reopen it or choose an output folder from a batch.
 
 The window opens in dark mode and can switch to light mode. Captures use a
 separate Smokeview process, so an interactive Smokeview window may stay open.

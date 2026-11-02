@@ -330,6 +330,7 @@ Keep this directory together. Run Smokeview with an absolute path to a case:
   .\smokeview.exe C:\absolute\path\to\case.smv
 
 The packaged smokeview.ini and objects.svo files are loaded from this directory.
+Company colourbars are in smokeview.ini; CSV colourbars are in colorbars\.
 
 Open Capture result slices from the Start menu or desktop to select one case or a folder,
 choose slice types and times, and set an output location. The window and
@@ -337,6 +338,8 @@ capture engine include their Python runtime.
 The window opens in dark mode. Advanced slices and clipping scans each case,
 lets you choose normal X/Y/Z captures, and adds extra slice/clip views. Save
 job and Load job preserve the setup in a portable JSON file.
+A completed single output folder opens automatically. Open captures lets you
+revisit it or choose which output folder to view from a batch.
 Open Ashton Smokeview Help from the Start menu (or smvhelp.txt beside this
 executable) for shortcuts and step-by-step capture instructions.
 

@@ -216,6 +216,8 @@ Open the capture window with:
 The window opens in dark mode. Advanced slices and clipping scans each case,
 lets you choose normal X/Y/Z captures, and adds extra slice/clip views. Save
 job and Load job preserve the setup in a portable JSON file.
+A completed single output folder opens automatically. Open captures lets you
+revisit it or choose which output folder to view from a batch.
 
 After installation, the equivalent commands are:
 
@@ -230,6 +232,7 @@ Desktop users can right-click an .smv file and choose
 Open With > Capture result slices.
 
 The packaged smokeview.ini and objects.svo files are loaded from this directory.
+Company colourbars are in smokeview.ini; CSV colourbars are in colorbars/.
 The capture utility requires Python 3.10 or newer and, unless --no-crop is used,
 ImageMagick (either the "magick" or the "convert" command). On Ubuntu/Debian,
 install it with:

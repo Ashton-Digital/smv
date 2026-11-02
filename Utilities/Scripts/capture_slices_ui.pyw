@@ -10,10 +10,10 @@ import os
 import subprocess
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QSize, Qt, QThread, QTimer, Signal, Slot
-from PySide6.QtGui import QColor, QFont, QIcon, QPalette, QTextCursor
+from PySide6.QtCore import QObject, QSize, Qt, QThread, QTimer, QUrl, Signal, Slot
+from PySide6.QtGui import QColor, QDesktopServices, QFont, QIcon, QPalette, QTextCursor
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
-    QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
+    QFrame, QGridLayout, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
     QPushButton, QRadioButton, QScrollArea, QSizePolicy, QToolButton, QListWidget,
     QVBoxLayout, QWidget, QButtonGroup)
 
@@ -89,6 +89,7 @@ class CaptureWindow(QWidget):
         self.job: CaptureJob | None = None
         self.thread: QThread | None = None
         self.pending_result: tuple[str, str] | None = None
+        self.capture_folders: list[Path] = []
         self.scan_generation = 0
         self.scan_key: tuple[str, bool, bool] | None = None
         self.scan_pending = False
@@ -330,6 +331,10 @@ class CaptureWindow(QWidget):
         self.cancel_button.setEnabled(False)
         self.cancel_button.clicked.connect(self._cancel)
         actions.addWidget(self.cancel_button)
+        self.open_captures_button = QPushButton("Open captures")
+        self.open_captures_button.setEnabled(False)
+        self.open_captures_button.clicked.connect(self._open_captures)
+        actions.addWidget(self.open_captures_button)
         self.status_label = self._label("Choose a .smv file or folder.", "status")
         actions.addWidget(self.status_label, 1)
         outer.addLayout(actions)
@@ -430,7 +435,9 @@ class CaptureWindow(QWidget):
             "normal captures for that case. Add clip views to capture a slice "
             "again with a different absolute clip coordinate or Min/Max view. "
             "Save job and Load job keep these settings for later. "
-            "Click Capture slices to run; watch the log or use Cancel to stop.\n\n"
+            "Click Capture slices to run; watch the log or use Cancel to stop. "
+            "A completed single-folder capture opens in your file manager. "
+            "Use Open captures to revisit it or choose a folder from a batch.\n\n"
             "For Smokeview keyboard shortcuts, open Ashton Smokeview Help from "
             "the Windows Start menu, or run smvhelp on Linux.",
         )
@@ -845,6 +852,8 @@ class CaptureWindow(QWidget):
             return
         self.job = CaptureJob(cases, source, folder_mode, output, times, quantities, planes,
                               self.crop.isChecked(), self.overwrite.isChecked(), case_settings)
+        self.capture_folders = []
+        self.open_captures_button.setEnabled(False)
         self.run_button.setEnabled(False)
         self.cancel_button.setEnabled(True)
         active_count = (sum(bool(value.axes or value.variants) for value in case_settings.values())
@@ -878,13 +887,35 @@ class CaptureWindow(QWidget):
     @Slot(str, str)
     def _capture_done(self, message: str, state: str) -> None:
         self.pending_result = (message, state)
+        self.capture_folders = list(self.job.completed_outputs) if self.job is not None else []
+        self.open_captures_button.setEnabled(bool(self.capture_folders))
         self.cancel_button.setEnabled(False)
         self._set_status(message, state)
+        if state == "success" and len(self.capture_folders) == 1:
+            self._open_capture_folder(self.capture_folders[0])
         if self.thread is None:
             self.job = None
             self._validate()
             self._set_status(message, state)
             self.pending_result = None
+
+    def _open_capture_folder(self, folder: Path) -> None:
+        if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder))):
+            QMessageBox.warning(self, "Open captures", f"Could not open {folder}")
+
+    def _open_captures(self) -> None:
+        if not self.capture_folders:
+            return
+        if len(self.capture_folders) == 1:
+            folder = self.capture_folders[0]
+        else:
+            choice, accepted = QInputDialog.getItem(
+                self, "Open captures", "Choose an output folder:",
+                [str(path) for path in self.capture_folders], 0, False)
+            if not accepted:
+                return
+            folder = Path(choice)
+        self._open_capture_folder(folder)
 
     @Slot()
     def _thread_finished(self) -> None:
@@ -939,6 +970,8 @@ def main() -> None:
             try:
                 if not LOGO_FILE.is_file() or not CHECK_FILE.is_file():
                     raise RuntimeError("Capture UI assets are missing")
+                if window.open_captures_button.isEnabled():
+                    raise RuntimeError("Open captures should be disabled before a capture")
                 case = Path.cwd() / "smv-ui-smoke-test.smv"
                 window.case_positions = [(case, ["Y=5.000"])]
                 window.case_axes = {case: set("xyz")}

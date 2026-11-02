@@ -74,12 +74,17 @@ adds an extra capture for a selected slice, with an independent absolute clip
 coordinate in metres and a Min or Max view. The Slice dropdown also accepts a
 typed position. A case with no enabled normal axes or extra rows is skipped.
 **Save job** and **Load job** preserve all capture settings in a portable JSON
-file.
+file. After a successful capture to one folder, that folder opens automatically.
+**Open captures** reopens it; for a batch or multiple times, it lets you choose
+which output folder to view.
 
 On Linux, the installer adds the **Capture result slices** application to the
 desktop menu and the `smv-cap-ui` command. Both installers bundle the PySide6
 window and its Python runtime. The capture engine on Linux still needs system
 Python 3.10 or newer. The Windows MSI also includes a private ImageMagick copy.
+Both installers place the company `smokeview.ini`, with its five custom
+colourbars, beside the Smokeview executable; the CSV colourbars go into its
+`colorbars` subfolder.
 If ImageMagick is unavailable on Linux, cropping is
 disabled and full-size images are saved.
 
