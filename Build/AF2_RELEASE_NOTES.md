@@ -15,6 +15,8 @@ The only previously published Ashton release is `6.11.2-af1`.
   cases and then adjust individual cases.
 - Added an **Open captures** action. A successful capture with one output
   folder opens it automatically; multi-output jobs offer a folder chooser.
+- A chosen output folder receives PNGs directly. Case and time identifiers in
+  filenames keep batch captures separate without creating nested folders.
 - Added a per-machine Windows MSI with the capture UI, bundled Python and
   ImageMagick, Start menu and desktop shortcuts, `.smv` integration, and help.
 - Added a Linux installer with the same capture UI, desktop integration,

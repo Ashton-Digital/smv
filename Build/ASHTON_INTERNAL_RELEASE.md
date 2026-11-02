@@ -314,7 +314,10 @@ portable Q16 x64 static archive. Pass the folder containing `magick.exe` with
 the two capture executables; the MSI copies the portable ImageMagick tree
 beside them. Installed Windows users do not need separate Python or
 ImageMagick installations. The packaged `DEPENDENCIES.txt` records the build
-interpreter, PyInstaller version, ImageMagick version and executable checksum.
+interpreter, PyInstaller version, ImageMagick version, executable checksum, and
+the SHA-256 checksum of `smokeview.ini`. The MSI build also checks that staged
+Smokeview resolves its global INI to the packaged file and that WiX harvested
+the company CSV colourbars.
 
 The camera-and-flame capture icon is authored in
 `Utilities/Scripts/capture_logo.svg`; the UI
@@ -572,8 +575,9 @@ Verify all of the following before distributing a release:
   **Capture result slices** File Explorer context action opens the window with
   that case selected. The Start menu entry opens the same window with no case.
 - The capture window finds all `.smv` files recursively in a selected folder,
-  skips unchecked result types, separates captures from multiple requested
-  times, and writes beside each case or under a chosen output folder. Its
+  skips unchecked result types, identifies cases and requested times in PNG
+  filenames, and writes directly into a chosen output folder. With no output
+  folder chosen, it creates a capture folder beside each case. Its
   advanced X/Y/Z controls and extra clip views apply separately to each named
   `.smv` case. A case with no enabled normal axes or extra views is skipped.
 - In folder mode, **Apply to all cases** copies the selected case's axes and

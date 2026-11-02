@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import math
 import os
+import hashlib
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 import shutil
@@ -64,18 +66,24 @@ def find_cases(source: Path, folder_mode: bool, include_subfolders: bool = True)
     return [source]
 
 
-def time_folder(value: float) -> str:
+def time_token(value: float) -> str:
     return f"t_{repr(float(value)).replace('-', 'm').replace('.', 'p')}s"
 
 
-def output_for_case(case: Path, source: Path, folder_mode: bool,
-                    chosen_root: Path | None, time: float, multiple_times: bool) -> Path:
-    if chosen_root is None:
-        output = case.with_name(f"{case.stem}_slice_captures")
-    else:
-        relative_parent = case.parent.relative_to(source) if folder_mode else Path()
-        output = chosen_root / relative_parent / f"{case.stem}_slice_captures"
-    return output / time_folder(time) if multiple_times else output
+def output_for_case(case: Path, chosen_root: Path | None) -> Path:
+    return chosen_root if chosen_root is not None else case.with_name(f"{case.stem}_slice_captures")
+
+
+def capture_prefix(case: Path, source: Path, folder_mode: bool,
+                   duplicate_stem: bool, time: float, multiple_times: bool) -> str:
+    prefix = case.stem
+    if duplicate_stem:
+        relative = case.relative_to(source) if folder_mode else Path(case.name)
+        digest = hashlib.sha256(relative.as_posix().encode("utf-8")).hexdigest()[:8]
+        prefix += f"__{digest}"
+    if multiple_times:
+        prefix += f"__{time_token(time)}"
+    return prefix
 
 
 def crop_tool_available() -> bool:
@@ -142,6 +150,7 @@ class CaptureJob:
             active_cases = ([case for case in self.cases if self.planes.get(case)]
                             if isinstance(self.planes, dict) else self.cases)
         total = len(active_cases) * len(self.times)
+        stem_counts = Counter(case.stem.casefold() for case in active_cases)
         try:
             if len(active_cases) < len(self.cases):
                 log(f"Skipping {len(self.cases) - len(active_cases)} case(s) with no selected slice positions.\n")
@@ -149,8 +158,10 @@ class CaptureJob:
                 for time in self.times:
                     if self.cancelled.is_set():
                         return "Cancelled.", "muted"
-                    output = output_for_case(case, self.source, self.folder_mode,
-                                             self.output_root, time, len(self.times) > 1)
+                    output = output_for_case(case, self.output_root)
+                    prefix = capture_prefix(case, self.source, self.folder_mode,
+                                            stem_counts[case.stem.casefold()] > 1,
+                                            time, len(self.times) > 1)
                     status(f"Case {case_number}/{len(active_cases)} · {time:g} s")
                     log(f"\n{case} at {time:g} s → {output}\n")
                     if getattr(sys, "frozen", False) and os.name == "nt":
@@ -162,7 +173,7 @@ class CaptureJob:
                         if not python:
                             raise RuntimeError("Python 3 is required to run the capture engine.")
                         command = [python, "-u", str(CAPTURE_SCRIPT), str(case)]
-                    command.extend(["-o", str(output), "--time", repr(time),
+                    command.extend(["-o", str(output), "--prefix", prefix, "--time", repr(time),
                                     "--quantities", *self.quantities])
                     planes = self.planes.get(case, "") if isinstance(self.planes, dict) else self.planes
                     if planes:

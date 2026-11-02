@@ -94,10 +94,11 @@ To run the window directly from a source checkout, install the Qt Widgets
 binding with `python3 -m pip install PySide6-Essentials`, then run
 `python3 Utilities/Scripts/capture_slices_ui.pyw` from the repository root.
 
-By default, images go into `CASE_slice_captures` beside each `.smv` file. If
-several times are entered, each time gets its own subfolder. With a chosen
-output folder, the window creates a separate case folder there and preserves
-the source subfolder layout for recursive batches.
+By default, images go into `CASE_slice_captures` beside each `.smv` file.
+When an output folder is chosen, all PNGs go directly into that folder.
+Multiple times are identified in filenames; cases with the same name in a
+folder batch get distinct filename suffixes. No case or time subfolders are
+created inside the chosen output folder.
 
 ## capture_result_slices.py
 

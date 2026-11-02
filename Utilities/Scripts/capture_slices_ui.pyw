@@ -435,7 +435,9 @@ class CaptureWindow(QWidget):
             self, "Capture result slices: Help",
             "Choose one .smv file or a folder. Include subfolders is on by default.\n\n"
             "Select slice types and enter times in seconds, separated by commas. "
-            "Leave Output folder blank to save beside each case.\n\n"
+            "Leave Output folder blank to save beside each case. If you choose "
+            "a folder, PNGs are saved directly there; cases and times are named "
+            "in the files.\n\n"
             "Expand Advanced slices and clipping to scan available positions. "
             "In folder mode, choose a case in the left list. X, Y and Z control "
             "normal captures for that case. Add clip views to capture a slice "

@@ -28,8 +28,9 @@ The right-click action fills in that case automatically.
   1. Select one .smv file or a folder. Include subfolders is on by default.
   2. Select the slice types and enter times in seconds, separated by commas
      (for example 60, 120, 180).
-  3. Optionally choose an output folder. Blank saves beside each .smv file in
-     a new case_slice_captures folder.
+  3. Optionally choose an output folder. PNGs go directly into a chosen folder,
+     with cases and times identified in filenames. Blank saves beside each
+     .smv file in a new case_slice_captures folder.
   4. Choose whether to crop images and replace existing captures.
   5. Expand Advanced slices and clipping to scan each case. X, Y and Z control
      normal captures for the selected case. In a folder, choose a case from

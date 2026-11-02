@@ -45,7 +45,7 @@ echo "${HEAD}Capture window:${RESET} launch ${CMD}smv-cap-ui${RESET} from a term
 echo "from the desktop menu. Right-click a .smv file and choose Open With > Capture result slices to preselect it."
 echo "Choose one .smv file, or choose a folder; Include subfolders is on by default. Select the slice types and"
 echo "enter one or more capture times in seconds, separated by commas (for example 60, 120, 180)."
-echo "Leave Output folder blank to save beside each case, or browse for a destination. Crop and Replace existing"
+echo "Leave Output folder blank to save beside each case, or choose a folder to receive PNGs directly. Crop and Replace existing"
 echo "captures are separate options. Expand Advanced slices and clipping to scan available slices."
 echo "In folder mode, choose each case from the left list. X, Y and Z checkboxes control normal captures per case."
 echo "Add clip views to capture a selected slice again with an absolute clip coordinate and Min or Max view."

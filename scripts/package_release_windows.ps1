@@ -162,6 +162,20 @@ foreach ($RequiredPath in @(
     }
 }
 
+$ConfigText = Get-Content -LiteralPath $ConfigFile -Raw
+if ($ConfigText -notmatch '(?m)^GCOLORBAR\r?\n[ \t]*5[ \t]*\r?\n') {
+    throw "The package smokeview.ini must contain the five company colourbars: $ConfigFile"
+}
+foreach ($ColorbarName in @("Visibility", "Temperature", "Velocity", "Pressure", "Fractional effective dose (FED)")) {
+    if ($ConfigText -notmatch "(?m)^[ \t]*$([regex]::Escape($ColorbarName))[ \t]*\r?$") {
+        throw "The package smokeview.ini is missing the $ColorbarName colourbar: $ConfigFile"
+    }
+}
+$ColorbarCsvs = @(Get-ChildItem -LiteralPath $ColorbarsDir -Filter "*.csv" -Recurse -File)
+if ($ColorbarCsvs.Count -eq 0) {
+    throw "The package colourbar directory contains no CSV files: $ColorbarsDir"
+}
+
 if (-not $SkipBuild) {
     $CMakeCommand = Find-CMakeCommand
 }
@@ -176,7 +190,8 @@ if (-not $SkipBuild) {
         "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded",
         "-DBUILD_SHARED_LIBS=OFF",
         "-DVENDORED_UI_LIBS=ON",
-        "-DVENDORED_LIBS=ON"
+        "-DVENDORED_LIBS=ON",
+        "-DSMV_ROOT_OVERRIDE="
     )
     Invoke-NativeCommand -Command $CMakeCommand -Arguments @(
         "--build", $BuildDir,
@@ -263,6 +278,7 @@ Python: $PythonVersion (embedded by PyInstaller $PyInstallerVersion)
 PySide6: $PySideVersion
 ImageMagick: $MagickVersion
 ImageMagick executable SHA-256: $((Get-FileHash -LiteralPath $PackagedMagick -Algorithm SHA256).Hash.ToLowerInvariant())
+Smokeview INI SHA-256: $((Get-FileHash -LiteralPath $ConfigFile -Algorithm SHA256).Hash.ToLowerInvariant())
 "@ | Set-Content -LiteralPath (Join-Path $PackageDir "DEPENDENCIES.txt") -Encoding UTF8
     Copy-Item -LiteralPath $ConfigFile -Destination (Join-Path $PackageDir "smokeview.ini")
     Copy-Item -LiteralPath $RootMarkerFile -Destination (Join-Path $PackageDir ".smokeview_bin")
@@ -276,6 +292,21 @@ ImageMagick executable SHA-256: $((Get-FileHash -LiteralPath $PackagedMagick -Al
     Copy-Item -LiteralPath $ColorbarsDir -Destination (Join-Path $PackageDir "colorbars") -Recurse
     Copy-Item -LiteralPath $TexturesDir -Destination (Join-Path $PackageDir "textures") -Recurse
     Copy-Item -LiteralPath $HelpFile -Destination (Join-Path $PackageDir "smvhelp.txt")
+
+    $StagedSmokeview = Join-Path $PackageDir "smokeview.exe"
+    $StagedVersionOutput = (& $StagedSmokeview "-version" 2>&1 | Out-String)
+    if ($LASTEXITCODE -ne 0) {
+        throw "Staged Smokeview failed its version check."
+    }
+    $GlobalIniMatch = [regex]::Match($StagedVersionOutput, '(?m)^Global ini\s*:\s*(.+?)\s*$')
+    if (-not $GlobalIniMatch.Success) {
+        throw "Staged Smokeview did not find its packaged smokeview.ini. Check SMV_ROOT_OVERRIDE."
+    }
+    $ActualIni = [IO.Path]::GetFullPath($GlobalIniMatch.Groups[1].Value.Trim())
+    $ExpectedIni = [IO.Path]::GetFullPath((Join-Path $PackageDir "smokeview.ini"))
+    if (-not $ActualIni.Equals($ExpectedIni, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Staged Smokeview loads $ActualIni instead of its packaged configuration $ExpectedIni."
+    }
 
     @'
 @echo off
@@ -333,7 +364,8 @@ The packaged smokeview.ini and objects.svo files are loaded from this directory.
 Company colourbars are in smokeview.ini; CSV colourbars are in colorbars\.
 
 Open Capture result slices from the Start menu or desktop to select one case or a folder,
-choose slice types and times, and set an output location. The window and
+choose slice types and times, and set an output location. A chosen output folder
+receives PNGs directly, with cases and times identified in filenames. The window and
 capture engine include their Python runtime.
 The window opens in dark mode. Advanced slices and clipping scans each case,
 lets you choose normal X/Y/Z captures, and adds extra slice/clip views. Save
@@ -449,6 +481,11 @@ Contact the Ashton Digital internal support channel for help with this build.
     )) {
         if ($HarvestContents -notmatch [regex]::Escape($RequiredPayloadFile)) {
             throw "WiX payload does not include $RequiredPayloadFile."
+        }
+    }
+    foreach ($Csv in $ColorbarCsvs) {
+        if ($HarvestContents -notmatch [regex]::Escape($Csv.Name)) {
+            throw "WiX payload does not include colourbar $($Csv.Name)."
         }
     }
     Invoke-NativeCommand -Command $CandleCommand -Arguments @(

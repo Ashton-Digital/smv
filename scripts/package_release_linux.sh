@@ -217,7 +217,8 @@ The window opens in dark mode. Advanced slices and clipping scans each case,
 lets you choose normal X/Y/Z captures, and adds extra slice/clip views. Save
 job and Load job preserve the setup in a portable JSON file. In folder mode,
 Apply to all cases copies the selected case's axes and clip views to every case.
-A completed single output folder opens automatically. Open captures lets you
+A chosen output folder receives PNGs directly, with cases and times identified
+in filenames. A completed single output folder opens automatically. Open captures lets you
 revisit it or choose which output folder to view from a batch.
 
 After installation, the equivalent commands are:
