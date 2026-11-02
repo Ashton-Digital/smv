@@ -11,7 +11,8 @@ The only previously published Ashton release is `6.11.2-af1`.
   times, optional output location, cropping, overwrite, and cancellation.
 - Added per-case X/Y/Z slice controls and extra clip views with independent
   slice and clip coordinates and Min/Max view direction. Jobs can be saved and
-  reloaded as JSON.
+  reloaded as JSON. Folder jobs can apply one case's advanced settings to all
+  cases and then adjust individual cases.
 - Added an **Open captures** action. A successful capture with one output
   folder opens it automatically; multi-output jobs offer a folder chooser.
 - Added a per-machine Windows MSI with the capture UI, bundled Python and

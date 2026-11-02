@@ -576,6 +576,8 @@ Verify all of the following before distributing a release:
   times, and writes beside each case or under a chosen output folder. Its
   advanced X/Y/Z controls and extra clip views apply separately to each named
   `.smv` case. A case with no enabled normal axes or extra views is skipped.
+- In folder mode, **Apply to all cases** copies the selected case's axes and
+  clip views to every scanned case; a later edit to one case stays local.
 - A successful single-output capture opens that folder, and **Open captures**
   reopens it or selects a folder from a multi-case or multi-time batch.
 - On Windows, the MSI creates the **Capture result slices** shortcut on the

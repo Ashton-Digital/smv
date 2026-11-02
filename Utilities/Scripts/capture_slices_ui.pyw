@@ -286,6 +286,10 @@ class CaptureWindow(QWidget):
         self.case_list.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.case_list.currentRowChanged.connect(self._show_case)
         body.addWidget(self.case_list, 0, Qt.AlignTop)
+        self.apply_all_button = QPushButton("Apply to all cases")
+        self.apply_all_button.setToolTip("Copy this case's normal axes and clip views to every scanned case")
+        self.apply_all_button.setEnabled(False)
+        self.apply_all_button.clicked.connect(self._apply_to_all_cases)
         details = QWidget()
         details.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         detail_layout = QVBoxLayout(details)
@@ -304,6 +308,7 @@ class CaptureWindow(QWidget):
             self.axis_boxes[axis] = box
             axes_row.addWidget(box)
         axes_row.addStretch()
+        axes_row.addWidget(self.apply_all_button)
         detail_layout.addLayout(axes_row)
         grid_widget = QWidget()
         grid_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -435,6 +440,8 @@ class CaptureWindow(QWidget):
             "In folder mode, choose a case in the left list. X, Y and Z control "
             "normal captures for that case. Add clip views to capture a slice "
             "again with a different absolute clip coordinate or Min/Max view. "
+            "Apply to all cases copies the selected case's axes and clip views "
+            "across a folder job; each case stays editable afterward. "
             "Save job and Load job keep these settings for later. "
             "Click Capture slices to run; watch the log or use Cancel to stop. "
             "A completed single-folder capture opens in your file manager. "
@@ -483,6 +490,8 @@ class CaptureWindow(QWidget):
         count = len(self.case_positions)
         self.case_index = max(0, min(index, count - 1))
         self.case_list.setVisible(count > 1)
+        self.apply_all_button.setVisible(count > 1)
+        self.apply_all_button.setEnabled(count > 1 and not self.scan_pending and self.job is None)
         self.add_variant.setEnabled(bool(count))
         for box in self.axis_boxes.values():
             box.setEnabled(bool(count))
@@ -502,6 +511,24 @@ class CaptureWindow(QWidget):
             self.plane_summary.setText(f"{len(positions)} slices found in {case.name}.")
         self.rendering_rows = False
         self._update_settings_height()
+
+    def _apply_to_all_cases(self) -> None:
+        if len(self.case_positions) < 2 or self.scan_pending or self.job is not None:
+            return
+        self._rows_changed()
+        selected_case = self.case_positions[self.case_index][0]
+        axes = self.case_axes[selected_case]
+        drafts = self.case_drafts[selected_case]
+        for case, _ in self.case_positions:
+            self.case_axes[case] = set(axes)
+            self.case_drafts[case] = list(drafts)
+        missing = sum(any(slice_text not in positions for slice_text, _, _ in drafts)
+                      for case, positions in self.case_positions if case != selected_case)
+        summary = f"Applied axes and {len(drafts)} clip view(s) to all {len(self.case_positions)} cases."
+        if missing:
+            summary += f" {missing} case(s) lack a selected slice; review them before capture."
+        self.plane_summary.setText(summary)
+        self._validate()
 
     def _axis_changed(self) -> None:
         if self.rendering_rows or not self.case_positions:
@@ -680,6 +707,7 @@ class CaptureWindow(QWidget):
         self.scan_pending = True
         self.scan_error = ""
         self.scan_button.setEnabled(False)
+        self.apply_all_button.setEnabled(False)
         self.plane_summary.setText("Scanning .smv cases and slice positions...")
         self._validate()
         def scan() -> None:
@@ -853,6 +881,7 @@ class CaptureWindow(QWidget):
             return
         self.job = CaptureJob(cases, source, folder_mode, output, times, quantities, planes,
                               self.crop.isChecked(), self.overwrite.isChecked(), case_settings)
+        self.apply_all_button.setEnabled(False)
         self.capture_folders = []
         self.open_captures_button.setEnabled(False)
         self.run_button.setEnabled(False)
@@ -940,6 +969,7 @@ class CaptureWindow(QWidget):
         self.thread = None
         self.worker = None
         self.job = None
+        self.apply_all_button.setEnabled(len(self.case_positions) > 1)
         self._validate()
         if self.pending_result is not None:
             self._set_status(*self.pending_result)
@@ -1002,6 +1032,21 @@ def main() -> None:
                 window.row_widgets[0][3].click()
                 if window.row_widgets:
                     raise RuntimeError("Remove did not delete the clip view row")
+                other_case = Path.cwd() / "smv-ui-smoke-test-2.smv"
+                window.case_positions.append((other_case, ["Y=5.000"]))
+                window.case_axes[other_case] = set("xyz")
+                window.case_drafts[other_case] = []
+                window._show_case(0)
+                window.add_variant.click()
+                window.axis_boxes["x"].setChecked(False)
+                window.apply_all_button.click()
+                if (window.case_axes[other_case] != {"y", "z"}
+                        or window.case_drafts[other_case] != window.case_drafts[case]):
+                    raise RuntimeError("Apply to all did not copy case settings")
+                window._show_case(1)
+                window.axis_boxes["z"].setChecked(False)
+                if "z" not in window.case_axes[case]:
+                    raise RuntimeError("Editing one case changed another case")
                 for _ in range(20):
                     window.theme_button.click()
                     app.processEvents()

@@ -73,6 +73,8 @@ checkboxes control normal captures, all enabled by default. **Add clip view**
 adds an extra capture for a selected slice, with an independent absolute clip
 coordinate in metres and a Min or Max view. The Slice dropdown also accepts a
 typed position. A case with no enabled normal axes or extra rows is skipped.
+In folder mode, **Apply to all cases** copies the selected case's X/Y/Z choices
+and clip views to every scanned case. Each case can still be edited afterward.
 **Save job** and **Load job** preserve all capture settings in a portable JSON
 file. After a successful capture to one folder, that folder opens automatically.
 **Open captures** reopens it; for a batch or multiple times, it lets you choose
