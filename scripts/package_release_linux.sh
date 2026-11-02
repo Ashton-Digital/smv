@@ -100,7 +100,16 @@ version="${version#v}"
 [[ -f "$repo_root/Build/for_bundle/.smokeview_bin" ]] || fail ".smokeview_bin is missing"
 [[ -f "$repo_root/Build/for_bundle/objects.svo" ]] || fail "objects.svo is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_result_slices.py" ]] || fail "capture_result_slices.py is missing"
+[[ -f "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" ]] || fail "capture_slices_ui.pyw is missing"
+[[ -f "$repo_root/Utilities/Scripts/capture_ui_core.py" ]] || fail "capture_ui_core.py is missing"
+if ! python3 -c 'import PySide6.QtWidgets, PyInstaller'; then
+  fail "Python 3 could not import PySide6.QtWidgets and PyInstaller; see the import error above"
+fi
+[[ -f "$repo_root/Utilities/Scripts/smv_planes.py" ]] || fail "smv_planes.py is missing"
+[[ -f "$repo_root/Utilities/Scripts/capture_logo.png" ]] || fail "capture_logo.png is missing"
+[[ -f "$repo_root/Utilities/Scripts/capture_check.svg" ]] || fail "capture_check.svg is missing"
 [[ -f "$repo_root/Utilities/Scripts/smv_help.sh" ]] || fail "smv_help.sh is missing"
+[[ -f "$repo_root/scripts/install_capture_desktop_shortcut.sh" ]] || fail "desktop shortcut helper is missing"
 [[ -d "$repo_root/Build/for_bundle/colorbars" ]] || fail "colorbars directory is missing"
 [[ -d "$repo_root/Build/for_bundle/textures" ]] || fail "textures directory is missing"
 
@@ -150,7 +159,19 @@ mkdir -p "$package_dir"
 
 install -m 0755 "$binary" "$package_dir/smokeview"
 install -m 0755 "$repo_root/Utilities/Scripts/capture_result_slices.py" "$package_dir/capture_result_slices.py"
+install -m 0755 "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" "$package_dir/capture_slices_ui.pyw"
+install -m 0644 "$repo_root/Utilities/Scripts/capture_ui_core.py" "$package_dir/capture_ui_core.py"
+python3 -m PyInstaller --noconfirm --clean --onefile --windowed \
+  --name capture_slices_ui --distpath "$stage_root/ui-dist" \
+  --workpath "$stage_root/ui-work" --specpath "$stage_root/ui-spec" \
+  "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" >/dev/null
+install -m 0755 "$stage_root/ui-dist/capture_slices_ui" "$package_dir/capture_slices_ui"
+install -m 0644 "$repo_root/Utilities/Scripts/capture_logo.png" "$package_dir/capture_logo.png"
+install -m 0644 "$repo_root/Utilities/Scripts/capture_check.svg" "$package_dir/capture_check.svg"
+QT_QPA_PLATFORM=offscreen "$package_dir/capture_slices_ui" --smoke-test >/dev/null || fail "bundled Linux capture window did not start"
+install -m 0644 "$repo_root/Utilities/Scripts/smv_planes.py" "$package_dir/smv_planes.py"
 install -m 0755 "$repo_root/Utilities/Scripts/smv_help.sh" "$package_dir/smv_help.sh"
+install -m 0755 "$repo_root/scripts/install_capture_desktop_shortcut.sh" "$package_dir/install_capture_desktop_shortcut.sh"
 install -m 0644 "$config_file" "$package_dir/smokeview.ini"
 install -m 0644 "$repo_root/Build/for_bundle/.smokeview_bin" "$package_dir/.smokeview_bin"
 install -m 0644 "$repo_root/Build/for_bundle/objects.svo" "$package_dir/objects.svo"
@@ -158,9 +179,11 @@ cp -R "$repo_root/Build/for_bundle/colorbars" "$package_dir/colorbars"
 cp -R "$repo_root/Build/for_bundle/textures" "$package_dir/textures"
 
 commit="$(git -C "$repo_root" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)"
-dirty="no"
-if [[ -n "$(git -C "$repo_root" status --porcelain --untracked-files=no 2>/dev/null)" ]]; then
-  dirty="yes"
+if status="$(git -C "$repo_root" status --porcelain --untracked-files=no 2>/dev/null)"; then
+  dirty="no"
+  [[ -z "$status" ]] || dirty="yes"
+else
+  dirty="unknown"
 fi
 compiler="$(sed -nE 's/^CMAKE_C_COMPILER(:FILEPATH|:STRING)?=//p' "$build_dir/CMakeCache.txt" | head -n 1)"
 compiler="${compiler:-unknown}"
@@ -186,22 +209,41 @@ Capture every configured result-review slice with:
 
   ./capture_result_slices.py /absolute/path/to/case.smv --overwrite
 
+Open the capture window with:
+
+  ./capture_slices_ui
+
+The window opens in dark mode. Advanced slices and clipping scans each case,
+lets you choose normal X/Y/Z captures, and adds extra slice/clip views. Save
+job and Load job preserve the setup in a portable JSON file. In folder mode,
+Apply to all cases copies the selected case's axes and clip views to every case.
+A chosen output folder receives PNGs directly, with cases and times identified
+in filenames. A completed single output folder opens automatically. Open captures lets you
+revisit it or choose which output folder to view from a batch.
+
 After installation, the equivalent commands are:
 
   af-smv /absolute/path/to/case.smv
   smv-cap /absolute/path/to/case.smv
+  smv-cap-ui
 
-Run smvhelp for a summary of the added shortcuts and smv-cap options.
+Run smvhelp for the Smokeview shortcuts, capture window walkthrough, and
+smv-cap options.
 
 Desktop users can right-click an .smv file and choose
 Open With > Capture result slices.
 
 The packaged smokeview.ini and objects.svo files are loaded from this directory.
+Company colourbars are in smokeview.ini; CSV colourbars are in colorbars/.
 The capture utility requires Python 3.10 or newer and, unless --no-crop is used,
 ImageMagick (either the "magick" or the "convert" command). On Ubuntu/Debian,
 install it with:
 
   sudo apt-get install imagemagick
+
+The capture window bundles PySide6 and Python; the capture engine still needs
+system Python 3.10 or newer. On minimal Linux desktops, Qt's xcb platform
+plugin may also need libxcb-shape0, libxcb-cursor0 and libxkbcommon-x11-0.
 
 It launches a separate automated Smokeview process, so an interactive Smokeview
 window may remain open while capture runs.
@@ -400,7 +442,10 @@ mkdir -p "$staging_dir"
 cp -R "$temporary_dir/$package_name/." "$staging_dir/"
 chmod 0755 "$staging_dir/smokeview"
 chmod 0755 "$staging_dir/capture_result_slices.py"
+chmod 0755 "$staging_dir/capture_slices_ui.pyw"
+chmod 0755 "$staging_dir/capture_slices_ui"
 chmod 0755 "$staging_dir/smv_help.sh"
+chmod 0755 "$staging_dir/install_capture_desktop_shortcut.sh"
 chmod -R a+rX "$staging_dir"
 
 if ((replacing_existing == 1)); then
@@ -413,7 +458,9 @@ mkdir -p "$link_dir"
 rm -f "$link_dir/ashton-smokeview" "$link_dir/ashton-capture-slices" "$link_dir/afm-smv"
 ln -sfn "$target/smokeview" "$link_dir/af-smv"
 ln -sfn "$target/capture_result_slices.py" "$link_dir/smv-cap"
+ln -sfn "$target/capture_slices_ui" "$link_dir/smv-cap-ui"
 ln -sfn "$target/smv_help.sh" "$link_dir/smvhelp"
+ln -sfn "$target/install_capture_desktop_shortcut.sh" "$link_dir/smv-cap-ui-shortcut"
 
 generic_launcher="$link_dir/smokeview"
 if [[ ! -e "$generic_launcher" && ! -L "$generic_launcher" ]]; then
@@ -470,7 +517,21 @@ NoDisplay=true
 MimeType=application/x-ashton-smokeview;
 DESKTOP_EOF
 
-chmod 0644 "$mime_dir/packages/af-smv.xml" "$applications_dir/af-smv.desktop" "$applications_dir/smv-cap.desktop"
+cat > "$applications_dir/smv-cap-ui.desktop" <<DESKTOP_EOF
+[Desktop Entry]
+Type=Application
+Name=Capture result slices
+Comment=Select Smokeview cases, slice types and capture times
+Exec="$link_dir/smv-cap-ui"
+Icon=$target/capture_logo.png
+Terminal=false
+Categories=Graphics;Science;
+StartupWMClass=smv-cap-ui
+StartupNotify=true
+X-Ashton-Smokeview=true
+DESKTOP_EOF
+
+chmod 0644 "$mime_dir/packages/af-smv.xml" "$applications_dir/af-smv.desktop" "$applications_dir/smv-cap.desktop" "$applications_dir/smv-cap-ui.desktop"
 
 if command -v update-mime-database >/dev/null 2>&1; then
   update-mime-database "$mime_dir" >/dev/null 2>&1 || echo "Warning: could not update the MIME database."
@@ -500,10 +561,19 @@ elif command -v xdg-mime >/dev/null 2>&1; then
     echo "Warning: could not set Ashton Smokeview as the default .smv application."
 fi
 
+if ((system_install == 0)); then
+  "$link_dir/smv-cap-ui-shortcut" || echo "Desktop shortcut could not be created; run smv-cap-ui-shortcut later."
+elif [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != root ]] && command -v runuser >/dev/null 2>&1; then
+  runuser -u "$SUDO_USER" -- "$link_dir/smv-cap-ui-shortcut" || \
+    echo "Desktop shortcut for $SUDO_USER could not be created; run smv-cap-ui-shortcut as that user."
+fi
+
 echo
 echo "Installed Ashton Smokeview in $target"
 echo "Smokeview launcher: $link_dir/af-smv"
 echo "Capture launcher: $link_dir/smv-cap"
+echo "Capture window: $link_dir/smv-cap-ui"
+echo "Desktop shortcut for another user: run $link_dir/smv-cap-ui-shortcut as that user"
 echo "Help launcher: $link_dir/smvhelp"
 echo "Run now: $link_dir/af-smv"
 echo "To capture: $link_dir/smv-cap /path/to/case.smv"

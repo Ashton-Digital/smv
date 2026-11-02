@@ -14,3 +14,9 @@ Here are some other useful links:
 
 
 Pull requests welcome!
+
+## Ashton internal release builds
+
+See [Build/ASHTON_INTERNAL_RELEASE.md](Build/ASHTON_INTERNAL_RELEASE.md) for the
+Windows MSI, Linux installer, and the one-command Windows workstation build
+that creates both.

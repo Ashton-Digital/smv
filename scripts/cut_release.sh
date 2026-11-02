@@ -14,7 +14,7 @@ Usage:
   scripts/cut_release.sh [ASHTON_RELEASE] [options]
 
 Arguments:
-  ASHTON_RELEASE     New release suffix, e.g. af2 or af1-rc3. Prompted for
+  ASHTON_RELEASE     New release suffix, e.g. af2 or af2-rc1. Prompted for
                      interactively if omitted and this is an interactive
                      terminal; required otherwise.
 
@@ -102,12 +102,16 @@ cmake --build cbuild/release-linux --target smokeview -j"$(nproc)"
 '
 fi
 
-echo "Building inside ubuntu:22.04..."
-"${docker_cmd[@]}" run --rm -v "$repo_root":/src -w /src ubuntu:22.04 bash -c "
+builder_image="ashton-smokeview-linux-builder:ubuntu-22.04"
+echo "Preparing cached Ubuntu 22.04 builder..."
+"${docker_cmd[@]}" build --platform linux/amd64 \
+  --file "$script_dir/Dockerfile.release-linux" --tag "$builder_image" "$script_dir"
+
+echo "Packaging inside Ubuntu 22.04..."
+"${docker_cmd[@]}" run --rm --platform linux/amd64 -v "$repo_root":/src -w /src "$builder_image" bash -c "
 set -Eeuo pipefail
-apt-get update -qq
-apt-get install -y -qq build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev libgd-dev libjson-c-dev python3-pip >/dev/null
-pip3 install --quiet --upgrade cmake
+git config --global --add safe.directory /src
+python3 -c 'import PySide6.QtWidgets, PyInstaller'
 export PATH=/usr/local/bin:\$PATH
 hash -r
 ${build_step}
@@ -119,8 +123,11 @@ version="$(sed -nE 's/.*project\(smv .*VERSION ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' 
 installer="$repo_root/dist/ashton-smokeview-v${version}-linux-x64.sh"
 
 if [[ -x "$repo_root/cbuild/release-linux/smokeview" ]] && command -v objdump >/dev/null 2>&1; then
-  glibc_floor="$(objdump -T "$repo_root/cbuild/release-linux/smokeview" 2>/dev/null | grep GLIBC_ | sed 's/.*GLIBC_//' | sort -uV | tail -1)"
-  echo "glibc floor: $glibc_floor (must not exceed the oldest supported target's, e.g. 2.35 for Ubuntu 22.04)"
+  glibc_floor="$(objdump -T "$repo_root/cbuild/release-linux/smokeview" 2>/dev/null | grep -oE 'GLIBC_[0-9]+(\.[0-9]+)+' | cut -d_ -f2 | sort -uV | tail -1)"
+  [[ -n "$glibc_floor" ]] || fail "could not determine the Linux glibc floor"
+  [[ "$(printf '%s\n' "$glibc_floor" 2.35 | sort -V | tail -1)" == 2.35 ]] || \
+    fail "Linux glibc floor $glibc_floor exceeds Ubuntu 22.04's 2.35"
+  echo "glibc floor: $glibc_floor (compatible with Ubuntu 22.04's 2.35)"
 fi
 
 echo
@@ -131,5 +138,9 @@ else
   echo "Warning: expected installer not found at $installer" >&2
 fi
 echo
-echo "CMakeLists.txt has been updated but not committed. Review, install and"
-echo "test locally, then commit it yourself once you're happy with the result."
+if [[ "$current_release" == "$new_release" ]]; then
+  echo "Release version in CMakeLists.txt was already $new_release."
+else
+  echo "Release version changed in CMakeLists.txt. Review and commit that change."
+fi
+echo "Install and test the package on a target Linux machine before distribution."

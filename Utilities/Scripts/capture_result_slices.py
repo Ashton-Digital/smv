@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+import math
 import os
 from pathlib import Path
 import re
@@ -24,6 +25,11 @@ import struct
 import subprocess
 import sys
 import tempfile
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+from smv_planes import parse_plane_selection
 
 
 QUANTITIES = ("visibility", "temperature", "velocity", "pressure")
@@ -43,13 +49,15 @@ class Capture:
     position: float
     width: int
     height: int
+    clip_position: float | None = None
+    clip_side: str = "max"
     model_bounds: tuple[int, int, int, int] | None = None
 
 
 def legacy_capture_pattern(prefix: str) -> re.Pattern[str]:
     return re.compile(
         rf"{re.escape(prefix)}_({QUANTITY_PATTERN})_([xyz])_(\d{{3}})_"
-        r"(m?\d+p\d{3})\.png"
+        r"(m?\d+p\d{3})(?:_clip_(m?\d+p\d{3})_(min|max))?\.png"
     )
 
 
@@ -57,7 +65,7 @@ def human_capture_pattern(prefix: str) -> re.Pattern[str]:
     quantities = "|".join(quantity.title() for quantity in QUANTITIES)
     return re.compile(
         rf"{re.escape(prefix)} ({quantities}) [XYZ] Slice \d{{3}} at "
-        r"-?\d+\.\d{3}m Clip (Min|Max)\.png"
+        r"-?\d+\.\d{3}m Clip (?:-?\d+\.\d{3}m )?(Min|Max)\.png"
     )
 
 
@@ -69,6 +77,27 @@ def nonnegative_int(value: str) -> int:
     if number < 0:
         raise argparse.ArgumentTypeError("value must be a non-negative integer")
     return number
+
+
+def capture_variant(value: str) -> str:
+    match = re.fullmatch(
+        r"\s*([XYZxyz])\s*=\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))"
+        r"\s*@\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*:\s*(min|max)\s*",
+        value, flags=re.IGNORECASE,
+    )
+    if match is None:
+        raise argparse.ArgumentTypeError("variant must be like Y=5@2:min")
+    slice_position, clip_position = float(match.group(2)), float(match.group(3))
+    if not math.isfinite(slice_position) or not math.isfinite(clip_position):
+        raise argparse.ArgumentTypeError("variant coordinates must be finite")
+    return f"{match.group(1).lower()}={slice_position:.3f}@{clip_position:.3f}:{match.group(4).lower()}"
+
+
+def default_axes(value: str) -> str:
+    axes = value.lower()
+    if any(axis not in "xyz" for axis in axes) or len(set(axes)) != len(axes):
+        raise argparse.ArgumentTypeError("default axes must contain each of X, Y, Z at most once")
+    return axes
 
 
 def smokeview_file(value: str) -> Path:
@@ -122,6 +151,11 @@ def png_size(path: Path) -> tuple[int, int]:
 
 
 def image_magick_command() -> list[str] | None:
+    if getattr(sys, "frozen", False):
+        bundled = Path(sys.executable).resolve().parent / "imagemagick" / "magick.exe"
+        if bundled.is_file():
+            os.environ["MAGICK_HOME"] = str(bundled.parent)
+            return [str(bundled)]
     magick = shutil.which("magick")
     if magick is not None:
         return [magick]
@@ -153,21 +187,27 @@ def discover_captures(
             continue
         if previous.get(path) == file_signature(path):
             continue
-        quantity, axis, sequence, encoded_position = match.groups()
+        quantity, axis, sequence, encoded_position, encoded_clip, side = match.groups()
         position_text = encoded_position.replace("p", ".")
         if position_text.startswith("m"):
             position_text = "-" + position_text[1:]
         width, height = png_size(path)
-        captures.append(
-            Capture(path, quantity, axis, sequence, float(position_text), width, height)
-        )
+        clip_position = None
+        if encoded_clip is not None:
+            clip_text = encoded_clip.replace("p", ".")
+            if clip_text.startswith("m"):
+                clip_text = "-" + clip_text[1:]
+            clip_position = float(clip_text)
+        captures.append(Capture(path, quantity, axis, sequence, float(position_text),
+                                width, height, clip_position, side or "max"))
     return captures
 
 
 def human_capture_name(prefix: str, capture: Capture) -> str:
+    clip = (f"{capture.clip_position:.3f}m " if capture.clip_position is not None else "")
     return (
         f"{prefix} {capture.quantity.title()} {capture.axis.upper()} "
-        f"Slice {capture.sequence} at {capture.position:.3f}m Clip Max.png"
+        f"Slice {capture.sequence} at {capture.position:.3f}m Clip {clip}{capture.clip_side.title()}.png"
     )
 
 
@@ -360,11 +400,37 @@ def supports_result_capture(executable: Path) -> bool:
     return not keywords
 
 
+def supports_plane_filter(executable: Path) -> bool:
+    marker = b"SMV_FEATURE_CAPTURE_PLANES_1"
+    overlap = b""
+    with executable.open("rb") as stream:
+        while chunk := stream.read(1024 * 1024):
+            data = overlap + chunk
+            if marker in data:
+                return True
+            overlap = data[-len(marker):]
+    return False
+
+
+def supports_capture_variants(executable: Path) -> bool:
+    marker = b"SMV_FEATURE_CAPTURE_VARIANTS_1"
+    overlap = b""
+    with executable.open("rb") as stream:
+        while chunk := stream.read(1024 * 1024):
+            data = overlap + chunk
+            if marker in data:
+                return True
+            overlap = data[-len(marker):]
+    return False
+
+
 def find_smokeview(explicit: Path | None) -> Path:
     if explicit is not None:
         return explicit
 
     candidates: list[Path] = []
+    if getattr(sys, "frozen", False):
+        candidates.append(Path(sys.executable).resolve().with_name("smokeview.exe"))
     script_dir = Path(__file__).resolve().parent
     for executable_name in ("smokeview", "smokeview_linux", "smokeview.exe"):
         candidates.append(script_dir / executable_name)
@@ -391,7 +457,8 @@ def find_smokeview(explicit: Path | None) -> Path:
     )
 
 
-def check_dependencies(smokeview: Path, crop_enabled: bool) -> list[str] | None:
+def check_dependencies(smokeview: Path, crop_enabled: bool, plane_filter: bool = False,
+                       variants: bool = False) -> list[str] | None:
     def report(message: str) -> None:
         print(message, flush=True)
 
@@ -418,6 +485,14 @@ def check_dependencies(smokeview: Path, crop_enabled: bool) -> list[str] | None:
             "Build Smokeview from this checkout or pass that executable with --smokeview."
         )
     report(f"  [OK] Smokeview capture support: {smokeview}")
+    if plane_filter and not supports_plane_filter(smokeview):
+        raise RuntimeError(
+            f"{smokeview} does not support selecting slice positions. "
+            "Use the matching Smokeview build or omit --planes."
+        )
+    if variants and not supports_capture_variants(smokeview):
+        raise RuntimeError("This Smokeview build does not support clip variants and axis defaults. "
+                           "Use the matching Ashton Smokeview build.")
 
     convert_command = image_magick_command()
     if crop_enabled:
@@ -481,6 +556,22 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--prefix", help="output filename prefix (default: case name)")
     parser.add_argument(
+        "--quantities", nargs="+", choices=QUANTITIES, metavar="QUANTITY",
+        help="capture only selected quantities: visibility temperature velocity pressure",
+    )
+    parser.add_argument(
+        "--planes", type=parse_plane_selection, metavar="AXIS=METRES,...",
+        help="capture only these slice positions, for example Y=3,Y=5 (default: all planes)",
+    )
+    parser.add_argument(
+        "--default-axes", type=default_axes, metavar="XYZ",
+        help="axes to capture at their default clip position; an empty value disables defaults",
+    )
+    parser.add_argument(
+        "--clip-variant", action="append", type=capture_variant, default=[],
+        metavar="SLICE@CLIP:SIDE", help="extra capture, for example Y=5@2:min; repeatable",
+    )
+    parser.add_argument(
         "--size", type=render_size, metavar="WIDTHxHEIGHT",
         help="capture dimensions (default: current display resolution)",
     )
@@ -518,7 +609,11 @@ def main() -> int:
         raise RuntimeError("The output path cannot contain a newline or '#' character")
 
     smokeview = find_smokeview(args.smokeview)
-    convert_command = check_dependencies(smokeview, crop_enabled=not args.no_crop)
+    if len(args.clip_variant) != len(set(args.clip_variant)):
+        raise RuntimeError("duplicate clip variants are not allowed")
+    convert_command = check_dependencies(smokeview, crop_enabled=not args.no_crop,
+                                         plane_filter=bool(args.planes or args.clip_variant),
+                                         variants=args.default_axes is not None or bool(args.clip_variant))
     output.mkdir(parents=True, exist_ok=True)
     legacy_pattern = legacy_capture_pattern(prefix)
     human_pattern = human_capture_pattern(prefix)
@@ -579,16 +674,34 @@ def main() -> int:
     print(f"Capture size: {width}x{height}")
     print(f"Using Smokeview: {smokeview}")
     try:
-        returncode = subprocess.run(command, cwd=case.parent, check=False).returncode
+        capture_env = os.environ.copy()
+        if args.quantities:
+            capture_env["ASHTON_CAPTURE_QUANTITIES"] = ",".join(args.quantities)
+        else:
+            capture_env.pop("ASHTON_CAPTURE_QUANTITIES", None)
+        if args.planes:
+            capture_env["ASHTON_CAPTURE_PLANES"] = args.planes
+        else:
+            capture_env.pop("ASHTON_CAPTURE_PLANES", None)
+        if args.default_axes is not None:
+            capture_env["ASHTON_CAPTURE_DEFAULT_AXES"] = args.default_axes
+        else:
+            capture_env.pop("ASHTON_CAPTURE_DEFAULT_AXES", None)
+        if args.clip_variant:
+            capture_env["ASHTON_CAPTURE_VARIANTS"] = ",".join(args.clip_variant)
+        else:
+            capture_env.pop("ASHTON_CAPTURE_VARIANTS", None)
+        returncode = subprocess.run(command, cwd=case.parent, env=capture_env, check=False).returncode
         if returncode != 0:
             return returncode
         captures = discover_captures(output, prefix, previous_captures)
         if not captures:
             print(
-                "capture_result_slices: warning: no new result PNG files were found",
+                "capture_result_slices: warning: no new result PNG files were found"
+                + (" at the requested slice positions" if args.planes or args.clip_variant else ""),
                 file=sys.stderr,
             )
-            return 0
+            return 2 if args.planes or args.clip_variant else 0
         if not args.no_crop:
             assert convert_command is not None
             crop_captures(captures, args.crop_padding, convert_command)

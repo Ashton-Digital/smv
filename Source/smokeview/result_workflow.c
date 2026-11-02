@@ -77,15 +77,19 @@ static float workflow_zaxis_angles_saved[3];
 static int workflow_zoomindex_saved = ZOOMINDEX_ONE;
 static int last_view_axis = -1;
 static int next_view_stage = 0;
+static int capture_variant_cursor = -1;
+static float capture_clip_position = 0.0f;
+static int capture_view_min = 0;
 
 const char *GetResultWorkflowCaptureFeature(void){
-  return "SMV_FEATURE_RENDERRESULTS_1";
+  return "SMV_FEATURE_RENDERRESULTS_1 SMV_FEATURE_CAPTURE_PLANES_1 SMV_FEATURE_CAPTURE_VARIANTS_1";
 }
 
 static void HideWorkflowPlane(const workflow_plane *plane);
 static void RestoreWorkflowCameraClip(void);
-static void SelectWorkflowPlane(int workflow_index, int apply_clip_view, int direction);
+static void SelectWorkflowPlane(int workflow_index, int apply_clip_view, int direction, int requested_plane);
 static void ApplyWorkflowClipView(const workflow_plane *plane);
+static void SetFittedAxisView(int view);
 
 /* ------------------ SetResultWorkflowCaptureTime ------------------------ */
 
@@ -120,16 +124,16 @@ void ReapplyResultWorkflowCaptureClip(void){
   if(active_plane.group_index < 0)return;
   switch(active_plane.idir){
     case 1:
-      clip_enabled = &clipinfo.clip_xmax;
-      clip_value = &clipinfo.xmax;
+      clip_enabled = capture_view_min ? &clipinfo.clip_xmin : &clipinfo.clip_xmax;
+      clip_value = capture_view_min ? &clipinfo.xmin : &clipinfo.xmax;
       break;
     case 2:
-      clip_enabled = &clipinfo.clip_ymax;
-      clip_value = &clipinfo.ymax;
+      clip_enabled = capture_view_min ? &clipinfo.clip_ymin : &clipinfo.clip_ymax;
+      clip_value = capture_view_min ? &clipinfo.ymin : &clipinfo.ymax;
       break;
     case 3:
-      clip_enabled = &clipinfo.clip_zmax;
-      clip_value = &clipinfo.zmax;
+      clip_enabled = capture_view_min ? &clipinfo.clip_zmin : &clipinfo.clip_zmax;
+      clip_value = capture_view_min ? &clipinfo.zmin : &clipinfo.zmax;
       break;
     default:
       return;
@@ -142,7 +146,7 @@ void ReapplyResultWorkflowCaptureClip(void){
   clipinfo.clip_zmax = 0;
   clip_mode = CLIP_BLOCKAGES;
   *clip_enabled = 1;
-  *clip_value = active_plane.position;
+  *clip_value = capture_clip_position;
   Clip2Cam(camera_current);
 }
 
@@ -165,6 +169,8 @@ static void ClearActiveResultWorkflow(void){
 
 void BeginResultWorkflowCapture(void){
   ClearActiveResultWorkflow();
+  capture_variant_cursor = -1;
+  capture_view_min = 0;
   outline_mode = SCENE_OUTLINE_HIDDEN;
   updatefacelists = 1;
   updatemenu = 1;
@@ -392,33 +398,202 @@ static int BuildWorkflowPlanes(const result_workflow *workflow, int is_vector, w
 
 /* ------------------ CaptureNextResultWorkflowPlane ------------------------ */
 
+static int CaptureWorkflowEnabled(const char *name){
+  const char *filter = getenv("ASHTON_CAPTURE_QUANTITIES");
+  const char *part;
+  size_t name_len;
+
+  if(filter == NULL || filter[0] == 0)return 1;
+  name_len = strlen(name);
+  part = filter;
+  while(*part != 0){
+    const char *end = strchr(part, ',');
+    size_t part_len = end == NULL ? strlen(part) : (size_t)(end - part);
+
+    if(part_len == name_len && strncmp(part, name, name_len) == 0)return 1;
+    if(end == NULL)break;
+    part = end + 1;
+  }
+  return 0;
+}
+
+static int CapturePlaneEnabled(const workflow_plane *plane){
+  const char *filter = getenv("ASHTON_CAPTURE_PLANES");
+  const char *axes = getenv("ASHTON_CAPTURE_DEFAULT_AXES");
+  const char *part;
+
+  if(axes != NULL && strchr(axes, 'x' + plane->idir - 1) == NULL)return 0;
+
+  if(filter == NULL || filter[0] == 0)return 1;
+  part = filter;
+  while(*part != 0){
+    char axis = 0;
+    float position = 0.0f;
+    int consumed = 0;
+
+    if(sscanf(part, " %c = %f %n", &axis, &position, &consumed) >= 2 && consumed > 0 &&
+       (part[consumed] == ',' || part[consumed] == 0)){
+      if(axis == (char)('x' + plane->idir - 1) && ABS(position - plane->position) <= 0.0005f)return 1;
+    }
+    part = strchr(part, ',');
+    if(part == NULL)break;
+    part++;
+  }
+  return 0;
+}
+
+static int CaptureVariantForPlane(const workflow_plane *plane, int after,
+                                 float *clip_position, int *view_min){
+  const char *part = getenv("ASHTON_CAPTURE_VARIANTS");
+  int index = 0;
+
+  if(part == NULL)return -1;
+  while(*part != 0){
+    char axis = 0, side[4] = {0};
+    float slice = 0.0f, clip = 0.0f;
+    int consumed = 0;
+
+    if(sscanf(part, " %c=%f@%f:%3[a-z]%n", &axis, &slice, &clip, side, &consumed) == 4 &&
+       consumed > 0 && (part[consumed] == ',' || part[consumed] == 0) &&
+       index > after && axis == 'x' + plane->idir - 1 &&
+       ABS(slice - plane->position) <= 0.0005f &&
+       (strcmp(side, "min") == 0 || strcmp(side, "max") == 0)){
+      *clip_position = clip;
+      *view_min = strcmp(side, "min") == 0;
+      return index;
+    }
+    part = strchr(part, ',');
+    if(part == NULL)break;
+    part++;
+    index++;
+  }
+  return -1;
+}
+
+static void ApplyCaptureVariant(const workflow_plane *plane, float clip_position, int view_min){
+  int view, *clip_enabled;
+  float *clip_value;
+
+  switch(plane->idir){
+    case 1:
+      view = view_min ? MENU_VIEW_XMIN : MENU_VIEW_XMAX;
+      clip_enabled = view_min ? &clipinfo.clip_xmin : &clipinfo.clip_xmax;
+      clip_value = view_min ? &clipinfo.xmin : &clipinfo.xmax;
+      break;
+    case 2:
+      view = view_min ? MENU_VIEW_YMIN : MENU_VIEW_YMAX;
+      clip_enabled = view_min ? &clipinfo.clip_ymin : &clipinfo.clip_ymax;
+      clip_value = view_min ? &clipinfo.ymin : &clipinfo.ymax;
+      break;
+    default:
+      view = view_min ? MENU_VIEW_ZMIN : MENU_VIEW_ZMAX;
+      clip_enabled = view_min ? &clipinfo.clip_zmin : &clipinfo.clip_zmax;
+      clip_value = view_min ? &clipinfo.zmin : &clipinfo.zmax;
+      break;
+  }
+  SetFittedAxisView(view);
+  clipinfo.clip_xmin = clipinfo.clip_xmax = 0;
+  clipinfo.clip_ymin = clipinfo.clip_ymax = 0;
+  clipinfo.clip_zmin = clipinfo.clip_zmax = 0;
+  clip_mode = CLIP_BLOCKAGES;
+  *clip_enabled = 1;
+  *clip_value = clip_position;
+  Clip2Cam(camera_current);
+  GLUIUpdateClip();
+  updatefacelists = 1;
+  global_scase.updatefaces = 1;
+  GLUTPOSTREDISPLAY;
+}
+
+static void CaptureRenderName(const char *prefix, const workflow_plane *plane,
+                              int plane_index, int variant_index, float clip_position,
+                              int view_min, const char *quantity,
+                              char *render_base, int render_base_size){
+  char position[64], clip[64];
+  int j;
+
+  snprintf(position, sizeof(position), "%.3f", plane->position);
+  snprintf(clip, sizeof(clip), "%.3f", clip_position);
+  for(j = 0; position[j] != 0; j++){
+    if(position[j] == '-')position[j] = 'm';
+    if(position[j] == '.')position[j] = 'p';
+  }
+  for(j = 0; clip[j] != 0; j++){
+    if(clip[j] == '-')clip[j] = 'm';
+    if(clip[j] == '.')clip[j] = 'p';
+  }
+  snprintf(render_base, (size_t)render_base_size, "%s%s%s_%c_%03i_%s",
+           prefix == NULL ? "" : prefix, prefix == NULL || prefix[0] == 0 ? "" : "_",
+           quantity, 'x' + plane->idir - 1, plane_index + 1, position);
+  if(variant_index >= 0){
+    size_t used = strlen(render_base);
+    if(used < (size_t)render_base_size){
+      snprintf(render_base + used, (size_t)render_base_size - used,
+               "_clip_%s_%s", clip, view_min ? "min" : "max");
+    }
+  }
+}
+
 int CaptureNextResultWorkflowPlane(int *workflow_index, int *plane_index,
                                    const char *prefix, char *render_base, int render_base_size){
   int i;
 
   if(workflow_index == NULL || plane_index == NULL || render_base == NULL || render_base_size <= 0)return 0;
   render_base[0] = 0;
+  if(*plane_index >= 0 && *workflow_index >= 0 && *workflow_index < NRESULT_WORKFLOWS){
+    workflow_plane *planes = NULL;
+    int nplanes = BuildWorkflowPlanes(workflows + *workflow_index, 0, &planes);
+    if(*plane_index < nplanes){
+      float clip;
+      int view_min;
+      int variant = CaptureVariantForPlane(planes + *plane_index, capture_variant_cursor,
+                                           &clip, &view_min);
+      if(variant >= 0){
+        CaptureRenderName(prefix, planes + *plane_index, *plane_index, variant, clip,
+                          view_min, workflows[*workflow_index].name, render_base, render_base_size);
+        ApplyCaptureVariant(planes + *plane_index, clip, view_min);
+        capture_variant_cursor = variant;
+        capture_clip_position = clip;
+        capture_view_min = view_min;
+        FREEMEMORY(planes);
+        return 1;
+      }
+    }
+    FREEMEMORY(planes);
+  }
   for(i = MAX(*workflow_index, 0); i < NRESULT_WORKFLOWS; i++){
     workflow_plane *planes = NULL;
     int next_plane = i == *workflow_index ? *plane_index + 1 : 0;
-    int nplanes = BuildWorkflowPlanes(workflows + i, 0, &planes);
+    int nplanes;
 
+    if(CaptureWorkflowEnabled(workflows[i].name) == 0){
+      *plane_index = -1;
+      continue;
+    }
+    nplanes = BuildWorkflowPlanes(workflows + i, 0, &planes);
+
+    while(next_plane >= 0 && next_plane < nplanes){
+      float clip;
+      int view_min;
+      if(CapturePlaneEnabled(planes + next_plane) ||
+         CaptureVariantForPlane(planes + next_plane, -1, &clip, &view_min) >= 0)break;
+      next_plane++;
+    }
     if(next_plane >= 0 && next_plane < nplanes){
-      char position[64];
-      int j;
-
-      snprintf(position, sizeof(position), "%.3f", planes[next_plane].position);
-      for(j = 0; position[j] != 0; j++){
-        if(position[j] == '-')position[j] = 'm';
-        if(position[j] == '.')position[j] = 'p';
+      float clip = planes[next_plane].position;
+      int view_min = 0;
+      int variant = -1;
+      if(CapturePlaneEnabled(planes + next_plane) == 0){
+        variant = CaptureVariantForPlane(planes + next_plane, -1, &clip, &view_min);
       }
-      snprintf(render_base, (size_t)render_base_size, "%s%s%s_%c_%03i_%s",
-               prefix == NULL ? "" : prefix,
-               prefix == NULL || prefix[0] == 0 ? "" : "_",
-               workflows[i].name, (char)('x' + planes[next_plane].idir - 1),
-               next_plane + 1, position);
+      CaptureRenderName(prefix, planes + next_plane, next_plane, variant, clip,
+                        view_min, workflows[i].name, render_base, render_base_size);
+      SelectWorkflowPlane(i, 1, 1, next_plane);
+      if(variant >= 0)ApplyCaptureVariant(planes + next_plane, clip, view_min);
+      capture_variant_cursor = variant;
+      capture_clip_position = clip;
+      capture_view_min = view_min;
       FREEMEMORY(planes);
-      SelectWorkflowPlane(i, 1, 1);
       *workflow_index = i;
       *plane_index = next_plane;
       return active_workflow == i && active_plane.group_index >= 0;
@@ -895,7 +1070,7 @@ static void ReportWorkflowMessage(const char *message){
 
 /* ------------------ SelectWorkflowPlane ------------------------ */
 
-static void SelectWorkflowPlane(int workflow_index, int apply_clip_view, int direction){
+static void SelectWorkflowPlane(int workflow_index, int apply_clip_view, int direction, int requested_plane){
   result_workflow *workflow = workflows + workflow_index;
   workflow_plane *planes = NULL;
   float selected_time = 0.0f;
@@ -933,7 +1108,10 @@ static void SelectWorkflowPlane(int workflow_index, int apply_clip_view, int dir
   workflow_message[0] = 0;
   HideWorkflowPlane(&active_plane);
   if(apply_clip_view == 0)RestoreWorkflowCameraClip();
-  if(active_workflow == workflow_index){
+  if(requested_plane >= 0){
+    plane_index = requested_plane;
+  }
+  else if(active_workflow == workflow_index){
     plane_index = workflow->current_plane + direction;
   }
   else{
@@ -1020,16 +1198,16 @@ int HandleResultWorkflowShortcut(unsigned char key, int modifiers){
       /* 'l' is a collision-free backup for visibility: Ctrl+I shares its
          key code with TAB, which some window managers and remote-desktop
          clients intercept before Smokeview ever sees it. */
-      SelectWorkflowPlane(WORKFLOW_VISIBILITY, apply_clip_view, direction);
+      SelectWorkflowPlane(WORKFLOW_VISIBILITY, apply_clip_view, direction, -1);
       return 1;
     case 't':
-      SelectWorkflowPlane(WORKFLOW_TEMPERATURE, apply_clip_view, direction);
+      SelectWorkflowPlane(WORKFLOW_TEMPERATURE, apply_clip_view, direction, -1);
       return 1;
     case 'v':
-      SelectWorkflowPlane(WORKFLOW_VELOCITY, apply_clip_view, direction);
+      SelectWorkflowPlane(WORKFLOW_VELOCITY, apply_clip_view, direction, -1);
       return 1;
     case 'p':
-      SelectWorkflowPlane(WORKFLOW_PRESSURE, apply_clip_view, direction);
+      SelectWorkflowPlane(WORKFLOW_PRESSURE, apply_clip_view, direction, -1);
       return 1;
     case 'm':
       return FlipWorkflowClipSide();

@@ -2,8 +2,9 @@
 
 This document defines how the Ashton custom Smokeview fork is built, tested,
 versioned, packaged, and distributed internally. The current release line is
-based on Smokeview 6.11.2 and uses an Ashton suffix such as `af1`, producing the
-combined version `6.11.2-af1`.
+based on Smokeview 6.11.2. The current build is `6.11.2-af2`;
+`6.11.2-af1` is the previous tagged release.
+The [af2 release notes](AF2_RELEASE_NOTES.md) summarise the candidate.
 
 ## Current Customisation
 
@@ -128,14 +129,16 @@ above) that shadowing happens silently.
 The internal repository is:
 
 ```text
-git@github.com:AshtonDigital/smv.git
+git@github.com:Ashton-Digital/smv.git
 ```
 
 Changes may be committed directly to the internal release branch without a
 pull request if that is the team's agreed process. Keep commits focused and do
 not commit generated files from `cbuild/` or packaged release archives.
 
-Before starting release work:
+Before starting release work, choose the exact source commit and make the
+release checkout clean. A local version edit or a previously built installer
+is not a substitute for a committed release version:
 
 ```bash
 git status --short --branch
@@ -146,27 +149,24 @@ Use annotated tags for distributed versions. The tag must match the version
 reported by `smokeview -version` and printed in the installer filename:
 
 ```bash
-git tag -a ashton-smv-v6.11.2-af1 -m "Ashton Smokeview 6.11.2-af1"
-git push origin ashton-smv-v6.11.2-af1
+git tag -a ashton-smv-v6.11.2-af2 -m "Ashton Smokeview 6.11.2-af2"
+git push origin ashton-smv-v6.11.2-af2
 ```
 
 Only tag a commit after its release package has passed the acceptance tests.
 
 ### Pre-release test builds
 
-While a release line is still being iterated on and has not yet been tagged,
-set `ASHTON_RELEASE` to that release name with an `-rcN` suffix, for example
-`af1-rc1`, `af1-rc2`, and so on for each distributed test build. This keeps
-successive test builds distinguishable (in the `-version` banner, the
-installer filename, and the embedded checksum) without implying a numbered
-release (`af2`) has begun. `ASHTON_RELEASE` is a free-form string, so no other
-build or packaging script needs to change to support this.
+The Windows build prompt proposes a version based on the current
+`ASHTON_RELEASE` value. For an intentional release with the literal suffix
+`af2`, pass `-Version af2` explicitly; the prompt may otherwise propose a
+different three-part line. The Linux release script takes `af2` as its
+argument. Rebuild Smokeview after changing the release suffix because the
+revision is compiled into the executable.
 
-Once a build passes acceptance testing, drop the `-rcN` suffix (`af1-rc3`
-becomes `af1`), rebuild and repackage so the final artefact's embedded version
-matches exactly, and only then create the annotated tag. Do not tag an `-rcN`
-build. The next release line after a tagged version increments the numbered
-suffix as before (`af1` to `af2`, not `af1.1`).
+For release candidates with an `-rcN` suffix, rebuild with the final version
+after acceptance testing. A literal `af2` build already carries its final
+version; create the annotated tag only after its installers pass testing.
 
 ## Configuration Files
 
@@ -175,14 +175,10 @@ Smokeview root directory. For the portable internal package, the executable,
 `smokeview.ini`, and `objects.svo` must be placed in the same top-level
 directory.
 
-The approved company-default configuration is maintained at:
-
-```text
-/home/tomcox/SharedFolder/VMLinux/smokeview.ini
-```
-
-`Build/for_bundle/smokeview.ini` is the version-controlled release snapshot of
-that file and is packaged on both platforms. The company default is a complete
+`Build/for_bundle/smokeview.ini` is the version-controlled company default and
+is packaged on both platforms. If a newer approved configuration is supplied,
+compare it with this file and commit the reviewed changes before building.
+The company default is a complete
 saved Smokeview configuration, not just a colourbar definition file. Review
 changes to it for:
 
@@ -211,7 +207,7 @@ For current development testing, place the required resources beside the
 executable:
 
 ```bash
-cp /home/tomcox/SharedFolder/VMLinux/smokeview.ini cbuild/review/smokeview.ini
+cp Build/for_bundle/smokeview.ini cbuild/review/smokeview.ini
 cp Build/for_bundle/objects.svo cbuild/review/objects.svo
 ```
 
@@ -230,53 +226,138 @@ This prevents the package from referring to a library inside the developer's
 checkout.
 
 For normal releases, use the platform packaging scripts from the repository
-root. To match the official Smokeview distribution format, Linux produces a
-self-extracting `.sh` installer and Windows produces an NSIS `.exe` installer.
+root. Linux produces a self-extracting `.sh` installer and Windows produces a
+WiX `.msi` installer.
 
 ```bash
-./scripts/package_release_linux.sh
+./scripts/cut_release.sh af2
 ```
 
-From an x64 Visual Studio Developer PowerShell on Windows:
+From an x64 Visual Studio Developer PowerShell on Windows, after extracting
+the [official portable static ImageMagick archive](https://imagemagick.org/download/):
 
 ```powershell
-.\scripts\package_release_windows.ps1
+.\scripts\package_release_windows.ps1 -Version af2 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
 ```
 
-Both scripts use `Build/for_bundle/smokeview.ini`, the committed snapshot of
-the company default. Use `--config` or `-ConfigFile` only to test an explicitly
-selected alternative configuration.
+This script asks whether the next build is a test or live release. It updates
+`CMakeLists.txt` and the current build references in this guide before building.
+Pass `-Version af2` for the intended literal af2 release or any unattended
+build of that version.
 
-Both scripts put the installer and a SHA-256 checksum in `dist/`. They accept
-`--help`/`Get-Help`-style parameter discovery and can package an existing build
+### Build both installers on one Windows workstation
+
+Install and start [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+in **Linux containers** mode. The Windows host needs Visual Studio 2022 C++
+build tools, CMake, WiX Toolset 3, Python 3.10+ with PyInstaller and
+PySide6-Essentials, and
+the extracted portable ImageMagick folder described below. Docker builds the
+Linux binary in Ubuntu 22.04; Visual Studio and WiX build the MSI on Windows.
+Both builds use the same checkout, with separate CMake build directories.
+
+WSL is optional. Docker Desktop can run Linux containers using its WSL 2
+backend, Hyper-V backend (with an all-users Docker Desktop installation), or
+Docker VMM. Choose a backend supported by the Windows machine when installing
+Docker Desktop from the linked official page. If using WSL 2, enable it with
+`wsl --install` in an Administrator PowerShell and restart if prompted. Start
+Docker Desktop, then check in PowerShell that
+`docker info --format '{{.OSType}}'` prints `linux`. The build runs from
+Windows PowerShell; no separate Ubuntu installation is required.
+
+Run this from the repository root in an x64 Visual Studio Developer PowerShell:
+
+```powershell
+py -3 -m pip install pyinstaller PySide6-Essentials
+.\scripts\package_release_all.ps1 -Version af2 -ImageMagickDir "C:\path\to\extracted\ImageMagick"
+```
+
+The script uses the same test/live prompt as the Windows-only build and updates
+`ASHTON_RELEASE` in `CMakeLists.txt` and the current build references in this
+guide before building. For a literal af2 release, pass `-Version af2`.
+After a live three-part Ashton release, the script increments its patch number
+for the next test or live build. The upstream
+Smokeview version (currently `6.11.2`) remains the value in `CMakeLists.txt`;
+update it there when the fork moves to a newer upstream Smokeview version.
+
+The script builds and checks both `dist/ashton-smokeview-v<version>-windows-x64.msi`
+and `dist/ashton-smokeview-v<version>-linux-x64.sh`, including their `.sha256`
+files. It checks that the Linux binary's glibc requirement does not exceed
+Ubuntu 22.04's 2.35. The first Docker image build downloads the Ubuntu build
+dependencies; later builds reuse the image. The Linux installer still needs to
+be tested on a separate Linux machine and the MSI on a separate Windows
+machine before distribution.
+
+All three scripts use `Build/for_bundle/smokeview.ini`, the committed snapshot
+of the company default. The individual platform scripts accept `--config` or
+`-ConfigFile` to test an explicitly selected alternative configuration.
+
+The platform scripts put their installer and a SHA-256 checksum in `dist/`.
+They accept `--help`/`Get-Help`-style parameter discovery and can package an existing build
 with `--skip-build`/`-SkipBuild`. The Windows package uses the static MSVC
 runtime so that installing the Visual C++ Redistributable is not a prerequisite.
-Creating the Windows installer also requires NSIS 3 and its `makensis.exe`
-compiler.
+Creating the Windows installer also requires WiX Toolset 3 (`heat.exe`,
+`candle.exe`, and `light.exe`). The MSI installs for all users under
+`%ProgramFiles%\Ashton Digital\Smokeview` and requests administrator elevation;
+its numeric Windows Installer
+version uses the upstream version, while the full Ashton version appears in
+the product name, filename, and packaged `VERSION` file.
+Ashton releases on the same upstream version therefore share one MSI numeric
+version. The installer allows same-version upgrades; test replacement of any
+installed trial build before rolling out af2, or uninstall trial builds
+first. The MSI version alone cannot distinguish Ashton release order.
+
+The Windows packaging machine also needs Python 3.10+ with PyInstaller and
+PySide6-Essentials (`py -3 -m pip install pyinstaller PySide6-Essentials`)
+and an extracted, official ImageMagick
+portable Q16 x64 static archive. Pass the folder containing `magick.exe` with
+`-ImageMagickDir`. PyInstaller embeds Python and PySide6 in
+the two capture executables; the MSI copies the portable ImageMagick tree
+beside them. Installed Windows users do not need separate Python or
+ImageMagick installations. The packaged `DEPENDENCIES.txt` records the build
+interpreter, PyInstaller version, ImageMagick version, executable checksum, and
+the SHA-256 checksum of `smokeview.ini`. The MSI build also checks that staged
+Smokeview resolves its global INI to the packaged file and that WiX harvested
+the company CSV colourbars.
+
+The camera-and-flame capture icon is authored in
+`Utilities/Scripts/capture_logo.svg`; the UI
+and Linux desktop launcher use `capture_logo.png`, while the Windows capture
+executable embeds `capture_logo.ico`.
 
 The release version combines the upstream Smokeview version with the Ashton
-fork release, for example `6.11.2-af1`. Increment `ASHTON_RELEASE` in the root
-`CMakeLists.txt` (`af2`, `af3`, and so on) before creating the next release.
+fork release, for example `6.11.2-af2`. The release selector updates
+`ASHTON_RELEASE` in the root `CMakeLists.txt` when building a new version.
 The packaging scripts derive the version automatically and reject an installer
 whose package version does not match the revision embedded in its executable.
 
-Both installers include `capture_result_slices.py` beside the Smokeview
-executable. This keeps the capture utility matched to the custom build and lets
-it discover the installed executable without a `--smokeview` argument. End
-users still need Python 3.10 or newer (enforced with a clear error rather than
-a raw `SyntaxError`/exception on older interpreters) and, unless they use
-`--no-crop`, ImageMagick (either the `magick` or the `convert` command). On
-Ubuntu/Debian, install it with:
+Both installers include the capture engine beside the Smokeview executable.
+This keeps the utility matched to the custom build and lets it discover the
+installed executable without a `--smokeview` argument. Linux users need Python
+3.10 or newer and, unless they use `--no-crop`, ImageMagick. On Ubuntu/Debian,
+install it with:
 
 ```bash
 sudo apt-get install imagemagick
 ```
 
-On Windows, the installer adds **Capture result slices** to the `.smv` file
-context menu. On Linux, it installs the `af-smv` and `smv-cap` commands and
-registers **Capture result slices** as an `.smv` application under **Open
-With**. These actions start a separate automated Smokeview process; an
-existing interactive window can remain open.
+The Linux installer bundles the PySide6 capture window and its Python runtime.
+System Python 3.10+ remains necessary for the capture engine script.
+
+On Windows, the installer adds **Capture result slices** and **Ashton Smokeview
+Help** to the Start menu, adds **Capture result slices** to the all-users
+desktop and the `.smv` context menu, and installs
+`smvhelp.txt` beside `smokeview.exe`.
+The window can select a case or search a folder recursively, choose result
+quantities and capture times, and set an output folder. It uses a capture logo
+and defaults to dark mode. The Advanced slices and clipping panel scans each
+case. Per-case X/Y/Z controls select normal captures, while extra rows capture
+selected slices with an independent absolute clip coordinate and Min/Max view.
+Jobs can be saved and loaded as portable JSON files. On Linux, the installer
+adds the same window to the desktop menu as `smv-cap-ui` and
+installs the `af-smv` and `smv-cap` commands and registers **Capture result
+slices** as an `.smv` application under **Open With**. These actions start a
+separate automated Smokeview process; an existing interactive window can
+remain open.
 
 The Linux installer also installs `smvhelp`, which prints a summary of the
 added shortcuts and `smv-cap` options for engineers unfamiliar with the fork —
@@ -381,9 +462,14 @@ The Linux and Windows installers contain equivalent application resources.
 The Linux payload has this layout:
 
 ```text
-ashton-smokeview-v6.11.2-af1-linux-x64/
+ashton-smokeview-v6.11.2-af2-linux-x64/
 |-- smokeview
 |-- capture_result_slices.py
+|-- capture_slices_ui.pyw
+|-- capture_slices_ui
+|-- capture_ui_core.py
+|-- smv_planes.py
+|-- capture_logo.png
 |-- smv_help.sh
 |-- smokeview.ini
 |-- objects.svo
@@ -407,8 +493,12 @@ installer also sweeps up any leftover directory from the old
 `ashton-smokeview-v<version>` scheme the first time it runs after this change.
 
 The Windows payload uses `smokeview.exe` and also includes
-`capture_result_slices.cmd`, which provides dependency checking and invokes the
-Python capture utility. `VERSION` contains the release version, Git commit,
+`capture_result_slices.exe` and `capture_result_slices.cmd`, which run the
+capture engine with bundled Python, `capture_slices_ui.exe`, which opens the
+capture window with bundled PySide6, and a private `imagemagick/` directory for
+cropping. The source scripts remain beside these executables. `smvhelp.txt`
+summarises the result shortcuts and capture
+options. `VERSION` contains the release version, Git commit,
 build date, platform and compiler. `README.txt` contains the launch and capture
 commands, dependency notes, configuration location and support information.
 
@@ -416,7 +506,7 @@ The packaging scripts assemble these payloads automatically. The equivalent
 manual Linux staging commands are useful only for troubleshooting:
 
 ```bash
-version=6.11.2-af1
+version=6.11.2-af2
 package="dist/ashton-smokeview-v${version}-linux-x64"
 
 rm -rf "$package"
@@ -472,14 +562,31 @@ Verify all of the following before distributing a release:
 - `Ctrl+U` unloads all data and restores the pre-workflow camera and clipping.
 - The installer passes testing on a second machine that has no source checkout.
 - The published `.sha256` file validates the installer.
-- The installed capture utility reports Python, Smokeview and ImageMagick
-  dependencies clearly before rendering.
+- The installed capture utility reports its bundled Python, Smokeview and
+  ImageMagick dependencies clearly before rendering on Windows; the Linux
+  package reports system dependencies.
+- The installed `smokeview.ini` contains the five approved `GCOLORBAR`
+  definitions, and the installed `colorbars/` directory contains the matching
+  CSV files on both platforms.
 - The capture utility renders, crops and renames all configured result slices.
 - Capture can run in a separate automated process while an interactive
   Smokeview window remains open.
 - On Windows, double-clicking an `.smv` file opens Ashton Smokeview and the
-  **Capture result slices** File Explorer context action works.
-- On Linux, `af-smv`, `smv-cap` and `smvhelp` are available, an `.smv` file
+  **Capture result slices** File Explorer context action opens the window with
+  that case selected. The Start menu entry opens the same window with no case.
+- The capture window finds all `.smv` files recursively in a selected folder,
+  skips unchecked result types, identifies cases and requested times in PNG
+  filenames, and writes directly into a chosen output folder. With no output
+  folder chosen, it creates a capture folder beside each case. Its
+  advanced X/Y/Z controls and extra clip views apply separately to each named
+  `.smv` case. A case with no enabled normal axes or extra views is skipped.
+- In folder mode, **Apply to all cases** copies the selected case's axes and
+  clip views to every scanned case; a later edit to one case stays local.
+- A successful single-output capture opens that folder, and **Open captures**
+  reopens it or selects a folder from a multi-case or multi-time batch.
+- On Windows, the MSI creates the **Capture result slices** shortcut on the
+  all-users desktop and in the Start menu.
+- On Linux, `af-smv`, `smv-cap`, `smv-cap-ui` and `smvhelp` are available, an `.smv` file
   opens in Ashton Smokeview by default, and **Open With > Capture result
   slices** works in the desktop file manager.
 - On a shared Linux machine installed with `--system`, `af-smv`, `smv-cap` and
@@ -498,17 +605,30 @@ Publish both the installer and its `.sha256` file using one controlled location:
 Do not distribute an unversioned installer over an existing release. Keep old
 installers available so a team can roll back to the preceding known-good version.
 
+Copy the generated `dist/ashton-smokeview-v<version>-linux-x64.sh` and its
+`.sha256` file to the Linux machine. No compiler or WiX tools are needed there.
+On Ubuntu/Debian, install any missing runtime packages once for either install
+mode (adjust package names for other distributions):
+
+```bash
+sudo apt-get install libglew2.2 libgd3 libgl1 libglu1-mesa libegl1 libopengl0 libxmu6 libx11-6 \
+  libxext6 libxt6 libdbus-1-3 libxcb-shape0 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 \
+  libxcb-image0 libxcb-keysyms1 libxcb-render-util0 imagemagick python3
+```
+
 Linux recipients installing only for themselves should make the downloaded
 installer executable and run it:
 
 ```bash
-chmod +x ashton-smokeview-v6.11.2-af1-linux-x64.sh
-./ashton-smokeview-v6.11.2-af1-linux-x64.sh
+chmod +x ashton-smokeview-v6.11.2-af2-linux-x64.sh
+./ashton-smokeview-v6.11.2-af2-linux-x64.sh
 ```
 
-That installs under `$HOME/.local/opt`, with the `af-smv`/`smv-cap`/`smvhelp`
+That installs under `$HOME/.local/opt/ashton-smokeview`, with the
+`af-smv`/`smv-cap`/`smv-cap-ui`/`smvhelp`
 commands symlinked into `$HOME/.local/bin` and the `.smv` file association set
-only for that user.
+only for that user. It also creates an **Ashton Capture Slices** launcher on
+that user's desktop, using the configured XDG desktop directory.
 
 ### Installing for every user on a shared machine
 
@@ -517,30 +637,33 @@ sudo themselves, one administrator installs it once for everybody with
 `--system`:
 
 ```bash
-chmod +x ashton-smokeview-v6.11.2-af1-linux-x64.sh
-sudo ./ashton-smokeview-v6.11.2-af1-linux-x64.sh --system
+chmod +x ashton-smokeview-v6.11.2-af2-linux-x64.sh
+sudo ./ashton-smokeview-v6.11.2-af2-linux-x64.sh --system
 ```
 
-`--system` requires root and installs into `/opt`, symlinks `af-smv`, `smv-cap`,
-`smvhelp` and a generic `smokeview` into `/usr/local/bin` (on every user's
-`PATH` by default), and registers the `.smv` file association and desktop
+`--system` requires root and installs into `/opt/ashton-smokeview`, symlinks
+`af-smv`, `smv-cap`, `smv-cap-ui`, `smvhelp` and a generic `smokeview` into
+`/usr/local/bin` (on every user's `PATH` by default), and registers the `.smv`
+file association and desktop
 entries under `/usr/share` rather than any one user's home directory. It also
 sets the
 system-wide default `.smv` application directly, since `xdg-mime default` only
 ever writes the invoking (root) user's own configuration and cannot set a
-machine-wide default on its own. **Do not** run the installer as root without
+machine-wide default on its own. If IT uses `sudo`, the installer also creates
+a desktop launcher for the account that invoked it. Each other user who wants
+an icon on their own desktop should run this once in their login session:
+
+```bash
+smv-cap-ui-shortcut
+```
+
+The capture window and Linux desktop entry share the `smv-cap-ui` application
+identity so the taskbar can display the capture icon. Desktop shells may still
+require the user to trust a newly created desktop launcher on first use.
+**Do not** run the installer as root without
 `--system` — that installs a copy usable only by the root account, under
 `/root`, which is invisible and useless to everyone else; the installer prints
 a warning if you do this.
-
-Because the target machine itself needs no build tools, only these runtime
-packages, install them once on the shared machine (adjust package names for
-non-Debian distributions):
-
-```bash
-sudo apt-get install libglew2.2 libgd3 libgl1 libglu1-mesa libxmu6 libx11-6 \
-  libxext6 libxt6 imagemagick python3
-```
 
 One consequence of a root-owned, shared `/opt` install: users cannot save
 Smokeview settings back into the packaged `smokeview.ini`, since it is not
@@ -548,9 +671,9 @@ writable by them. This has not come up as a problem in practice, since the
 approved company default is meant to be used as shipped, but it is worth
 knowing if a user reports that "Save Settings" silently fails.
 
-Windows recipients run the `.exe` installer normally. The Linux installer cannot
-be used natively on Windows; each platform needs its own build and acceptance-test
-pass.
+Windows recipients run the `.msi` installer normally. The Linux installer
+cannot be used natively on Windows. The combined build command produces both
+artifacts on one workstation, but each still needs its own acceptance-test pass.
 
 ## Remaining Release Work
 
