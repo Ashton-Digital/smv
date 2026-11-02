@@ -2,7 +2,7 @@
 
 This document defines how the Ashton custom Smokeview fork is built, tested,
 versioned, packaged, and distributed internally. The current release line is
-based on Smokeview 6.11.2. The current build is `6.11.2-af2.1.0-rc1`;
+based on Smokeview 6.11.2. The current build is `6.11.2-af3`;
 `6.11.2-af1` is the previous tagged release.
 
 ## Current Customisation
@@ -154,12 +154,10 @@ Only tag a commit after its release package has passed the acceptance tests.
 
 ### Pre-release test builds
 
-The current `af2-rc6` build uses the older suffix scheme. The next Windows
-build moves to the three-part Ashton scheme: test selects `af2.1.0-rc1`, and
-live selects `af2.1.0`. Further test builds increment the candidate number
-(`af2.1.0-rc2`); after a live `af2.1.0` build, the next patch is
-`af2.1.1-rc1` or `af2.1.1`. A planned feature release can be selected
-explicitly with `-Version af2.2.0-rc1`.
+The current build uses the short suffix `af3`. Pass `-Version af3` to rebuild
+that exact release. Without an explicit version, the next Windows build asks
+whether to start the three-part `af3.1.0` line as `af3.1.0-rc1` (test) or
+`af3.1.0` (live). Further test builds increment the candidate number.
 
 Once a test build passes acceptance testing, choose live to drop the `-rcN`
 suffix, rebuild and repackage so the final artefact's embedded version matches
@@ -242,10 +240,10 @@ the [official portable static ImageMagick archive](https://imagemagick.org/downl
 ```
 
 This script asks whether the next build is a test or live release. With the
-current `af2-rc6` value, test selects `af2.1.0-rc1` and live selects `af2.1.0`.
+current `af3` value, test selects `af3.1.0-rc1` and live selects `af3.1.0`.
 It updates `CMakeLists.txt` and the current build references in this guide
-before building. Pass `-Version af2.1.0-rc1` for unattended builds or to choose a
-specific version.
+before building. Pass `-Version af3` to rebuild this exact release or to run an
+unattended build with the same version.
 
 ### Build both installers on one Windows workstation
 
@@ -275,7 +273,7 @@ py -3 -m pip install pyinstaller PySide6-Essentials
 
 The script uses the same test/live prompt as the Windows-only build and updates
 `ASHTON_RELEASE` in `CMakeLists.txt` and the current build references in this
-guide before building. For unattended builds, pass `-Version af2.1.0-rc1`.
+guide before building. For this release, pass `-Version af3`.
 After a live three-part Ashton release, the script increments its patch number
 for the next test or live build. The upstream
 Smokeview version (currently `6.11.2`) remains the value in `CMakeLists.txt`;
@@ -594,8 +592,8 @@ On Ubuntu/Debian, install any missing runtime packages once for either install
 mode (adjust package names for other distributions):
 
 ```bash
-sudo apt-get install libglew2.2 libgd3 libgl1 libglu1-mesa libxmu6 libx11-6 \
-  libxext6 libxt6 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 \
+sudo apt-get install libglew2.2 libgd3 libgl1 libglu1-mesa libegl1 libopengl0 libxmu6 libx11-6 \
+  libxext6 libxt6 libdbus-1-3 libxcb-shape0 libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 \
   libxcb-image0 libxcb-keysyms1 libxcb-render-util0 imagemagick python3
 ```
 
@@ -603,8 +601,8 @@ Linux recipients installing only for themselves should make the downloaded
 installer executable and run it:
 
 ```bash
-chmod +x ashton-smokeview-v6.11.2-af2.1.0-rc1-linux-x64.sh
-./ashton-smokeview-v6.11.2-af2.1.0-rc1-linux-x64.sh
+chmod +x ashton-smokeview-v6.11.2-af3-linux-x64.sh
+./ashton-smokeview-v6.11.2-af3-linux-x64.sh
 ```
 
 That installs under `$HOME/.local/opt/ashton-smokeview`, with the
@@ -619,8 +617,8 @@ sudo themselves, one administrator installs it once for everybody with
 `--system`:
 
 ```bash
-chmod +x ashton-smokeview-v6.11.2-af2.1.0-rc1-linux-x64.sh
-sudo ./ashton-smokeview-v6.11.2-af2.1.0-rc1-linux-x64.sh --system
+chmod +x ashton-smokeview-v6.11.2-af3-linux-x64.sh
+sudo ./ashton-smokeview-v6.11.2-af3-linux-x64.sh --system
 ```
 
 `--system` requires root and installs into `/opt/ashton-smokeview`, symlinks

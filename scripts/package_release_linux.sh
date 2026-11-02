@@ -102,7 +102,9 @@ version="${version#v}"
 [[ -f "$repo_root/Utilities/Scripts/capture_result_slices.py" ]] || fail "capture_result_slices.py is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_slices_ui.pyw" ]] || fail "capture_slices_ui.pyw is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_ui_core.py" ]] || fail "capture_ui_core.py is missing"
-python3 -c 'import PySide6.QtWidgets, PyInstaller' >/dev/null 2>&1 || fail "PySide6 and PyInstaller are required to bundle the Linux capture window"
+if ! python3 -c 'import PySide6.QtWidgets, PyInstaller'; then
+  fail "Python 3 could not import PySide6.QtWidgets and PyInstaller; see the import error above"
+fi
 [[ -f "$repo_root/Utilities/Scripts/smv_planes.py" ]] || fail "smv_planes.py is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_logo.png" ]] || fail "capture_logo.png is missing"
 [[ -f "$repo_root/Utilities/Scripts/smv_help.sh" ]] || fail "smv_help.sh is missing"
@@ -173,9 +175,11 @@ cp -R "$repo_root/Build/for_bundle/colorbars" "$package_dir/colorbars"
 cp -R "$repo_root/Build/for_bundle/textures" "$package_dir/textures"
 
 commit="$(git -C "$repo_root" rev-parse --short=12 HEAD 2>/dev/null || echo unknown)"
-dirty="no"
-if [[ -n "$(git -C "$repo_root" status --porcelain --untracked-files=no 2>/dev/null)" ]]; then
-  dirty="yes"
+if status="$(git -C "$repo_root" status --porcelain --untracked-files=no 2>/dev/null)"; then
+  dirty="no"
+  [[ -z "$status" ]] || dirty="yes"
+else
+  dirty="unknown"
 fi
 compiler="$(sed -nE 's/^CMAKE_C_COMPILER(:FILEPATH|:STRING)?=//p' "$build_dir/CMakeCache.txt" | head -n 1)"
 compiler="${compiler:-unknown}"
@@ -229,7 +233,7 @@ install it with:
 
 The capture window bundles PySide6 and Python; the capture engine still needs
 system Python 3.10 or newer. On minimal Linux desktops, Qt's xcb platform
-plugin may also need libxcb-cursor0 and libxkbcommon-x11-0.
+plugin may also need libxcb-shape0, libxcb-cursor0 and libxkbcommon-x11-0.
 
 It launches a separate automated Smokeview process, so an interactive Smokeview
 window may remain open while capture runs.

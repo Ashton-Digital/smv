@@ -427,7 +427,8 @@ class CaptureWindow(QWidget):
         c = THEMES[self.theme]
         app = QApplication.instance()
         if not isinstance(app.style(), IndicatorStyle):
-            app.setStyle(IndicatorStyle())
+            app.indicator_style = IndicatorStyle()
+            app.setStyle(app.indicator_style)
         app.style().colors = c
         palette = self.palette()
         palette.setColor(QPalette.Window, QColor(c['bg']))
@@ -823,7 +824,13 @@ def main() -> None:
     window.show()
     if smoke_test:
         QTimer.singleShot(0, app.quit)
-    sys.exit(app.exec())
+    result = app.exec()
+    window.close()
+    window.deleteLater()
+    app.processEvents()
+    del window
+    del app
+    raise SystemExit(result)
 
 
 if __name__ == "__main__":
