@@ -67,12 +67,14 @@ The window opens in dark mode with rounded buttons, a resizable capture log,
 and a light-mode button. Its **Help** button summarizes the capture workflow;
 the Windows MSI also installs **Ashton Smokeview Help** in the Start menu for
 Smokeview shortcuts and capture instructions. On Linux, run `smvhelp` for the
-same workflow summary. Under **Advanced: slice positions**, enable the position
-filter and scan the input. Available positions appear as checked boxes; uncheck
-any you do not want. For a folder, **Previous** and **Next** show each `.smv`
-case and its own positions. A case with no positions checked is skipped. Leave
-the filter off to capture every plane. Use **Add position manually** for a
-position missing from the scan; the added position belongs to the case shown.
+same workflow summary. Expand **Advanced slices and clipping** to scan the
+input. For a folder, choose each `.smv` case from the left list. Its X, Y and Z
+checkboxes control normal captures, all enabled by default. **Add clip view**
+adds an extra capture for a selected slice, with an independent absolute clip
+coordinate in metres and a Min or Max view. The Slice dropdown also accepts a
+typed position. A case with no enabled normal axes or extra rows is skipped.
+**Save job** and **Load job** preserve all capture settings in a portable JSON
+file.
 
 On Linux, the installer adds the **Capture result slices** application to the
 desktop menu and the `smv-cap-ui` command. Both installers bundle the PySide6
@@ -123,7 +125,11 @@ Smokeview. Cropping uses ImageMagick; the startup dependency check stops before
 rendering if ImageMagick is missing unless `--no-crop` is used.
 Use `--planes Y=3,Y=5` to render only those slice planes across the selected
 result types. The match is by axis and position in metres; the default renders
-all planes. If an individual model cannot be identified confidently, that PNG
+all planes. Use `--default-axes xz` to include normal X and Z views only, and
+repeat `--clip-variant Y=5@2:min` to add views of a slice using an independent
+absolute clip coordinate and a Min or Max view. An empty `--default-axes ''`
+captures only the added variants. If an individual model cannot be identified
+confidently, that PNG
 is retained uncropped with a warning. Use `--prefix
 NAME` to override the output filename prefix (default: the case name), and
 `--keep-script` to retain the generated `.ssf` script file in the output

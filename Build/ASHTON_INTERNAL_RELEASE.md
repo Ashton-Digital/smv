@@ -341,9 +341,10 @@ Help** to the Start menu, adds capture to the `.smv` context menu, and installs
 `smvhelp.txt` beside `smokeview.exe`.
 The window can select a case or search a folder recursively, choose result
 quantities and capture times, and set an output folder. It uses a capture logo
-and defaults to dark mode. The advanced slice-position control scans selected
-cases and passes axis/coordinate selections to Smokeview so only requested
-planes are rendered. On Linux, the installer
+and defaults to dark mode. The Advanced slices and clipping panel scans each
+case. Per-case X/Y/Z controls select normal captures, while extra rows capture
+selected slices with an independent absolute clip coordinate and Min/Max view.
+Jobs can be saved and loaded as portable JSON files. On Linux, the installer
 adds the same window to the desktop menu as `smv-cap-ui` and
 installs the `af-smv` and `smv-cap` commands and registers **Capture result
 slices** as an `.smv` application under **Open With**. These actions start a
@@ -565,8 +566,8 @@ Verify all of the following before distributing a release:
 - The capture window finds all `.smv` files recursively in a selected folder,
   skips unchecked result types, separates captures from multiple requested
   times, and writes beside each case or under a chosen output folder. Its
-  advanced position checkboxes apply separately to each named `.smv` case;
-  cases with no selected positions are skipped.
+  advanced X/Y/Z controls and extra clip views apply separately to each named
+  `.smv` case. A case with no enabled normal axes or extra views is skipped.
 - On Linux, `af-smv`, `smv-cap`, `smv-cap-ui` and `smvhelp` are available, an `.smv` file
   opens in Ashton Smokeview by default, and **Open With > Capture result
   slices** works in the desktop file manager.

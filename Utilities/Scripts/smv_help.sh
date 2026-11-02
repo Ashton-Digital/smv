@@ -46,10 +46,10 @@ echo "from the desktop menu. Right-click a .smv file and choose Open With > Capt
 echo "Choose one .smv file, or choose a folder; Include subfolders is on by default. Select the slice types and"
 echo "enter one or more capture times in seconds, separated by commas (for example 60, 120, 180)."
 echo "Leave Output folder blank to save beside each case, or browse for a destination. Crop and Replace existing"
-echo "captures are separate options. Expand Advanced and scan the input to see checked slice positions."
-echo "Uncheck positions to omit them. In folder mode, Previous and Next show each .smv case separately."
-echo "Cases with no checked positions are skipped; with the filter off, every matching plane is captured."
-echo "Add position manually lets you enter a position missing from the scan for the case shown."
+echo "captures are separate options. Expand Advanced slices and clipping to scan available slices."
+echo "In folder mode, choose each case from the left list. X, Y and Z checkboxes control normal captures per case."
+echo "Add clip views to capture a selected slice again with an absolute clip coordinate and Min or Max view."
+echo "Save job and Load job use portable JSON files so you can return to a capture setup later."
 echo "Click Capture slices to start. Progress appears in the Capture log; Cancel stops a running batch."
 echo "The window starts in dark mode and has a Light mode button."
 echo
@@ -65,6 +65,8 @@ echo "${KEY}--no-crop${RESET} - keep the full-size image instead of cropping tig
 echo "${KEY}-o <directory>${RESET} - save images to a chosen folder instead of the default one"
 echo "${KEY}--time <seconds>${RESET} - capture a different simulation time instead of the default 150 s"
 echo "${KEY}--planes Y=3,Y=5${RESET} - capture only slices at the listed axis positions (metres)"
+echo "${KEY}--default-axes xz${RESET} - capture normal X and Z slices; omit normal Y slices"
+echo "${KEY}--clip-variant Y=5@2:min${RESET} - add a Y=5 slice clipped at Y=2 from Min; repeatable"
 echo "${KEY}--prefix <name>${RESET} - use a different filename prefix instead of the case name"
 echo "${KEY}--crop-padding <pixels>${RESET} - change the white border width around cropped images (default: 20)"
 echo

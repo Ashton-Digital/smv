@@ -211,8 +211,9 @@ Open the capture window with:
 
   ./capture_slices_ui
 
-The window opens in dark mode. Its advanced slice-position control scans a
-case or folder and can limit captures to positions such as Y=3 or Y=5.
+The window opens in dark mode. Advanced slices and clipping scans each case,
+lets you choose normal X/Y/Z captures, and adds extra slice/clip views. Save
+job and Load job preserve the setup in a portable JSON file.
 
 After installation, the equivalent commands are:
 

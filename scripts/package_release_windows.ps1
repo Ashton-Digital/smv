@@ -329,8 +329,9 @@ The packaged smokeview.ini and objects.svo files are loaded from this directory.
 Open Capture result slices from the Start menu to select one case or a folder,
 choose slice types and times, and set an output location. The window and
 capture engine include their Python runtime.
-The window opens in dark mode. Use Advanced slice positions to scan cases and
-capture only selected planes, such as Y=3 or Y=5.
+The window opens in dark mode. Advanced slices and clipping scans each case,
+lets you choose normal X/Y/Z captures, and adds extra slice/clip views. Save
+job and Load job preserve the setup in a portable JSON file.
 Open Ashton Smokeview Help from the Start menu (or smvhelp.txt beside this
 executable) for shortcuts and step-by-step capture instructions.
 

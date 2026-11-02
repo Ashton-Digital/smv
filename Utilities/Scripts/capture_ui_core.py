@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import math
 import os
+from dataclasses import dataclass, field
 from pathlib import Path
 import shutil
 import signal
@@ -14,6 +15,22 @@ from typing import Callable
 QUANTITIES = ("visibility", "temperature", "velocity", "pressure")
 CAPTURE_SCRIPT = (Path(sys.executable).resolve().parent if getattr(sys, "frozen", False)
                   else Path(__file__).resolve().parent) / "capture_result_slices.py"
+
+
+@dataclass(frozen=True)
+class ClipVariant:
+    slice: str
+    clip: float
+    side: str = "max"
+
+    def argument(self) -> str:
+        return f"{self.slice}@{self.clip:.3f}:{self.side}"
+
+
+@dataclass
+class CaseCaptureSettings:
+    axes: set[str] = field(default_factory=lambda: set("xyz"))
+    variants: list[ClipVariant] = field(default_factory=list)
 
 
 def parse_times(text: str) -> list[float]:
@@ -72,7 +89,8 @@ def crop_tool_available() -> bool:
 class CaptureJob:
     def __init__(self, cases: list[Path], source: Path, folder_mode: bool,
                  output_root: Path | None, times: list[float], quantities: list[str],
-                 planes: str | dict[Path, str], crop: bool, overwrite: bool) -> None:
+                 planes: str | dict[Path, str], crop: bool, overwrite: bool,
+                 case_settings: dict[Path, CaseCaptureSettings] | None = None) -> None:
         self.cases = cases
         self.source = source
         self.folder_mode = folder_mode
@@ -82,6 +100,7 @@ class CaptureJob:
         self.planes = planes
         self.crop = crop
         self.overwrite = overwrite
+        self.case_settings = case_settings
         self.cancelled = threading.Event()
         self.process: subprocess.Popen[str] | None = None
 
@@ -100,8 +119,13 @@ class CaptureJob:
 
     def run(self, log: Callable[[str], None], status: Callable[[str], None]) -> tuple[str, str]:
         failures = 0
-        active_cases = ([case for case in self.cases if self.planes.get(case)]
-                        if isinstance(self.planes, dict) else self.cases)
+        if self.case_settings is not None:
+            active_cases = [case for case in self.cases if
+                            (settings := self.case_settings.get(case, CaseCaptureSettings())).axes
+                            or settings.variants]
+        else:
+            active_cases = ([case for case in self.cases if self.planes.get(case)]
+                            if isinstance(self.planes, dict) else self.cases)
         total = len(active_cases) * len(self.times)
         try:
             if len(active_cases) < len(self.cases):
@@ -128,6 +152,11 @@ class CaptureJob:
                     planes = self.planes.get(case, "") if isinstance(self.planes, dict) else self.planes
                     if planes:
                         command.extend(["--planes", planes])
+                    if self.case_settings is not None:
+                        settings = self.case_settings.get(case, CaseCaptureSettings())
+                        command.extend(["--default-axes", "".join(sorted(settings.axes))])
+                        for variant in settings.variants:
+                            command.extend(["--clip-variant", variant.argument()])
                     if not self.crop:
                         command.append("--no-crop")
                     if self.overwrite:
