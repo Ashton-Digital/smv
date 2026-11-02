@@ -16,8 +16,6 @@ GLUI *glui_labels=NULL;
 
 GLUI_EditText *EDIT_LB_label_string=NULL;
 
-GLUI_Spinner *SPINNER_cullgeom_portsize=NULL;
-
 GLUI_Listbox *LIST_LB_labels=NULL;
 GLUI_Listbox *LIST_surfs=NULL;
 
@@ -32,7 +30,6 @@ GLUI_Spinner *SPINNER_LB_tick_xdir=NULL;
 GLUI_Spinner *SPINNER_LB_tick_ydir=NULL;
 GLUI_Spinner *SPINNER_LB_tick_zdir=NULL;
 GLUI_Spinner *SPINNER_ntick_decimals = NULL;
-
 
 GLUI_Spinner *SPINNER_light_az0=NULL;
 GLUI_Spinner *SPINNER_light_az1=NULL;
@@ -70,7 +67,7 @@ GLUI_Spinner *SPINNER_northangle_position_x = NULL;
 GLUI_Spinner *SPINNER_northangle_position_y = NULL;
 GLUI_Spinner *SPINNER_northangle_position_z = NULL;
 GLUI_Spinner *SPINNER_sliceoffset_factor=NULL;
-GLUI_Spinner *SPINNER_ventoffset_factor=NULL;
+GLUI_Spinner *SPINNER_ventoffset_smv=NULL;
 GLUI_Spinner *SPINNER_amb_red=NULL;
 GLUI_Spinner *SPINNER_amb_green=NULL;
 GLUI_Spinner *SPINNER_amb_blue=NULL;
@@ -95,7 +92,6 @@ GLUI_Spinner *SPINNER_sphere_xyz0[3];
 GLUI_Spinner *SPINNER_sphere_dxyz[3];
 GLUI_Spinner *SPINNER_sphere_nxyz[3];
 GLUI_Spinner *SPINNER_sphere_rgb[3];
-GLUI_Spinner *SPINNER_sphere_blue=NULL;
 GLUI_Spinner *SPINNER_sphere_diameter=NULL;
 
 GLUI_Checkbox *CHECKBOX_sphere_show=NULL;
@@ -105,7 +101,6 @@ GLUI_Checkbox *CHECKBOX_labels_meshlabel = NULL;
 GLUI_Checkbox *CHECKBOX_labels_version=NULL;
 GLUI_Checkbox *CHECKBOX_visUSERticks=NULL;
 GLUI_Checkbox *CHECKBOX_visUSERticks2=NULL;
-GLUI_Checkbox *CHECKBOX_cullgeom=NULL;
 GLUI_Checkbox *CHECKBOX_LB_visLabels=NULL;
 GLUI_Checkbox *CHECKBOX_LB_label_use_foreground=NULL;
 GLUI_Checkbox *CHECKBOX_LB_label_show_always=NULL;
@@ -166,13 +161,11 @@ GLUI_Panel *PANEL_sphere3 = NULL;
 GLUI_Panel *PANEL_sphere4 = NULL;
 GLUI_Panel *PANEL_blockage_drawing = NULL;
 GLUI_Panel *PANEL_titles=NULL;
-GLUI_Panel *PANEL_screen = NULL;
 GLUI_Panel *PANEL_light=NULL;
 GLUI_Panel *PANEL_position0=NULL;
 GLUI_Panel *PANEL_position1 = NULL;
 GLUI_Panel *PANEL_ambient=NULL;
 GLUI_Panel *PANEL_diffuse=NULL;
-GLUI_Panel *PANEL_specular = NULL;
 GLUI_Panel *PANEL_positional = NULL;
 GLUI_Panel *PANEL_positional2 = NULL;
 GLUI_Panel *PANEL_timebar_overlap = NULL;
@@ -196,7 +189,6 @@ GLUI_Panel *PANEL_linewidth = NULL;
 GLUI_Panel *PANEL_offset = NULL;
 GLUI_Panel *PANEL_surfs = NULL;
 GLUI_Panel *PANEL_texture_display = NULL;
-GLUI_Panel *PANEL_sky = NULL;
 GLUI_Panel *PANEL_sphere = NULL;
 GLUI_Panel *PANEL_skycolor = NULL;
 GLUI_Panel *PANEL_horizon_color = NULL;
@@ -216,11 +208,11 @@ GLUI_Button *BUTTON_LB_label_next=NULL;
 GLUI_Button *BUTTON_LB_label_update=NULL;
 GLUI_Button *BUTTON_LB_label_add=NULL;
 GLUI_Button *BUTTON_LB_label_delete=NULL;
-GLUI_Button *BUTTON_LB_label_set=NULL;
 GLUI_Button *BUTTON_label_1=NULL;
 GLUI_Button *BUTTON_label_2=NULL;
 GLUI_Button *BUTTON_label_3=NULL;
 GLUI_Button *BUTTON_label_4=NULL;
+GLUI_Button *BUTTON_reset_sliceoffset=NULL;
 
 #define USERTICKS_ORIGIN    0
 #define USERTICKS_MIN       1
@@ -233,6 +225,7 @@ GLUI_Button *BUTTON_label_4=NULL;
 
 #define FLIP                 19
 #define APPLY_VENTOFFSET     20
+#define RESET_VENTOFFSET     42
 
 #define SURFACE_COLOR        101
 #define SURFACE_SELECT       102
@@ -303,7 +296,6 @@ GLUI_Button *BUTTON_label_4=NULL;
 
 #define UPDATEPLOT 10
 
-
 #define LABELS_TITLES_ROLLOUT  0
 #define LABELS_OFFSETS_ROLLOUT 1
 #define LIGHT_ROLLOUT          2
@@ -342,14 +334,7 @@ extern "C" void GLUIUpdateBackgroundFlip(int flip){
   CHECKBOX_labels_flip->set_int_val(flip);
 }
 
-/* ------------------ GLUIUpdateTimebarOverlap ------------------------ */
-
-extern "C" void GLUIUpdateTimebarOverlap(void){
-  RADIO_timebar_overlap->set_int_val(timebar_overlap);
-}
-
-
-/* ------------------ GLUIUpdateTimebarOverlap ------------------------ */
+/* ------------------ GLUIUpdateFastBlockageDraw ------------------------ */
 
 extern "C" void GLUIUpdateFastBlockageDraw(void){
   if(RADIOBUTTON_label_1 != NULL)RADIOBUTTON_label_1->set_int_val(blockage_draw_option);
@@ -367,7 +352,7 @@ void UpdateGluiLabelText(void){
   if(LabelGetNUserLabels(&global_scase.labelscoll)>0){
     labeldata *gl;
 
-    gl=&LABEL_local;
+    gl=&LABEL_global;
 
     LIST_LB_labels->set_int_val(gl->glui_id);
     EDIT_LB_label_string->set_text(gl->name);
@@ -381,7 +366,6 @@ void UpdateGluiLabelText(void){
     SPINNER_LB_tick_ydir->set_float_val(gl->tick_direction[1]);
     SPINNER_LB_tick_zdir->set_float_val(gl->tick_direction[2]);
     CHECKBOX_labels_showtick->set_int_val(gl->show_tick);
-
 
     SPINNER_LB_time_start->set_float_val(gl->tstart_stop[0]);
     SPINNER_LB_time_stop->set_float_val(gl->tstart_stop[1]);
@@ -441,13 +425,13 @@ void TextLabelsCB(int var){
   int count;
   char name[300];
 
-  gl = &LABEL_local;
+  gl = &LABEL_global;
   switch(var){
   case LB_VISLABELS:
     updatemenu = 1;
     break;
   case LB_UPDATE:
-    for(thislabel = global_scase.labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = global_scase.labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
     }
@@ -455,7 +439,7 @@ void TextLabelsCB(int var){
     //LabelResort(LABEL_global_ptr);
 
     count = 0;
-    for(thislabel = global_scase.labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = global_scase.labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
       if(thislabel->labeltype == TYPE_SMV)continue;
       thislabel->glui_id = count;
       LIST_LB_labels->add_item(count++, thislabel->name);
@@ -509,13 +493,13 @@ void TextLabelsCB(int var){
       gl = &LABEL_default;
     }
     gl->labeltype = TYPE_INI;
-    for(thislabel = global_scase.labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = global_scase.labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
     }
     LabelInsert(&global_scase.labelscoll, gl);
     count = 0;
-    for(thislabel = global_scase.labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = global_scase.labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
       if(thislabel->labeltype == TYPE_SMV)continue;
       thislabel->glui_id = count;
       LIST_LB_labels->add_item(count++, thislabel->name);
@@ -524,7 +508,7 @@ void TextLabelsCB(int var){
     break;
   case LB_DELETE:
     strcpy(name, LIST_LB_labels->curr_text);
-    for(thislabel = global_scase.labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = global_scase.labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
       if(thislabel->glui_id < 0)continue;
       LIST_LB_labels->delete_item(thislabel->glui_id);
     }
@@ -533,7 +517,7 @@ void TextLabelsCB(int var){
       LabelDelete(thislabel);
     }
     count = 0;
-    for(thislabel = global_scase.labelscoll.label_first_ptr->next;thislabel->next != NULL;thislabel = thislabel->next){
+    for(thislabel = global_scase.labelscoll.label_first_ptr->next; thislabel->next != NULL; thislabel = thislabel->next){
       if(thislabel->labeltype == TYPE_SMV)continue;
       thislabel->glui_id = count;
       LIST_LB_labels->add_item(count++, thislabel->name);
@@ -706,7 +690,7 @@ void SurfaceCB(int var){
       memcpy(s_color, surfi->color, 3*sizeof(float));
       s_color[3] = surfi->transparent_level;
 
-      for(i=0;i<4;i++){
+      for(i=0; i<4; i++){
         glui_surface_color[i] = CLAMP((int)(255.0*s_color[i]+0.5),0,255);
         SPINNER_surf_color[i]->set_int_val(glui_surface_color[i]);
       }
@@ -724,7 +708,7 @@ extern "C" void GLUIUpdateTextureDisplay(void){
   int i;
   int showall = 1, hideall = 1, update=0;
 
-  for(i = 0;i < global_scase.texture_coll.ntextureinfo;i++){
+  for(i = 0; i < global_scase.texture_coll.ntextureinfo; i++){
     texti = global_scase.texture_coll.textureinfo + i;
     if(texti->loaded == 0 || texti->used == 0)continue;
     if(texti->display == 0)showall=0;
@@ -778,12 +762,13 @@ extern "C" void GLUISkyCB(int var){
   else{
     farclip = farclip_save;
   }
+  UpdateVentOffset(nearclip, farclip, 1);
   if(farclip != farclip_before){
     GLUISceneMotionCB(NEARFARCLIP);
     GLUIUpdateFarclip();
   }
 
-  switch (var){
+  switch(var){
     case SKY_BOX:
       if(sky_diam<1.0){
         sky_diam = 1.0;
@@ -804,7 +789,7 @@ extern "C" void GLUISkyCB(int var){
       break;
     case RESET_COLORS:
       int i;
-      for(i=0;i<3;i++){
+      for(i=0; i<3; i++){
         SPINNER_horizon_color[i]->set_int_val(horizon_color_save[i]);
         SPINNER_zenith_color[i]->set_int_val(zenith_color_save[i]);
         SPINNER_ground_color[i]->set_int_val(ground_color_save[i]);
@@ -869,6 +854,28 @@ extern "C" void GLUIUserTicksCB(int var){
   default:
     assert(FFALSE);
     break;
+  }
+}
+
+/* ------------------ UpdateVentOffset ------------------------ */
+
+extern "C" void UpdateVentOffset(float nnear_local, float ffar_local, int flag){
+  if(ventoffset_smv_ini >= 0.0 && flag == 1){
+    ventoffset_smv = ventoffset_smv_ini;
+  }
+  else{
+    float ndepth = pow(2.0,16.0) - 1.0;
+
+    if(use_graphics==1 && opengl_setup == 1){
+      GLint ndepthbits;
+
+      glGetIntegerv(GL_DEPTH_BITS,&ndepthbits);
+      ndepth = pow(2.0,ndepthbits)-1.0;
+    }
+    ventoffset_smv = 2.0 * ffar_local * (ffar_local - nnear_local) / (nnear_local * ndepth + (ffar_local - nnear_local));
+  }
+  if(SPINNER_ventoffset_smv != NULL){
+    SPINNER_ventoffset_smv->set_float_val(ventoffset_smv);
   }
 }
 
@@ -953,10 +960,10 @@ extern "C" void GLUIDisplaySetup(int main_window){
   SPINNER_ticklinewidth->set_float_limits(1.0, 10.0, GLUI_LIMIT_CLAMP);
 
   PANEL_offset=glui_labels->add_panel_to_panel(ROLLOUT_general2,"offset");
-  SPINNER_ventoffset_factor=glui_labels->add_spinner_to_panel(PANEL_offset,"vent",GLUI_SPINNER_FLOAT,&ventoffset_factor,APPLY_VENTOFFSET,GLUILabelsCB);
-//  SPINNER_ventoffset_factor->set_float_limits(-1.0,1.0,GLUI_LIMIT_CLAMP);
+  SPINNER_ventoffset_smv=glui_labels->add_spinner_to_panel(PANEL_offset,"vent",GLUI_SPINNER_FLOAT,&ventoffset_smv,APPLY_VENTOFFSET,GLUILabelsCB);
+  BUTTON_reset_sliceoffset=glui_labels->add_button_to_panel(PANEL_offset,"Reset vent offset",RESET_VENTOFFSET,GLUILabelsCB);
+
   SPINNER_sliceoffset_factor=glui_labels->add_spinner_to_panel(PANEL_offset,"slice",GLUI_SPINNER_FLOAT,&sliceoffset_factor);
-//  SPINNER_sliceoffset_factor->set_float_limits(-1.0,1.0,GLUI_LIMIT_CLAMP);
   glui_labels->add_spinner_to_panel(PANEL_offset, "boundary", GLUI_SPINNER_FLOAT, &boundaryoffset);
 
   int i, surfcount = 0, first_surf=-1;
@@ -1038,7 +1045,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
   CHECKBOX_label_2=glui_labels->add_checkbox_to_panel(ROLLOUT_general2,"Sort transparent faces",&sort_transparent_faces,LABELS_drawface,GLUILabelsCB);
   CHECKBOX_label_3=glui_labels->add_checkbox_to_panel(ROLLOUT_general2,"Hide overlaps",&hide_overlaps,LABELS_hide_overlaps,GLUILabelsCB);
   CHECKBOX_label_4=glui_labels->add_checkbox_to_panel(ROLLOUT_general2, "Only show horizontal mesh outlines", &meshface_horiz,MESH_HORIZ, GLUILabelsCB);
-  
+
   if(nface_transparent>0){
     glui_labels->add_column_to_panel(PANEL_gen1,true);
     PANEL_transparency = glui_labels->add_panel_to_panel(ROLLOUT_general2,"Geometry transparency");
@@ -1057,7 +1064,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
   ROLLOUT_light2 = glui_labels->add_rollout("Light",false,LIGHT_ROLLOUT,DisplayRolloutCB);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_light2, LIGHT_ROLLOUT, glui_labels);
 
-  for(i = 0; i<3;i++){
+  for(i = 0; i<3; i++){
     glui_ambientlight[i] = CLAMP(255*ambientlight[i],0,255);
     glui_diffuselight[i] = CLAMP(255*diffuselight[i],0,255);
   }
@@ -1095,7 +1102,6 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   PANEL_positional = glui_labels->add_panel_to_panel(ROLLOUT_light2, "direction");
   glui_labels->add_checkbox_to_panel(PANEL_positional, "show directions", &drawlights);
-
 
   PANEL_positional2 = glui_labels->add_panel_to_panel(PANEL_positional, "",false);
   PANEL_position0 = glui_labels->add_panel_to_panel(PANEL_positional2, "light 1");
@@ -1245,12 +1251,11 @@ extern "C" void GLUIDisplaySetup(int main_window){
 
   // -------------- User labels -------------------
 
-  gl=&LABEL_local;
+  gl=&LABEL_global;
   ROLLOUT_user_labels = glui_labels->add_rollout("Labels + Ticks",false,LABELS_TICKS_ROLLOUT,DisplayRolloutCB);
   TOGGLE_ROLLOUT(displayprocinfo, ndisplayprocinfo, ROLLOUT_user_labels, LABELS_TICKS_ROLLOUT, glui_labels);
 
   PANEL_LB_panel1 = glui_labels->add_panel_to_panel(ROLLOUT_user_labels,"",GLUI_PANEL_NONE);
-
 
   PANEL_LB_panel3 = glui_labels->add_panel_to_panel(ROLLOUT_user_labels,"Labels");
 
@@ -1266,7 +1271,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
     labeldata *thislabel;
     int count=0;
 
-    for(thislabel=global_scase.labelscoll.label_first_ptr->next;thislabel->next!=NULL;thislabel=thislabel->next){
+    for(thislabel=global_scase.labelscoll.label_first_ptr->next; thislabel->next!=NULL; thislabel=thislabel->next){
       if(thislabel->labeltype==TYPE_SMV){
         thislabel->glui_id=-1;
         continue;
@@ -1362,7 +1367,7 @@ extern "C" void GLUIDisplaySetup(int main_window){
   SPINNER_ground_color[2] = glui_labels->add_spinner_to_panel(PANEL_ground_color, "blue",  GLUI_SPINNER_INT, ground_color+2);
   glui_labels->add_button_to_panel(PANEL_skycolor,"Reset colors",RESET_COLORS,GLUISkyCB);
 
-  for(i=0;i<3;i++){
+  for(i=0; i<3; i++){
     SPINNER_horizon_color[i]->set_int_limits(0,255);
     SPINNER_zenith_color[i]->set_int_limits(0,255);
     SPINNER_ground_color[i]->set_int_limits(0,255);
@@ -1478,8 +1483,11 @@ extern "C" void GLUILabelsCB(int var){
     user_tick_direction=1.0;
     if(glui_tick_inside==1)user_tick_direction=-1.0;
     break;
+  case RESET_VENTOFFSET:
+    UpdateVentOffset(nearclip, farclip, 0);
+    GLUILabelsCB(APPLY_VENTOFFSET);
+    break;
   case APPLY_VENTOFFSET:
-    UpdateVentOffset();
     global_scase.updatefaces=1;
     break;
   case FLIP:

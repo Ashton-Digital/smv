@@ -166,10 +166,9 @@ void ShowScene2(int mode){
 
     /* draw the box framing the simulation (corners at (0,0,0) (xbar,ybar,zbar) */
 
-
     /* ++++++++++++++++++++++++ draw simulation frame (corners at (0,0,0) and (xbar,ybar,zbar) +++++++++++++++++++++++++ */
 
-    if( (hide_scene == 1 && mouse_down == 1) ||
+    if((hide_scene == 1 && mouse_down == 1) ||
         (global_scase.isZoneFireModel == 0 && outline_mode == SCENE_OUTLINE_SCENE)
       ){
       CLIP_GEOMETRY;
@@ -181,7 +180,7 @@ void ShowScene2(int mode){
       int i;
       float box_black[4] = {0.0, 0.0, 0.0, 1.0};
 
-      for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+      for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
         meshdata *meshi;
         float *xyz_min, *xyz_max;
 
@@ -228,7 +227,6 @@ void ShowScene2(int mode){
       glPopMatrix();
     }
 
-
     /* ++++++++++++++++++++++++ draw mesh +++++++++++++++++++++++++ */
 
     if(global_scase.setPDIM == 1){
@@ -237,7 +235,7 @@ void ShowScene2(int mode){
         meshdata *meshi;
 
         UNCLIP;
-        for(igrid = 0;igrid<global_scase.meshescoll.nmeshes;igrid++){
+        for(igrid = 0; igrid<global_scase.meshescoll.nmeshes; igrid++){
           meshi = global_scase.meshescoll.meshinfo + igrid;
           DrawGrid(meshi);
           SNIFF_ERRORS("DrawGrid");
@@ -245,7 +243,6 @@ void ShowScene2(int mode){
       }
     }
   } /* end of if(mode==DRAWSCENE) code segment */
-
 
     /* ++++++++++++++++++++++++ draw selected particles +++++++++++++++++++++++++ */
 
@@ -290,7 +287,6 @@ void ShowScene2(int mode){
       return;
     }
   }
-
 
   /* ++++++++++++++++++++++++ draw tours +++++++++++++++++++++++++ */
 
@@ -375,7 +371,7 @@ void ShowScene2(int mode){
       flag = TERRAIN_TOP_SIDE;
     }
     CLIP_GEOMETRY;
-    for(i = 0;i<global_scase.nterraininfo;i++){
+    for(i = 0; i<global_scase.nterraininfo; i++){
       terraindata *terri;
 
       terri = global_scase.terraininfo + i;
@@ -410,7 +406,7 @@ void ShowScene2(int mode){
 
   /* ++++++++++++++++++++++++ draw HVAC networks +++++++++++++++++++++++++ */
 
-  if (global_scase.hvaccoll.nhvacinfo > 0) {
+  if(global_scase.hvaccoll.nhvacinfo > 0){
     DrawHVACS();
   }
 

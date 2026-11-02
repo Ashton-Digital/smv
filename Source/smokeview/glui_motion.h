@@ -104,7 +104,6 @@ EXTERNCPP void GLUIViewpointCB(int val);
 EXTERNCPP void GLUIUpdateMovieParms(void);
 EXTERNCPP void GLUISetCurrentViewPoint(char *viewpoint_label);
 EXTERNCPP void GLUIUpdateUseGeomFactors(void);
-EXTERNCPP void GLUIUpdateWindowAspect(void);
 EXTERNCPP void GLUIShrinkDialogs(void);
 #ifdef __cplusplus
 EXTERNCPP void GLUICloseRollouts(GLUI *dialog);
@@ -128,7 +127,7 @@ EXTERNCPP void GLUIUpdateCameraLabel(void);
 EXTERNCPP void GLUISceneMotionCB(int var);
 EXTERNCPP void GLUIUpdateWindowSizeList(void);
 EXTERNCPP void GLUIUpdateGsliceParms(void);
-EXTERNCPP void GLUIUpdateResolutionMultiplier(void);
+EXTERNCPP int  GLUIUpdateResolutionMultiplier(int var);
 EXTERNCPP void GLUISetColorControls(void);
 EXTERNCPP void GLUIShowMotion(int menu_id);
 EXTERNCPP void GLUIHideMotion(void);

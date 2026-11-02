@@ -12,98 +12,6 @@
 #define EXPMIN -1
 #define EXPMAX 3
 
-/* ------------------ GetBoundaryColors ------------------------ */
-
-void GetBoundaryColors(float *t, int nt, unsigned char *it,
-              int settmin, float *ttmin, int settmax, float *ttmax,
-              float *tmin_arg, float *tmax_arg,
-              int ndatalevel, int nlevel,
-              char **labels, char *scale, float *tvals256,
-              int *extreme_min, int *extreme_max
-              ){
-  int n;
-  float *tcopy, factor, tval, range;
-  int expmin, expmax;
-  int itt;
-  float local_tmin, local_tmax, tmin2, tmax2;
-
-  tmin2 = *t;
-  tmax2 = *t;
-
-  STRCPY(scale,"");
-  tcopy = t+1;
-  for(n=1;n<nt;n++){
-    if(*tcopy<tmin2)tmin2=*tcopy;
-    if(*tcopy>tmax2)tmax2=*tcopy;
-    tcopy++;
-  }
-  *tmin_arg = tmin2;
-  *tmax_arg = tmax2;
-  *extreme_min=0;
-  *extreme_max=0;
-  if(settmin!=SET_MIN){
-    *ttmin=tmin2;
-  }
-  if(settmax!=SET_MAX){
-    *ttmax=tmax2;
-  }
-  local_tmin = *ttmin;
-  local_tmax = *ttmax;
-
-  range = local_tmax - local_tmin;
-  factor = 0.0f;
-  if(range!=0.0f)factor = (ndatalevel-2*extreme_data_offset)/range;
-  for(n=0;n<nt;n++){
-    float val;
-
-    val = *t;
-
-    if(val<local_tmin){
-      itt=0;
-      *extreme_min=1;
-    }
-    else if(val>local_tmax){
-      itt=ndatalevel-1;
-      *extreme_max=1;
-    }
-    else{
-      itt=extreme_data_offset+(int)(factor*(val-local_tmin));
-    }
-    *it++ = CLAMP(itt, colorbar_offset, ndatalevel - 1 - colorbar_offset);
-    t++;
-  }
-  GetMantissaExponent(local_tmax, &expmax);
-  GetMantissaExponent(local_tmin, &expmin);
-  if(expmin!=0&&expmax!=0&&expmax-expmin<=2&&(expmin<-2||expmin>2)){
-    local_tmin *= pow((double)10.0,(double)-expmin);
-    local_tmax *= pow((double)10.0,(double)-expmin);
-    sprintf(scale,"*10^%i",expmin);
-  }
-  if(expmin==0&&(expmax<EXPMIN||expmax>EXPMAX)){
-    local_tmin *= pow((double)10.0,(double)-expmax);
-    local_tmax *= pow((double)10.0,(double)-expmax);
-    sprintf(scale,"*10^%i",expmax);
-  }
-  if(expmax==0&&(expmin<EXPMIN||expmin>EXPMAX)){
-    local_tmin *= pow((double)10.0,(double)-expmin);
-    local_tmax *= pow((double)10.0,(double)-expmin);
-    sprintf(scale,"*10^%i",expmin);
-  }
-  range = local_tmax - local_tmin;
-  factor = range/(nlevel-2);
-  for(n=1;n<nlevel-2;n++){
-    tval = local_tmin + (n-1)*factor;
-    Num2String(&labels[n][0],tval);
-  }
-  tval = local_tmin + (nlevel-3)*factor;
-  for(n=0;n<256;n++){
-    tvals256[n] = (local_tmin*(255-n) + n*local_tmax)/255.;
-  }
-  Num2String(&labels[nlevel-2][0],tval);
-  tval = local_tmax;
-  Num2String(&labels[nlevel-1][0],tval);
-}
-
 /* ------------------ GetBoundaryColors3 ------------------------ */
 
 void GetBoundaryColors3(patchdata *patchi, float *t, int start, int nt, unsigned char *it,
@@ -155,13 +63,13 @@ void GetBoundaryColors3(patchdata *patchi, float *t, int start, int nt, unsigned
   CheckMemory;
   range = new_tmax - new_tmin;
   factor = range/(nlevel-2);
-  for(n=1;n<nlevel-2;n++){
+  for(n=1; n<nlevel-2; n++){
     tval = new_tmin + (n-1)*factor;
     Num2String(&patchlabels[n][0],tval);
     patchvalues[n] = tval;
   }
   tval = new_tmin + (nlevel-3)*factor;
-  for(n=0;n<256;n++){
+  for(n=0; n<256; n++){
     tvals256[n] = (new_tmin*(255-n) + n*new_tmax)/255.;
   }
   Num2String(&patchlabels[nlevel-2][0],tval);
@@ -258,13 +166,13 @@ void GetBoundaryLabels(
 
   range = local_tmax - local_tmin;
   factor = range/(nlevel-2);
-  for(n=1;n<nlevel-2;n++){
+  for(n=1; n<nlevel-2; n++){
     tval = local_tmin + (n-1)*factor;
     Num2String(&boundarylabels[n][0],tval);
     boundaryvalues[n] = tval;
   }
   tval = local_tmin + (nlevel-3)*factor;
-  for(n=0;n<256;n++){
+  for(n=0; n<256; n++){
     tvals256[n] = (local_tmin*(255-n) + n*local_tmax)/255.;
   }
   Num2String(&boundarylabels[nlevel-2][0],tval);
@@ -279,7 +187,7 @@ void GetBoundaryLabels(
 void UpdatePart5Extremes(void){
   int i;
 
-  for(i=0;i<npart5prop;i++){
+  for(i=0; i<npart5prop; i++){
     partpropdata *propi;
 
     propi = part5propinfo + i;
@@ -315,10 +223,10 @@ void GetPartColors(partdata *parti, int nlevel, int flag){
 
   int start=0;
   if(flag==0)start = parti->ntimes+1;// skip particle conversion if flag is 0
-  for(i=start;i<parti->ntimes;i++){
+  for(i=start; i<parti->ntimes; i++){
     int j;
 
-    for(j=0;j<parti->nclasses;j++){
+    for(j=0; j<parti->nclasses; j++){
       float valmin, valmax, dval;
       partclassdata *partclassi;
       float *rvals;
@@ -334,7 +242,7 @@ void GetPartColors(partdata *parti, int nlevel, int flag){
         datacopy++;
         continue;
       }
-      for(k=2;k<partclassi->ntypes;k++){
+      for(k=2; k<partclassi->ntypes; k++){
         partpropdata *prop_id;
 
         if(datacopy->npoints_file ==0)continue;
@@ -421,7 +329,7 @@ void GetPartColors(partdata *parti, int nlevel, int flag){
 
   // erase data memory in a separate loop (so all "columns" are available when doing any conversions)
 
-  for(i=0;i<npart5prop;i++){
+  for(i=0; i<npart5prop; i++){
     int n;
     partpropdata *propi;
     float local_tmin, local_tmax;
@@ -439,11 +347,11 @@ void GetPartColors(partdata *parti, int nlevel, int flag){
     range = local_tmax - local_tmin;
 
     factor = range/(nlevel-2);
-    for(n=1;n<nlevel-2;n++){
+    for(n=1; n<nlevel-2; n++){
       tval = local_tmin + (n-1)*factor;
       vals[n] = tval;
     }
-    for(n=0;n<256;n++){
+    for(n=0; n<256; n++){
       ppartlevels256[n] = (local_tmin*(255-n) + n*local_tmax)/255.;
     }
     tval = local_tmin + (nlevel-3)*factor;
@@ -473,7 +381,6 @@ int GetZoneColor(float t, float local_tmin, float local_tmax, int nlevel){
   return level;
 }
 
-
 /* ------------------ GetZoneColors ------------------------ */
 
 void GetZoneColors(const float *t, int nt, unsigned char *it,
@@ -494,7 +401,7 @@ void GetZoneColors(const float *t, int nt, unsigned char *it,
   dt = local_tmax - local_tmin;
   factor=0.0f;
   if(dt!=0.0f)factor = (nlevel_full-2*extreme_data_offset)/dt;
-  for(n=0;n<nt;n++){
+  for(n=0; n<nt; n++){
     float val;
 
     val=*t;
@@ -513,13 +420,13 @@ void GetZoneColors(const float *t, int nt, unsigned char *it,
 
   range = local_tmax - local_tmin;
   factor = range/(nlevel-2);
-  for(n=1;n<nlevel-2;n++){
+  for(n=1; n<nlevel-2; n++){
     tval = local_tmin + (n-1)*factor;
     zonevalues[n] = tval;
     Num2String(&zonelabels[n][0],tval);
   }
   tval = local_tmin + (nlevel-3)*factor;
-  for(n=0;n<256;n++){
+  for(n=0; n<256; n++){
     tvals256[n] = (local_tmin*(255-n) + n*local_tmax)/255.;
   }
   zonevalues[nlevel-2] = tval;
@@ -597,13 +504,13 @@ void GetPlot3DColors(int plot3dvar, float *ttmin, float *ttmax,
   range = local_tmax-local_tmin;
   dt = range/(float)(nlevel-1);
   dtorig = (tmaxorig-tminorig)/(float)(nlevel-1);
-  for(n=0;n<nlevel-1;n++){
+  for(n=0; n<nlevel-1; n++){
     tval = local_tmin + n*dt;
     Num2String(&labels[n][0],tval);
     colorvaluesp3[plot3dvar][n] = tval;
     Num2String(&labelsiso[n][0],tval+dt/2.0);
   }
-  for(n=0;n<256;n++){
+  for(n=0; n<256; n++){
     tlevels256[n] = (local_tmin*(255-n) + local_tmax*n)/255.;
   }
   tval = local_tmax;
@@ -611,7 +518,7 @@ void GetPlot3DColors(int plot3dvar, float *ttmin, float *ttmax,
   colorvaluesp3[plot3dvar][nlevel-1] = tval;
   Num2String(&labelsiso[nlevel-1][0],tval);
 
-  for(n=0;n<nlevel;n++){
+  for(n=0; n<nlevel; n++){
     tlevels[n]=tminorig+(float)n*dtorig;
   }
 
@@ -670,7 +577,7 @@ void MakeColorLabels(char colorlabels[12][11], float colorvalues[12], float tmin
   range = tmax_arg-tmin_arg;
   dt = range/(float)(nlevel-2);
 
-  for(n=1;n<nlevel;n++){
+  for(n=1; n<nlevel; n++){
     float tval;
 
     tval = tmin_arg + (n-1)*dt;
@@ -766,7 +673,7 @@ void GetSliceColors(const float *t, int nt, unsigned char *it,
     factor = 0.0f;
   }
   if(flag==1){
-    for(n=0;n<nt;n++){
+    for(n=0; n<nt; n++){
       float val;
 
       val = *t;
@@ -789,7 +696,7 @@ void GetSliceColors(const float *t, int nt, unsigned char *it,
 
   MakeColorLabels(colorlabels, colorvalues, local_tmin, local_tmax, nlevel);
 
-  for(n=0;n<256;n++){
+  for(n=0; n<256; n++){
     tlevels256[n] = (local_tmin*(255-n) + local_tmax*n)/255.;
   }
   tval = local_tmax;
@@ -807,11 +714,11 @@ void GetColorbarLabels(float local_tmin, float local_tmax, int nlevel,
 
   range = local_tmax-local_tmin;
   dt = range/(float)(nlevel-2);
-  for(n=1;n<nlevel-1;n++){
+  for(n=1; n<nlevel-1; n++){
     tval = local_tmin + (n-1)*dt;
     Num2String(&labels[n][0],tval);
   }
-  for(n=0;n<256;n++){
+  for(n=0; n<256; n++){
     tlevels256[n] = (local_tmin*(255-n) + local_tmax*n)/255.;
   }
   tval = local_tmax;
@@ -825,20 +732,20 @@ void InitCadColors(void){
   float xx, f1, f2, sum;
   switch(setbw){
    case 0:
-    for(n=0;n<nrgb_cad;n++){
+    for(n=0; n<nrgb_cad; n++){
       xx = (float)n/(float)nrgb_cad * (float)(global_scase.nrgb-1);
       i1 = (int)xx;
       i2 = (int)(xx+1);
       f2 = xx - (float)i1;
       f1 = 1.0f - f2;
       sum=0.0;
-      for(i=0;i<3;i++){
+      for(i=0; i<3; i++){
         rgb_cad[n][i] = f1*global_scase.rgb[i1][i] + f2*global_scase.rgb[i2][i];
         sum += rgb_cad[n][i]*rgb_cad[n][i];
       }
       sum=sqrt((double)sum);
       if(sum>0.0){
-        for(i=0;i<3;i++){
+        for(i=0; i<3; i++){
           rgb_cad[n][i] /= sum;
         }
       }
@@ -846,9 +753,9 @@ void InitCadColors(void){
     }
     break;
    case 1:
-    for(n=0;n<nrgb_cad;n++){
+    for(n=0; n<nrgb_cad; n++){
       xx = (float)n/(float)nrgb_cad;
-      for(i=0;i<3;i++){
+      for(i=0; i<3; i++){
         rgb_cad[n][i] = xx;
       }
       rgb_cad[n][3]=1.0;
@@ -910,7 +817,7 @@ void InitRGB(void){
     ConvertColor(TO_COLOR);
     if(nrgb_ini > 0){
       global_scase.nrgb = nrgb_ini;
-      for(n=0;n<nrgb_ini;n++){
+      for(n=0; n<nrgb_ini; n++){
         global_scase.rgb[n][0] = rgb_ini[n*3];
         global_scase.rgb[n][1] = rgb_ini[n*3+1];
         global_scase.rgb[n][2] = rgb_ini[n*3+2];
@@ -918,7 +825,7 @@ void InitRGB(void){
       }
     }
     else{
-      for(n=0;n<global_scase.nrgb;n++){
+      for(n=0; n<global_scase.nrgb; n++){
         global_scase.rgb[n][0] = rgb_base[n][0];
         global_scase.rgb[n][1] = rgb_base[n][1];
         global_scase.rgb[n][2] = rgb_base[n][2];
@@ -928,7 +835,7 @@ void InitRGB(void){
   }
   else{
     ConvertColor(TO_BW);
-    for(n=0;n<global_scase.nrgb;n++){
+    for(n=0; n<global_scase.nrgb; n++){
       global_scase.rgb[n][0] = bw_base[n][0];
       global_scase.rgb[n][1] = bw_base[n][1];
       global_scase.rgb[n][2] = bw_base[n][2];
@@ -952,7 +859,7 @@ void UpdateCO2Colormap(void){
 
   switch(co2_colormap_type){
     case CO2_RGB:
-      for(n=0;n<MAXSMOKERGB;n++){
+      for(n=0; n<MAXSMOKERGB; n++){
         rgb_colormap[4*n+0] = (float)co2_color_int255[0] / 255.0;
         rgb_colormap[4*n+1] = (float)co2_color_int255[1] / 255.0;
         rgb_colormap[4*n+2] = (float)co2_color_int255[2] / 255.0;
@@ -960,7 +867,7 @@ void UpdateCO2Colormap(void){
       }
       break;
     case CO2_COLORBAR:
-      for(n=0;n<MAXSMOKERGB;n++){
+      for(n=0; n<MAXSMOKERGB; n++){
         rgb_colormap[4*n+0] = co2_cb[3*n+0];
         rgb_colormap[4*n+1] = co2_cb[3*n+1];
         rgb_colormap[4*n+2] = co2_cb[3*n+2];
@@ -1010,7 +917,7 @@ void UpdateSmokeColormap(void){
   switch(fire_colormap_type){
     case FIRECOLOR_RGB:
 
-      for(n=0;n<MAXSMOKERGB;n++){
+      for(n=0; n<MAXSMOKERGB; n++){
         int use_smoke;
 
         use_smoke = is_smoke_loaded;
@@ -1042,7 +949,7 @@ void UpdateSmokeColormap(void){
       break;
     case FIRECOLOR_COLORBAR:
       if(have_fire == NO_FIRE)break;
-      for(n=0;n<MAXSMOKERGB;n++){
+      for(n=0; n<MAXSMOKERGB; n++){
         int use_smoke;
         float val;
 
@@ -1100,7 +1007,7 @@ void UpdateRGBColors(int colorbar_index){
   InitCadColors();
   InitRGB();
   nrgb_full = MAXRGB;
-  for(n=0;n<nrgb_full;n++){
+  for(n=0; n<nrgb_full; n++){
     rgb_trans[4*n]=0.0;
     rgb_trans[4*n+1]=0.0;
     rgb_trans[4*n+2]=0.0;
@@ -1113,7 +1020,7 @@ void UpdateRGBColors(int colorbar_index){
     cbi = colorbars.colorbarinfo + colorbartype;
 
     alpha_rgb = colorbars.colorbarinfo[colorbartype].colorbar_alpha;
-    for(n=0;n<nrgb_full;n++){
+    for(n=0; n<nrgb_full; n++){
       rgb_full[n][0]=cbi->colorbar_rgb[3*n];
       rgb_full[n][1]=cbi->colorbar_rgb[3*n+1];
       rgb_full[n][2]=cbi->colorbar_rgb[3*n+2];
@@ -1127,7 +1034,7 @@ void UpdateRGBColors(int colorbar_index){
     UpdateSmokeColormap();
   }
   else{
-    for(n=0;n<nrgb_full;n++){
+    for(n=0; n<nrgb_full; n++){
       rgb_full[n][0]=(float)n/(float)(nrgb_full);
       rgb_full[n][1]=(float)n/(float)(nrgb_full);
       rgb_full[n][2]=(float)n/(float)(nrgb_full);
@@ -1135,14 +1042,14 @@ void UpdateRGBColors(int colorbar_index){
     }
   }
   if(contour_type==LINE_CONTOURS){
-    for(n=0;n<nrgb_full;n++){
+    for(n=0; n<nrgb_full; n++){
       rgb_full2[n][3]=rgb_full[n][3];
       rgb_full[n][3]=0;
     }
 
     int width;
     width = ( int )(256.0 / 10.0 );
-    for(n=0;n<11;n++){
+    for(n=0; n<11; n++){
       int cbmin, cbmax, j;
 
       cbmin = CLAMP(n * width, 0, 255);
@@ -1156,15 +1063,15 @@ void UpdateRGBColors(int colorbar_index){
   if(contour_type==STEPPED_CONTOURS){
     int index[11];
 
-    for(n=0;n<10;n++){
+    for(n=0; n<10; n++){
       index[n]=n*25.4;
     }
     index[10]=nrgb_full;
-    for(n=0;n<10;n++){
+    for(n=0; n<10; n++){
       int mid;
 
       mid = (index[n]+index[n+1])/2;
-      for(i=index[n];i<index[n+1];i++){
+      for(i=index[n]; i<index[n+1]; i++){
         rgb_full[i][0]=rgb_full[mid][0];
         rgb_full[i][1]=rgb_full[mid][1];
         rgb_full[i][2]=rgb_full[mid][2];
@@ -1176,13 +1083,13 @@ void UpdateRGBColors(int colorbar_index){
     {
       int nnn;
 
-      for(n=0;n<nrgb_full;n++){
+      for(n=0; n<nrgb_full; n++){
         rgb_full2[n][0]=rgb_full[n][0];
         rgb_full2[n][1]=rgb_full[n][1];
         rgb_full2[n][2]=rgb_full[n][2];
         rgb_full2[n][3]=rgb_full[n][3];
       }
-      for(n=0;n<nrgb_full;n++){
+      for(n=0; n<nrgb_full; n++){
         nnn=nrgb_full-1-n;
         rgb_full[nnn][0]=rgb_full2[n][0];
         rgb_full[nnn][1]=rgb_full2[n][1];
@@ -1220,7 +1127,7 @@ void UpdateRGBColors(int colorbar_index){
       cbmin = cbmin - (cbmax-255);
       cbmax = 255;
     }
-    for(n=cbmin;n<cbmax+1;n++){
+    for(n=cbmin; n<cbmax+1; n++){
       rgb_full[n][0]=highlight_color[0];
       rgb_full[n][1]=highlight_color[1];
       rgb_full[n][2]=highlight_color[2];
@@ -1244,7 +1151,7 @@ void UpdateRGBColors(int colorbar_index){
     rgb2ptr=&(rgb2[0][0]);
   }
   if(colorbar_index!=0){
-    for(n=0;n<global_scase.nrgb;n++){
+    for(n=0; n<global_scase.nrgb; n++){
       nn=n*(nrgb_full-1)/(global_scase.nrgb-1);
       global_scase.rgb[n][0] = rgb_full[nn][0];
       global_scase.rgb[n][1] = rgb_full[nn][1];
@@ -1252,7 +1159,7 @@ void UpdateRGBColors(int colorbar_index){
       global_scase.rgb[n][3] = transparent_level_local;
     }
   }
-  for(n=global_scase.nrgb;n<global_scase.nrgb+global_scase.nrgb2;n++){
+  for(n=global_scase.nrgb; n<global_scase.nrgb+global_scase.nrgb2; n++){
     global_scase.rgb[n][0]=rgb2ptr[3*(n-global_scase.nrgb)];
     global_scase.rgb[n][1]=rgb2ptr[3*(n-global_scase.nrgb)+1];
     global_scase.rgb[n][2]=rgb2ptr[3*(n-global_scase.nrgb)+2];
@@ -1277,14 +1184,14 @@ void UpdateRGBColors(int colorbar_index){
     memcpy(global_scase.rgb[rgb_white], zero3,               3*sizeof(float));
     memcpy(global_scase.rgb[rgb_black], one3,                3*sizeof(float));
   }
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     int j;
 
     meshi=global_scase.meshescoll.meshinfo + i;
     vent_offset = 6*meshi->nbptrs;
     outline_offset = vent_offset + meshi->nvents;
     if(meshi->faceinfo == NULL)continue;
-    for(j=outline_offset;j<outline_offset+6;j++){
+    for(j=outline_offset; j<outline_offset+6; j++){
       facej = meshi->faceinfo + j;
       facej->color=foregroundcolor;
     }
@@ -1315,7 +1222,6 @@ void UpdateChopColors(void){
   int setp3chopmin_temp_local=0, setp3chopmax_temp_local=0;
   float p3chopmin_temp_local=1.0, p3chopmax_temp_local=0.0;
   float glui_p3min_local=1.0, glui_p3max_local=0.0;
-
 
   cpp_boundsdata *bounds;
 
@@ -1358,7 +1264,7 @@ void UpdateChopColors(void){
 
   if(use_transparency_data==1)transparent_level_local=transparent_level;
 
-  for(i=0;i<nrgb_full;i++){
+  for(i=0; i<nrgb_full; i++){
     rgb_iso[4*i]=rgb_full[i][0];
     rgb_iso[4*i+1]=rgb_full[i][1];
     rgb_iso[4*i+2]=rgb_full[i][2];
@@ -1438,7 +1344,7 @@ void UpdateChopColors(void){
   if(showall_3dslices==1){
     int slice3d_loaded = 0;
 
-    for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
 
       slicei = global_scase.slicecoll.sliceinfo + i;
@@ -1469,10 +1375,10 @@ void UpdateChopColors(void){
       ichopmin=nrgb_full*(patchchopmin_local-smin)/(smax-smin);
       if(ichopmin<0)ichopmin=0;
       if(ichopmin>nrgb_full-1)ichopmin=nrgb_full-1;
-      for(i=0;i<ichopmin;i++){
+      for(i=0; i<ichopmin; i++){
         rgb_patch[4*i+3]=0.0;
       }
-      for(i=ichopmin-NCHOP;i<ichopmin;i++){
+      for(i=ichopmin-NCHOP; i<ichopmin; i++){
         int ii;
 
         if(i<=0)continue;
@@ -1486,10 +1392,10 @@ void UpdateChopColors(void){
       ichopmax=nrgb_full*(patchchopmax_local - smin)/(smax-smin);
       if(ichopmax<0)ichopmax=0;
       if(ichopmax>nrgb_full-1)ichopmax=nrgb_full-1;
-      for(i=ichopmax;i<nrgb_full;i++){
+      for(i=ichopmax; i<nrgb_full; i++){
         rgb_patch[4*i+3]=0.0;
       }
-      for(i=ichopmax;i<ichopmax+NCHOP;i++){
+      for(i=ichopmax; i<ichopmax+NCHOP; i++){
         int ii;
 
         if(i<=0)continue;
@@ -1521,10 +1427,10 @@ void UpdateChopColors(void){
       ichopmin=nrgb_full*(glui_slicechopmin_local-smin)/(smax-smin);
       if(ichopmin<0)ichopmin=0;
       if(ichopmin>nrgb_full-1)ichopmin=nrgb_full-1;
-      for(i=0;i<ichopmin;i++){
+      for(i=0; i<ichopmin; i++){
         rgb_slice[4*i+3]=0.0;
       }
-      for(i=ichopmin-NCHOP;i<ichopmin;i++){
+      for(i=ichopmin-NCHOP; i<ichopmin; i++){
         int ii;
 
         if(i<=0)continue;
@@ -1538,10 +1444,10 @@ void UpdateChopColors(void){
       ichopmax=nrgb_full*(glui_slicechopmax_local - smin)/(smax-smin);
       if(ichopmax<0)ichopmax=0;
       if(ichopmax>nrgb_full-1)ichopmax=nrgb_full-1;
-      for(i=ichopmax;i<nrgb_full;i++){
+      for(i=ichopmax; i<nrgb_full; i++){
         rgb_slice[4*i+3]=0.0;
       }
-      for(i=ichopmax;i<ichopmax+NCHOP;i++){
+      for(i=ichopmax; i<ichopmax+NCHOP; i++){
         int ii;
 
         if(i<=0)continue;
@@ -1561,7 +1467,7 @@ void UpdateChopColors(void){
       ichopmin = nrgb_full*(partchopmin_local-glui_partmin_local)/(glui_partmax_local-glui_partmin_local);
       if(ichopmin<0)ichopmin=0;
       if(ichopmin>nrgb_full-1)ichopmin=nrgb_full-1;
-      for(i=0;i<ichopmin;i++){
+      for(i=0; i<ichopmin; i++){
         rgb_part[4*i+3]=0.0;
       }
     }
@@ -1569,7 +1475,7 @@ void UpdateChopColors(void){
       ichopmax = nrgb_full*(partchopmax_local - glui_partmin_local)/(glui_partmax_local - glui_partmin_local);
       if(ichopmax<0)ichopmax=0;
       if(ichopmax>nrgb_full-1)ichopmax=nrgb_full-1;
-      for(i=ichopmax;i<nrgb_full;i++){
+      for(i=ichopmax; i<nrgb_full; i++){
         rgb_part[4*i+3]=0.0;
       }
     }
@@ -1580,10 +1486,10 @@ void UpdateChopColors(void){
       ichopmin=nrgb_full*(p3chopmin_temp_local - glui_p3min_local)/(glui_p3max_local - glui_p3min_local);
       if(ichopmin<0)ichopmin=0;
       if(ichopmin>nrgb_full-1)ichopmin=nrgb_full-1;
-      for(i=0;i<ichopmin;i++){
+      for(i=0; i<ichopmin; i++){
         rgb_plot3d[4*i+3]=0.0;
       }
-      for(i=ichopmin-NCHOP;i<ichopmin;i++){
+      for(i=ichopmin-NCHOP; i<ichopmin; i++){
         int ii;
 
         if(i<=0)continue;
@@ -1609,10 +1515,10 @@ void UpdateChopColors(void){
       ichopmax=nrgb_full*(p3chopmax_temp_local - glui_p3min_local)/(glui_p3max_local - glui_p3min_local);
       if(ichopmax<0)ichopmax=0;
       if(ichopmax>nrgb_full-1)ichopmax=nrgb_full-1;
-      for(i=ichopmax;i<nrgb_full;i++){
+      for(i=ichopmax; i<nrgb_full; i++){
         rgb_plot3d[4*i+3]=0.0;
       }
-      for(i=ichopmax;i<ichopmax+NCHOP;i++){
+      for(i=ichopmax; i<ichopmax+NCHOP; i++){
         int ii;
 
         if(i<=0)continue;
@@ -1623,7 +1529,7 @@ void UpdateChopColors(void){
       }
     }
   }
-  for(i=0;i<global_scase.npartinfo;i++){
+  for(i=0; i<global_scase.npartinfo; i++){
     partdata *parti;
 
     parti = global_scase.partinfo + i;
@@ -1652,33 +1558,21 @@ void GetRGB(unsigned int val, unsigned char *rr, unsigned char *gg, unsigned cha
   *rr=r; *gg=g; *bb=b;
 }
 
-/* ------------------ GetColorTranPtr ------------------------ */
-
-float *GetColorTranPtr(float *color, float transparency){
-  float col[4];
-
-  col[0] = color[0];
-  col[1] = color[1];
-  col[2] = color[2];
-  col[3] = transparency;
-  return GetColorPtr(&global_scase, col);
-}
-
-  /* ------------------ ConvertColor ------------------------ */
+/* ------------------ ConvertColor ------------------------ */
 
 void ConvertColor(int flag){
   colordata *colorptr;
 
   switch(flag){
    case TO_BW:
-    for(colorptr=global_scase.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
+    for(colorptr=global_scase.firstcolor; colorptr!=NULL; colorptr=colorptr->nextcolor){
       colorptr->color[0]=colorptr->bw_color[0];
       colorptr->color[1]=colorptr->bw_color[1];
       colorptr->color[2]=colorptr->bw_color[2];
     }
     break;
    case TO_COLOR:
-    for(colorptr=global_scase.firstcolor;colorptr!=NULL;colorptr=colorptr->nextcolor){
+    for(colorptr=global_scase.firstcolor; colorptr!=NULL; colorptr=colorptr->nextcolor){
       colorptr->color[0]=colorptr->full_color[0];
       colorptr->color[1]=colorptr->full_color[1];
       colorptr->color[2]=colorptr->full_color[2];

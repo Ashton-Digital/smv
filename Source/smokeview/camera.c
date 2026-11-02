@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
 #include "smokeviewvars.h"
 #include "glui_motion.h"
 #include "IOscript.h"
@@ -87,7 +86,6 @@ void UpdateCameraYpos(cameradata *ci, int option){
   local_aperture_default = Zoom2Aperture(1.0);
   if(VP_scene.width==0||VP_scene.height==0)GetViewportInfo();
   if(VP_scene.height!=0)asp = (float)VP_scene.width/(float)VP_scene.height;
-
 
   if(use_geom_factors==1&&have_geom_factors==1){
     dx = FDS2SMV_X(geom_xmax) - FDS2SMV_X(geom_xmin);
@@ -294,7 +292,6 @@ void InitCamera(cameradata *ci,char *name){
     cam->zmax=clipinfo.zmax;
   }
 
-
 /* ------------------ Clip2Cam ------------------------ */
 
   void Cam2Clip(cameradata *cam){
@@ -446,7 +443,7 @@ cameradata *InsertCamera(cameradata *cb,cameradata *source, char *name){
   cameradata *cam=NULL,*ca;
   int insert = 1;
 
-  for(ca=camera_list_first.next;ca->next!=NULL;ca=ca->next){
+  for(ca=camera_list_first.next; ca->next!=NULL; ca=ca->next){
     if(strcmp(ca->name, name) == 0){
       cam = ca;
       insert = 0;
@@ -547,7 +544,7 @@ void DeleteCamera(cameradata *cam){
 cameradata *GetCamera(char *name){
   cameradata *ca;
 
-  for(ca=camera_list_first.next;ca->next!=NULL;ca=ca->next){
+  for(ca=camera_list_first.next; ca->next!=NULL; ca=ca->next){
     if(strcmp(ca->name,name)==0){
       return ca;
     }
@@ -560,7 +557,7 @@ cameradata *GetCamera(char *name){
 char *GetCameraLabel(int index){
   cameradata *ca;
 
-  for(ca=camera_list_first.next;ca->next!=NULL;ca=ca->next){
+  for(ca=camera_list_first.next; ca->next!=NULL; ca=ca->next){
     if(ca->view_id==index){
       return ca->name;
     }

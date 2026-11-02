@@ -30,11 +30,9 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define LABELS_shadedata 30
 #define LABELS_colorbar_shift 36
 
-
 #define OBJECT_PLOT_SHOW_ALL        -8
 #define OBJECT_PLOT_SHOW_SELECTED  -11
 #define OBJECT_PLOT_SHOW_TREE_ALL  -12
-
 
 #define PLOT_HRRPUV           -13
 
@@ -83,7 +81,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define PLOT_ONLY_DATA  0
 #define PLOT_ALL        1
 #define PLOT_ONLY_FRAME 2
-
 
 #define    ALL_FILES 0
 #define LOADED_FILES 1
@@ -358,7 +355,6 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define ZWALLMIN -3
 #define ZWALLMAX  3
 
-
 #define NODATA  0
 #define HASDATA 1
 
@@ -436,15 +432,15 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define CLIP_GEOMETRY   \
   {int clip_geom=0;\
     if(clip_mode==CLIP_BLOCKAGES||clip_mode==CLIP_BLOCKAGES_DATA)clip_geom=1;\
-    if( clipon==0&&clip_geom==1){CLIP;}\
-    else if( clipon==1&&clip_geom==0){UNCLIP;}\
+    if(clipon==0&&clip_geom==1){CLIP;}\
+    else if(clipon==1&&clip_geom==0){UNCLIP;}\
   }
 
 #define CLIP_VALS   \
   {int clip_data=0;\
   if(clip_mode==CLIP_DATA||clip_mode==CLIP_BLOCKAGES_DATA)clip_data=1;\
-  if( clipon==0&&clip_data==1){CLIP;}\
-    else if( clipon==1&&clip_data==0){UNCLIP;}\
+  if(clipon==0&&clip_data==1){CLIP;}\
+    else if(clipon==1&&clip_data==0){UNCLIP;}\
   }
 
 #define GAS        1
@@ -763,6 +759,10 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define RENDER_RESOLUTION_HIGH    3
 #define RENDER_RESOLUTION_360     4
 
+#define MIN_RESOLUTION_MULTIPLIER     2
+#define MAX_RESOLUTION_MULTIPLIER    10
+#define DEFAULT_RESOLUTION_MULTIPLIER 2
+
 #define SMOKE_OUTLINE_TRIANGLE 0
 #define SMOKE_TRIANGULATION    1
 #define SMOKE_OUTLINE_POLYGON  2
@@ -802,12 +802,12 @@ EXTERNCPP void _Sniff_Errors(const char *whereat, const char *file, int line);
 #define HTML_CURRENT_TIME         0
 #define HTML_ALL_TIMES            1
 
-#define SHOW_EXTERIOR_WALL_MENU           -1
-#define HIDE_EXTERIOR_WALL_MENU          -19
-#define SHOW_INTERIOR_WALL_MENU          -21
-#define HIDE_INTERIOR_WALL_MENU          -22
+#define SHOW_EXTERIOR_WALL_MENU        -1
+#define HIDE_EXTERIOR_WALL_MENU       -19
+#define SHOW_INTERIOR_WALL_MENU       -21
+#define HIDE_INTERIOR_WALL_MENU       -22
 #define INI_EXTERIORwallmenu          -20
-#define INTERIOR_WALL_MENU               -2
+#define TOGGLE_INTERIOR_WALL_MENU      -2
 #define FRONTwallmenu                  -3
 #define BACKwallmenu                   -4
 #define LEFTwallmenu                   -5

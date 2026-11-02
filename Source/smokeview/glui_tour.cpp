@@ -20,15 +20,10 @@ GLUI *glui_tour=NULL;
 GLUI_Rollout *ROLLOUT_keyframe = NULL;
 GLUI_Rollout *ROLLOUT_circular = NULL;
 
-GLUI_Panel *PANEL_misc = NULL;
 GLUI_Panel *PANEL_node = NULL;
 GLUI_Panel *PANEL_tour = NULL;
-GLUI_Panel *PANEL_settingskeyframe=NULL;
-GLUI_Panel *PANEL_path=NULL;
 GLUI_Panel *PANEL_tour1=NULL;
-GLUI_Panel *PANEL_tour3=NULL;
 GLUI_Panel *PANEL_close_tour=NULL;
-GLUI_Panel *PANEL_pos=NULL;
 GLUI_Panel *PANEL_tourposition=NULL;
 GLUI_Panel *PANEL_tournavigate=NULL;
 GLUI_Panel *PANEL_tourview=NULL;
@@ -38,7 +33,6 @@ GLUI_Panel *PANEL_tour4;
 GLUI_Panel *PANEL_tour5;
 GLUI_Panel *PANEL_tour6;
 GLUI_Panel *PANEL_tour7;
-
 
 GLUI_Checkbox *CHECKBOX_view1 = NULL;
 GLUI_Checkbox *CHECKBOX_view2 = NULL;
@@ -211,7 +205,7 @@ extern "C" void GLUITourSetup(int main_window){
 
     LISTBOX_tour->add_item(TOURINDEX_MANUAL, "Manual");
     LISTBOX_tour->add_item(-999, "-");
-    for(i = 0;i < global_scase.tourcoll.ntourinfo;i++){
+    for(i = 0; i < global_scase.tourcoll.ntourinfo; i++){
       tourdata *touri;
 
       touri = global_scase.tourcoll.tourinfo + i;
@@ -236,14 +230,13 @@ extern "C" void GLUITourSetup(int main_window){
   CHECKBOX_tour_constant_velocity = glui_tour->add_checkbox_to_panel(PANEL_tour5, "Constant velocity",
     &tour_constant_velocity, TOUR_CONSTANT_VELOCITY, TourCB);
 
-
   glui_tour->add_column_to_panel(PANEL_tour6, false);
   PANEL_tour7 = glui_tour->add_panel_to_panel(PANEL_tour6, "");
 
   if(global_scase.objectscoll.navatar_types > 0){
     glui_tour->add_checkbox_to_panel(PANEL_tour7, "Show avatar", &show_avatar);
     LISTBOX_avatar = glui_tour->add_listbox_to_panel(PANEL_tour7, "Avatar:", &glui_avatar_index, TOUR_AVATAR, TourCB);
-    for(i = 0;i < global_scase.objectscoll.navatar_types;i++){
+    for(i = 0; i < global_scase.objectscoll.navatar_types; i++){
       LISTBOX_avatar->add_item(i, global_scase.objectscoll.avatar_types[i]->label);
     }
     if(tourlocus_type == 0){
@@ -306,7 +299,7 @@ extern "C" void GLUITourSetup(int main_window){
   update_tour_list =1;
 }
 
-/* ------------------ GLUIUpdateTourList(void) ------------------------ */
+/* ------------------ GLUIUpdateTourList ------------------------ */
 
 extern "C" void GLUIUpdateTourList(void){
 
@@ -497,7 +490,7 @@ void TourCB(int var){
 
       if(selected_tour == NULL)return;
       update_tour_path=0;
-      for(frame=selected_tour->first_frame.next;frame->next!=NULL;frame=frame->next){
+      for(frame=selected_tour->first_frame.next; frame->next!=NULL; frame=frame->next){
         glui_tour_xyz[0] = frame->xyz_fds[0];
         glui_tour_xyz[1] = frame->xyz_fds[1];
         glui_tour_xyz[2] = frame->xyz_fds[2];
@@ -915,7 +908,7 @@ extern "C" void GLUIDeleteTourList(void){
   int i;
 
   if(LISTBOX_tour==NULL)return;
-  for(i=0;i<global_scase.tourcoll.ntourinfo;i++){
+  for(i=0; i<global_scase.tourcoll.ntourinfo; i++){
     LISTBOX_tour->delete_item(i);
   }
 }
@@ -926,7 +919,7 @@ extern "C" void GLUICreateTourList(void){
   int i;
 
   if(LISTBOX_tour==NULL)return;
-  for(i=0;i<global_scase.tourcoll.ntourinfo;i++){
+  for(i=0; i<global_scase.tourcoll.ntourinfo; i++){
     tourdata *touri;
     char label[1000];
 

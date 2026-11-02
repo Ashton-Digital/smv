@@ -101,7 +101,7 @@ void GetColorbarLabelWidth(int show_slice_colorbar_local, int showcfast_local,
     int show_hvacduct_colorbar_local, show_hvacnode_colorbar_local;
 
     strcpy(sample_label, "");
-    for(i=0;i<MAX(5,ncolorlabel_digits+nextra);i++){
+    for(i=0; i<MAX(5,ncolorlabel_digits+nextra); i++){
       strcat(sample_label,"1");
     }
     max_width = GetStringWidth(sample_label);
@@ -367,7 +367,6 @@ void GetViewportInfo(void){
   // we want to print and the spacing information
   // only do this if title is set
 
-
   // add the margins
   VP_title.height=titleinfo.top_margin+titleinfo.bottom_margin;
   // count the lines first, then add space after
@@ -526,49 +525,6 @@ int SubPortOrtho(int quad,
 /* ------------------------ SubPortOrtho2custom ------------------------- */
 
 #define WINDOW_MARGIN 0
-int SubPortOrtho2Custom( portdata *p, GLint screen_left, GLint screen_down, int left_percen, int down_percen, int length_percen){
-
-  GLint x0, y0;
-  GLsizei dxy;
-  float df;
-
-  GLdouble portx_left, portx_right, portx_down, portx_top;
-
-  portx_left = p->left;
-  portx_right = p->left + p->width;
-  portx_down = p->down;
-  portx_top = p->down + p->height;
-  port_pixel_width = p->width;
-  port_pixel_height = p->height;
-  port_unit_width = portx_right-portx_left;
-  port_unit_height = portx_top-portx_down;
-
-  dxy = ((float)length_percen/100.0)*MIN(p->width, p->height);
-  {
-    float text_height;
-
-    text_height = (float)GetFontHeight();
-    text_height += 3.0;
-    text_height *= 6.0;
-    if(dxy>text_height){
-      df = text_height/(dxy - text_height);
-    }
-    else{
-      df = 0.25;
-    }
-  }
-
-  x0 = p->left + MIN( (float)left_percen/100.0*p->width,  p->width  - dxy);
-  y0 = p->down + MIN( (float)down_percen/100.0*p->height, p->height - dxy);
-
-  glViewport(x0, y0, dxy, dxy);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluOrtho2D(-0.25, 1.1, -df, 1.1);
-  pixel_dens = dxy/(1.1+df);
-  return 1;
-}
 
 /* ------------------------ SubPortOrtho2 ------------------------- */
 
@@ -851,7 +807,6 @@ void GetClipLabel(char *buffer, int flag){
   strcat(buffer," m");
 }
 
-
  /* ------------------------ ViewportInfo ------------------------- */
 
 void ViewportInfo(int quad, GLint screen_left, GLint screen_down){
@@ -880,7 +835,6 @@ void ViewportInfo(int quad, GLint screen_left, GLint screen_down){
      visGrid==GRID_PROBE){
     int iplotval;
     char buff_label[128], *buff_label_ptr;
-
 
     iplotval=mesh_xyz->iplotx_all[iplotx_all];
     buff_label_ptr = buff_label;
@@ -1042,7 +996,7 @@ void OutputSlicePlot(char *file){
   }
   int j;
 
-  for(j = -3;j < ntimes;j++){
+  for(j = -3; j < ntimes; j++){
     first = 1;
     for(i = 0; i < global_scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
@@ -1116,7 +1070,7 @@ void ViewportSlicePlot(int quad, GLint screen_left, GLint screen_down){
     strcpy(label, cbi->menu_label);
     strcat(label, "/CIELab delta");
 
-    for(i=0;i<255;i++){
+    for(i=0; i<255; i++){
       xvals[i] = (float)i;
     }
 
@@ -1202,7 +1156,7 @@ void ViewportTimebar(int quad, GLint screen_left, GLint screen_down){
   if(visFramerate==1&&showtime==1)framerate_width = GetStringWidth("Frame rate: 99.99");
   timebar_right_width = framerate_width;
 #ifdef pp_MEMDEBUG
-  if(vismemusage == 1) {
+  if(vismemusage == 1){
     memusage_width = GetStringWidth("Mem Usage: 9999 MBx");
     timebar_right_width = MAX(timebar_right_width, memusage_width);
   }
@@ -1321,8 +1275,6 @@ void ViewportTitle(int quad, GLint screen_left, GLint screen_down){
   char workflow_status[512];
 
   if(SubPortOrtho2(quad,&VP_title,screen_left,screen_down)==0)return;
-
-
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -1474,19 +1426,6 @@ void GetEyePos(float *mm){
   NORMALIZE3(fds_viewdir);
 }
 
-/* ------------------ CompareVolFaceListData ------------------------ */
-
-int CompareVolFaceListData(const void *arg1, const void *arg2){
-  volfacelistdata *vi, *vj;
-
-  vi = *(volfacelistdata **)arg1;
-  vj = *(volfacelistdata **)arg2;
-
-  if(vi->dist2 < vj->dist2)return 1;
-  if(vi->dist2 > vj->dist2)return -1;
-  return 0;
-}
-
 /* ------------------ GetSmokeDir ------------------------ */
 
 void GetSmokeDir(float *mm){
@@ -1515,7 +1454,7 @@ void GetSmokeDir(float *mm){
   eye_position_fds[1] = SMV2FDS_Y(eye_position_smv[1]);
   eye_position_fds[2] = SMV2FDS_Z(eye_position_smv[2]);
 
-#ifdef pp_GETMESH_TEST
+#ifdef pp_GETMESH
   for(j = 0; j < global_scase.meshescoll.nmeshes + 1; j++){
 #else
   for(j = 0; j < global_scase.meshescoll.nmeshes; j++){
@@ -1525,7 +1464,7 @@ void GetSmokeDir(float *mm){
     float absangle, cosangle, minangle, mincosangle;
     int iminangle, alphadir, minalphadir;
 
-#ifdef pp_GETMESH_TEST
+#ifdef pp_GETMESH
     if(j < global_scase.meshescoll.nmeshes){
       meshj = global_scase.meshescoll.meshinfo + j;
       dx = meshj->boxmiddle_smv[0] - eye_position_smv[0];
@@ -1607,7 +1546,7 @@ void GetSmokeDir(float *mm){
         }
       }
     }
-#ifdef pp_GETMESH_TEST
+#ifdef pp_GETMESH
     if(j < global_scase.meshescoll.nmeshes){
       meshj->smokedir = iminangle;
     }
@@ -1675,7 +1614,7 @@ void GetZoneSmokeDir(float *mm){
   eye_position_smv[1] = -(mm[4] * mm[12] + mm[5] * mm[13] + mm[6] * mm[14]) / mscale[1];
   eye_position_smv[2] = -(mm[8] * mm[12] + mm[9] * mm[13] + mm[10] * mm[14]) / mscale[2];
 
-  for(j = 0;j<global_scase.nrooms;j++){
+  for(j = 0; j<global_scase.nrooms; j++){
     roomdata *roomj;
 
     roomj = global_scase.roominfo + j;
@@ -1686,7 +1625,7 @@ void GetZoneSmokeDir(float *mm){
       eye_position_smv[1]>roomj->y0&&eye_position_smv[1]<roomj->y1&&
       eye_position_smv[2]>roomj->z0&&eye_position_smv[2]<roomj->z1
       ){
-      for(i = -3;i <= 3;i++){
+      for(i = -3; i <= 3; i++){
         if(i == 0)continue;
         roomj->drawsides[i + 3] = 1;
       }
@@ -1694,7 +1633,7 @@ void GetZoneSmokeDir(float *mm){
       continue;
     }
 
-    for(i = -3;i <= 3;i++){
+    for(i = -3; i <= 3; i++){
       if(i == 0)continue;
       ii = ABS(i);
       norm[0] = 0.0;
@@ -1752,7 +1691,7 @@ void GetZoneSmokeDir(float *mm){
       if(cosdir<0.0)cosdir = -cosdir;
       angles[3 + i] = cosdir;
     }
-    for(i = -3;i <= 3;i++){
+    for(i = -3; i <= 3; i++){
       if(i == 0)continue;
       if(angles[i + 3]<90.0){
         roomj->drawsides[i + 3] = 1;
@@ -1786,7 +1725,7 @@ float DistPointLineSeg(float *point, float *xyz1, float *xyz2){
   // (point - xt) .dot. (xyz2 - xyz1) = 0
   // solve for t and compute distance between xt and point
 
-  for(i=0;i<3;i++){
+  for(i=0; i<3; i++){
     dp[i]   = point[i]  - xyz1[i];
     dxyz[i] = xyz2[i] - xyz1[i];
   }
@@ -1798,7 +1737,7 @@ float DistPointLineSeg(float *point, float *xyz1, float *xyz2){
 
     t = num/denom;
     if(t<0.0||t>1.0)return -1.0;
-    for(i=0;i<3;i++){
+    for(i=0; i<3; i++){
       xyz[i] = xyz1[i]*(1.0-t)+xyz2[i]*t;
       dxyz[i] = point[i] - xyz[i];
     }
@@ -1996,7 +1935,7 @@ void UpdateMeshInFrustum(void) {
   int i;
 
   if(cull_meshes == 1){
-    for(i = 0; i < global_scase.meshescoll.nmeshes; i++) {
+    for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
       meshi = global_scase.meshescoll.meshinfo + i;
@@ -2004,7 +1943,7 @@ void UpdateMeshInFrustum(void) {
     }
   }
   else {
-    for(i = 0; i < global_scase.meshescoll.nmeshes; i++) {
+    for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
       meshi = global_scase.meshescoll.meshinfo + i;
@@ -2057,6 +1996,7 @@ void ViewportScene(int quad, int view_mode, GLint screen_left, GLint screen_down
   eyeyINI = camera_current->eye[1];
   eyezINI = camera_current->eye[2];
 
+  
   if(projection_type==PROJECTION_ORTHOGRAPHIC){
     fnear = -eyeyINI - 1.0;
     if(fnear < nearclip)fnear = nearclip;

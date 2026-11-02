@@ -32,7 +32,6 @@
 #include "IOobjects.h"
 #include "IOscript.h"
 
-#include "translate.h"
 #include "file_util.h"
 #include "datadefs.h"
 #include "readimage.h"
@@ -126,7 +125,7 @@ void UpdateINIList(void){
   if(global_scase.filelist_coll.nini_filelist>0){
     MakeFileList(".",filter,global_scase.filelist_coll.nini_filelist,NO,&global_scase.filelist_coll.ini_filelist, FILE_MODE);
 
-    for(i=0;i<global_scase.filelist_coll.nini_filelist;i++){
+    for(i=0; i<global_scase.filelist_coll.nini_filelist; i++){
       filelistdata *filei;
 
       filei = global_scase.filelist_coll.ini_filelist + i;
@@ -164,7 +163,7 @@ void InitTextures0(void){
 
   INIT_PRINT_TIMER(texture_timer);
   global_scase.texture_coll.ntextureinfo = 0;
-  for(i=0;i<global_scase.surfcoll.nsurfinfo;i++){
+  for(i=0; i<global_scase.surfcoll.nsurfinfo; i++){
     surfdata *surfi;
     texturedata *texti;
     int len;
@@ -183,7 +182,7 @@ void InitTextures0(void){
   }
   PRINT_TIMER(texture_timer, "SURF textures");
 
-  for(i=0;i<global_scase.device_texture_list_coll.ndevice_texture_list;i++){
+  for(i=0; i<global_scase.device_texture_list_coll.ndevice_texture_list; i++){
     char *texturefile;
     texturedata *texti;
     int len;
@@ -205,7 +204,7 @@ void InitTextures0(void){
     texturedata *texture_base;
 
     texture_base = global_scase.texture_coll.textureinfo + global_scase.texture_coll.ntextureinfo;
-    for(i=0;i<global_scase.terrain_texture_coll.nterrain_textures;i++){
+    for(i=0; i<global_scase.terrain_texture_coll.nterrain_textures; i++){
       char *texturefile;
       texturedata *texti;
       int len;
@@ -228,7 +227,7 @@ void InitTextures0(void){
   // check to see if texture files exist .
   // If so, then convert to OpenGL format
 
-  for(i=0;i<global_scase.texture_coll.ntextureinfo;i++){
+  for(i=0; i<global_scase.texture_coll.ntextureinfo; i++){
     unsigned char *floortex;
     int texwid, texht;
     texturedata *texti;
@@ -381,7 +380,7 @@ void InitTextures0(void){
     unsigned char *floortex;
     int texwid, texht, nloaded=0;
 
-    for(i=0;i<global_scase.terrain_texture_coll.nterrain_textures;i++){
+    for(i=0; i<global_scase.terrain_texture_coll.nterrain_textures; i++){
       int is_transparent;
 
       tt = global_scase.terrain_texture_coll.terrain_textures + i;
@@ -491,7 +490,7 @@ void UpdateBoundInfo(void){
     NewMemory((void*)&isoindex,global_scase.nisoinfo*sizeof(int));
     NewMemory((void*)&isobounds,global_scase.nisoinfo*sizeof(boundsdata));
     niso_bounds=0;
-    for(i=0;i<global_scase.nisoinfo;i++){
+    for(i=0; i<global_scase.nisoinfo; i++){
       isodata *isoi;
 
       isoi = global_scase.isoinfo + i;
@@ -514,7 +513,7 @@ void UpdateBoundInfo(void){
       isobounds[niso_bounds].chopmin=1.0;
       isobounds[niso_bounds].label=&isoi->color_label;
       niso_bounds++;
-      for(n=0;n<i;n++){
+      for(n=0; n<i; n++){
         isodata *ison;
 
         ison = global_scase.isoinfo + n;
@@ -533,7 +532,7 @@ void UpdateBoundInfo(void){
     FREEMEMORY(slicebounds);
     NewMemory((void*)&slicebounds,global_scase.slicecoll.nsliceinfo*sizeof(boundsdata));
     nslicebounds=0;
-    for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
       boundsdata *sbi;
 
@@ -559,7 +558,7 @@ void UpdateBoundInfo(void){
       sbi->line_contour_num=1;
       sbi->label = &(slicei->label);
       nslicebounds++;
-      for(n=0;n<i;n++){
+      for(n=0; n<i; n++){
         slicedata *slicen;
 
         slicen = global_scase.slicecoll.sliceinfo + n;
@@ -582,7 +581,7 @@ void UpdateBoundInfo(void){
     FREEMEMORY(patchlabellist_index);
     NewMemory((void **)&patchlabellist,global_scase.npatchinfo*sizeof(char *));
     NewMemory((void **)&patchlabellist_index,global_scase.npatchinfo*sizeof(int));
-    for(i=0;i<global_scase.npatchinfo;i++){
+    for(i=0; i<global_scase.npatchinfo; i++){
       patchdata *patchi;
       boundsdata *sbi;
 
@@ -595,7 +594,7 @@ void UpdateBoundInfo(void){
       patchlabellist[npatch2]=patchi->label.shortlabel;
       patchlabellist_index[npatch2]=i;
       npatch2++;
-      for(n=0;n<i;n++){
+      for(n=0; n<i; n++){
         patchdata *patchn;
 
         patchn = global_scase.patchinfo + n;
@@ -653,7 +652,7 @@ void UpdateBoundInfo(void){
     nhvacnodebounds=0;
 
 #ifndef __clang_analyzer__
-    for(i=0;i<nhvacboundsmax;i++){
+    for(i=0; i<nhvacboundsmax; i++){
       hvacvaldata *hi;
       boundsdata *hbi;
 
@@ -692,7 +691,7 @@ void UpdateBoundInfo(void){
         nbeg = global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars;
         nhvacnodebounds++;
       }
-      for(n=nbeg;n<i;n++){
+      for(n=nbeg; n<i; n++){
         hvacvaldata *hn;
 
         if(n<global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars){
@@ -754,21 +753,6 @@ blocktype: 0 regular block non-textured
 3 smoothed block
 r g b           colors used if colorindex==-3
 */
-
-/* ------------------ UpdateVentOffset ------------------------ */
-
-void UpdateVentOffset(void){
-  int i;
-
-  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
-    meshdata *meshi;
-
-    meshi = global_scase.meshescoll.meshinfo + i;
-    meshi->vent_offset[XXX] = ventoffset_factor*(meshi->xplt_smv[1] - meshi->xplt_smv[0]);
-    meshi->vent_offset[YYY] = ventoffset_factor*(meshi->yplt_smv[1] - meshi->yplt_smv[0]);
-    meshi->vent_offset[ZZZ] = ventoffset_factor*(meshi->zplt_smv[1] - meshi->zplt_smv[0]);
-  }
-}
 
 /* ------------------ UpdateBlockType ------------------------ */
 
@@ -984,7 +968,7 @@ void GetBoxCorners(float xbar_local, float ybar_local, float zbar_local){
 void UpdateMeshBoxBounds(void){
   int i;
 
-  for(i = 0; i<global_scase.meshescoll.nmeshes;  i++){
+  for(i = 0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     // xplt, yplt, zplt has original coordinates because this routine is called before UpdateMeshCoords
@@ -1054,7 +1038,6 @@ void UpdateSmoke3DTypes(void){
     smoke3ddata *smoke3di;
     int j;
     smokestatedata *smokestate=NULL;
-
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo+i;
 #ifdef pp_SMOKE3D_FORCE
@@ -1135,13 +1118,13 @@ void UpdateMeshCoords(void){
       current_mesh->zplt_smv = zplt_smv;
     }
 
-    for(nn=0;nn<=current_mesh->ibar;nn++){
+    for(nn=0; nn<=current_mesh->ibar; nn++){
       current_mesh->xplt_smv[nn]=global_scase.xbar0+(float)nn*(global_scase.xbar-global_scase.xbar0)/(float)current_mesh->ibar;
     }
-    for(nn=0;nn<=current_mesh->jbar;nn++){
+    for(nn=0; nn<=current_mesh->jbar; nn++){
       current_mesh->yplt_smv[nn]=global_scase.ybar0+(float)nn*(global_scase.ybar-global_scase.ybar0)/(float)current_mesh->jbar;
     }
-    for(nn=0;nn<=current_mesh->kbar;nn++){
+    for(nn=0; nn<=current_mesh->kbar; nn++){
       current_mesh->zplt_smv[nn]=global_scase.zbar0+(float)nn*(global_scase.zbar-global_scase.zbar0)/(float)current_mesh->kbar;
     }
   }
@@ -1150,7 +1133,7 @@ void UpdateMeshCoords(void){
 
   /* add in offsets */
 #ifndef __clang_analyzer__
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int ii;
 
@@ -1169,20 +1152,20 @@ void UpdateMeshCoords(void){
       dz = (meshi->xyz_bar[ZZZ] - meshi->xyz_bar0[ZZZ])/meshi->kbar;
       meshi->cellsize=sqrt(dx*dx+dy*dy+dz*dz);
     }
-    for(ii=0;ii<meshi->ibar+1;ii++){
+    for(ii=0; ii<meshi->ibar+1; ii++){
       meshi->xplt_fds[ii] += meshi->offset[XXX];
     }
-    for(ii=0;ii<meshi->jbar+1;ii++){
+    for(ii=0; ii<meshi->jbar+1; ii++){
       meshi->yplt_fds[ii] += meshi->offset[YYY];
     }
-    for(ii=0;ii<meshi->kbar+1;ii++){
+    for(ii=0; ii<meshi->kbar+1; ii++){
       meshi->zplt_fds[ii] += meshi->offset[ZZZ];
     }
     meshi->xcen_smv+=meshi->offset[XXX];
     meshi->ycen_smv+=meshi->offset[YYY];
     meshi->zcen_smv+=meshi->offset[ZZZ];
   }
-  for(i=1;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=1; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+i;
@@ -1195,7 +1178,7 @@ void UpdateMeshCoords(void){
   }
 
   ijkbarmax=global_scase.meshescoll.meshinfo->ibar;
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+i;
@@ -1205,7 +1188,7 @@ void UpdateMeshCoords(void){
     ijkbarmax = MAX(ijkbarmax,meshi->kbar);
   }
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     float xminmax[2], yminmax[2], zminmax[2];
     float *verts;
@@ -1238,7 +1221,7 @@ void UpdateMeshCoords(void){
     zminmax[0] = meshi->xyz_bar0[ZZZ];
     zminmax[1] = meshi->xyz_bar[ZZZ];
     verts = meshi->verts;
-    for(j=0;j<8;j++){
+    for(j=0; j<8; j++){
       verts[3*j+0] = xminmax[xindex[j]];
       verts[3*j+1] = yminmax[yindex[j]];
       verts[3*j+2] = zminmax[zindex[j]];
@@ -1321,13 +1304,13 @@ void UpdateMeshCoords(void){
   dysbar = (global_scase.ybar-global_scase.ybar0)/factor;
   dzsbar = (global_scase.zbar-global_scase.zbar0)/factor;
 
-  for(nn=0;nn<factor;nn++){
+  for(nn=0; nn<factor; nn++){
     xplts[nn]=global_scase.xbar0+((float)nn+0.5)*dxsbar;
   }
-  for(nn=0;nn<factor;nn++){
+  for(nn=0; nn<factor; nn++){
     yplts[nn]=global_scase.ybar0+((float)nn+0.5)*dysbar;
   }
-  for(nn=0;nn<factor;nn++){
+  for(nn=0; nn<factor; nn++){
     zplts[nn]=global_scase.zbar0+((float)nn+0.5)*dzsbar;
   }
 
@@ -1353,23 +1336,20 @@ void UpdateMeshCoords(void){
   float dy_scene   = global_scase.ybar - global_scase.ybar0;
   float dz_scene   = global_scase.zbar - global_scase.zbar0;
   xyzmaxdiff = MAX(MAX(dx_scene,dy_scene),dz_scene);
-  // set fire_half depth to max of 1/40 domain size (rounded to 0.1 m) and 0.3
-  fire_halfdepth = (float)((int)(100.0*xyzmaxdiff/40.0+0.5))/100.0;
-  fire_halfdepth = MAX(fire_halfdepth, 0.05);
   vector_scalelength = MIN(dx_scene, dz_scene);
-  if(global_scase.meshescoll.meshinfo[0].jbar > 1) {
+  if(global_scase.meshescoll.meshinfo[0].jbar > 1){
     vector_scalelength = MIN(vector_scalelength, dy_scene);
   }
 
   // normalize various coordinates.
 
-  for(nn=0;nn<factor;nn++){
+  for(nn=0; nn<factor; nn++){
     xplts[nn]=FDS2SMV_X(xplts[nn]);
   }
-  for(nn=0;nn<factor;nn++){
+  for(nn=0; nn<factor; nn++){
     yplts[nn]=FDS2SMV_Y(yplts[nn]);
   }
-  for(nn=0;nn<factor;nn++){
+  for(nn=0; nn<factor; nn++){
     zplts[nn]=FDS2SMV_Z(zplts[nn]);
   }
 
@@ -1412,7 +1392,7 @@ void UpdateMeshCoords(void){
   }
   GetBoxCorners(global_scase.xbar, global_scase.ybar, global_scase.zbar);
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+i;
@@ -1425,7 +1405,7 @@ void UpdateMeshCoords(void){
     meshi->zcen_smv = FDS2SMV_Z(meshi->zcen_smv);
   }
 
-  for(i=0;i<global_scase.noutlineinfo;i++){
+  for(i=0; i<global_scase.noutlineinfo; i++){
     outlinedata *outlinei;
     float *x1, *x2, *yy1, *yy2, *z1, *z2;
     int j;
@@ -1437,7 +1417,7 @@ void UpdateMeshCoords(void){
     yy2 = outlinei->y2;
     z1 = outlinei->z1;
     z2 = outlinei->z2;
-    for(j=0;j<outlinei->nlines;j++){
+    for(j=0; j<outlinei->nlines; j++){
       x1[j]=FDS2SMV_X(x1[j]);
       x2[j]=FDS2SMV_X(x2[j]);
       yy1[j]=FDS2SMV_Y(yy1[j]);
@@ -1448,7 +1428,7 @@ void UpdateMeshCoords(void){
   }
 
   min_gridcell_size=global_scase.meshescoll.meshinfo->xplt_fds[1]-global_scase.meshescoll.meshinfo->xplt_fds[0];
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     float dx, dy, dz;
     meshdata *meshi;
 
@@ -1461,7 +1441,7 @@ void UpdateMeshCoords(void){
     min_gridcell_size=MIN(dz,min_gridcell_size);
   }
 
-  for(igrid=0;igrid<global_scase.meshescoll.nmeshes;igrid++){
+  for(igrid=0; igrid<global_scase.meshescoll.nmeshes; igrid++){
     meshdata *meshi;
     float *face_centers;
     float *xplt_cen_smv, *yplt_cen_smv, *zplt_cen_smv;
@@ -1484,27 +1464,27 @@ void UpdateMeshCoords(void){
 
     NewMemory((void **)&xplt_smv, sizeof(float)*(ibar + 1));
     meshi->xplt_smv = xplt_smv;
-    for(i=0;i<ibar+1;i++){
+    for(i=0; i<ibar+1; i++){
       xplt_smv[i]=FDS2SMV_X(meshi->xpltd_fds[i]);
     }
     NewMemory((void **)&yplt_smv, sizeof(float)*(jbar + 1));
     meshi->yplt_smv = yplt_smv;
-    for(j = 0; j < jbar + 1; j++) {
+    for(j = 0; j < jbar + 1; j++){
       yplt_smv[j]=FDS2SMV_Y(meshi->ypltd_fds[j]);
     }
     NewMemory((void **)&zplt_smv, sizeof(float)*(kbar + 1));
     meshi->zplt_smv = zplt_smv;
-    for(k = 0; k < kbar + 1; k++) {
+    for(k = 0; k < kbar + 1; k++){
       zplt_smv[k]=FDS2SMV_Z(meshi->zpltd_fds[k]);
     }
 
-    for(nn=0;nn<ibar;nn++){
+    for(nn=0; nn<ibar; nn++){
       xplt_cen_smv[nn]=(xplt_smv[nn]+xplt_smv[nn+1])/2.0;
     }
-    for(nn=0;nn<jbar;nn++){
+    for(nn=0; nn<jbar; nn++){
       yplt_cen_smv[nn]=(yplt_smv[nn]+yplt_smv[nn+1])/2.0;
     }
-    for(nn=0;nn<kbar;nn++){
+    for(nn=0; nn<kbar; nn++){
       zplt_cen_smv[nn]=(zplt_smv[nn]+zplt_smv[nn+1])/2.0;
     }
 
@@ -1542,7 +1522,7 @@ void UpdateMeshCoords(void){
     dplane_max[3] = MAX(dx, dy);
 
     face_centers = meshi->face_centers_smv;
-    for(j=0;j<6;j++){
+    for(j=0; j<6; j++){
       face_centers[0]=meshi->xcen_smv;
       face_centers[1]=meshi->ycen_smv;
       face_centers[2]=meshi->zcen_smv;
@@ -1562,11 +1542,11 @@ void UpdateMeshCoords(void){
 
   UpdateBlockType();
 
-  for(igrid=0;igrid<global_scase.meshescoll.nmeshes;igrid++){
+  for(igrid=0; igrid<global_scase.meshescoll.nmeshes; igrid++){
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+igrid;
-    for(i=0;i<meshi->nbptrs;i++){
+    for(i=0; i<meshi->nbptrs; i++){
       blockagedata *bc;
 
       bc=meshi->blockageinfoptrs[i];
@@ -1583,7 +1563,7 @@ void UpdateMeshCoords(void){
       bc->zmin = FDS2SMV_Z(bc->zmin);
       bc->zmax = FDS2SMV_Z(bc->zmax);
     }
-    for(i=0;i<meshi->nvents+12;i++){
+    for(i=0; i<meshi->nvents+12; i++){
       ventdata *vi;
 
       vi=meshi->ventinfo+i;
@@ -1595,17 +1575,17 @@ void UpdateMeshCoords(void){
       vi->zmax = FDS2SMV_Z(vi->zmax);
     }
   }
-  for(i=0;i<NCADGeom(&global_scase.cadgeomcoll);i++){
+  for(i=0; i<NCADGeom(&global_scase.cadgeomcoll); i++){
     cadgeomdata *cd;
     int j;
 
     cd=global_scase.cadgeomcoll.cadgeominfo+i;
-    for(j=0;j<cd->nquads;j++){
+    for(j=0; j<cd->nquads; j++){
       int k;
       cadquad *quadi;
 
       quadi = cd->quad+j;
-      for(k=0;k<4;k++){
+      for(k=0; k<4; k++){
         FDS2SMV_XYZ(quadi->xyzpoints+3*k,quadi->xyzpoints+3*k);
       }
       if(cd->version==2&&quadi->cadlookq->textureinfo.loaded==1){
@@ -1613,7 +1593,7 @@ void UpdateMeshCoords(void){
       }
     }
   }
-  for(n=0;n<global_scase.nrooms;n++){
+  for(n=0; n<global_scase.nrooms; n++){
     roomdata *roomi;
 
     roomi = global_scase.roominfo + n;
@@ -1627,7 +1607,7 @@ void UpdateMeshCoords(void){
     roomi->dy=SCALE2SMV(roomi->dy);
     roomi->dz=SCALE2SMV(roomi->dz);
   }
-  for(n=0;n<global_scase.nfires;n++){
+  for(n=0; n<global_scase.nfires; n++){
     firedata *firen;
 
     firen = global_scase.fireinfo + n;
@@ -1636,7 +1616,7 @@ void UpdateMeshCoords(void){
     firen->absz=FDS2SMV_Z(firen->absz);
     firen->dz=SCALE2SMV(firen->dz);
   }
-  for(n=0;n<global_scase.nzvents;n++){
+  for(n=0; n<global_scase.nzvents; n++){
     zventdata *zvi;
 
     zvi = global_scase.zventinfo + n;
@@ -1649,13 +1629,13 @@ void UpdateMeshCoords(void){
     zvi->z1 = FDS2SMV_Z(zvi->z1);
   }
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     float *offset;
 
     meshi=global_scase.meshescoll.meshinfo + i;
     offset = meshi->offset;
-    for(n=0;n<meshi->nvents+12;n++){
+    for(n=0; n<meshi->nvents+12; n++){
       ventdata *vi;
 
       vi = meshi->ventinfo+n;
@@ -1667,13 +1647,12 @@ void UpdateMeshCoords(void){
       vi->zvent2plot=FDS2SMV_Z(offset[ZZZ]+vi->zvent2);
     }
   }
-  UpdateVentOffset();
   if(global_scase.smoke3dcoll.nsmoke3dinfo>0)NewMemory((void **)&global_scase.smoke3dcoll.smoke3dinfo_sorted,global_scase.smoke3dcoll.nsmoke3dinfo*sizeof(smoke3ddata *));
   NewMemory((void **)&meshvisptr,global_scase.meshescoll.nmeshes*sizeof(int));
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshvisptr[i]=1;
   }
-  for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+  for(i=0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
     global_scase.smoke3dcoll.smoke3dinfo_sorted[i]=global_scase.smoke3dcoll.smoke3dinfo+i;
   }
   for(i = 0; i<global_scase.meshescoll.nmeshes; i++){
@@ -1713,7 +1692,7 @@ void InitCellMeshInfo(void){
   if(cellmeshinfo!=NULL){
     nxyz = cellmeshinfo->nxyz;
     ntotal = nxyz[0]*nxyz[1]*nxyz[2];
-    for(i=0;i<ntotal;i++){
+    for(i=0; i<ntotal; i++){
       if(cellmeshinfo->cellmeshes[i] == NULL){
         is_convex = 0;
         return;
@@ -1743,7 +1722,7 @@ void InitCellMeshInfo(void){
   dxyz[1] = y[mesh0->jbar] - y[0];
   dxyz[2] = z[mesh0->kbar] - z[0];
 
-  for(i = 1; i<global_scase.meshescoll.nmeshes;i++){
+  for(i = 1; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo + i;
@@ -1771,10 +1750,10 @@ void InitCellMeshInfo(void){
   ntotal = nxyz[0]*nxyz[1]*nxyz[2];
   NewMemory((void **)&cellmeshinfo->cellmeshes, ntotal*sizeof(meshdata *));
   cellmeshes = cellmeshinfo->cellmeshes;
-  for(i=0;i<ntotal;i++){
+  for(i=0; i<ntotal; i++){
     cellmeshinfo->cellmeshes[i] = NULL;
   }
-  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+  for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int i1, i2, j1, j2, k1, k2;
     float xmin, xmax, ymin, ymax, zmin, zmax;
@@ -1805,7 +1784,7 @@ void InitCellMeshInfo(void){
       }
     }
   }
-  for(i=0;i<ntotal;i++){
+  for(i=0; i<ntotal; i++){
     if(cellmeshinfo->cellmeshes[i] == NULL){
       is_convex = 0;
       return;
@@ -1866,7 +1845,7 @@ void SetupMeshWalls(void){
     xyz[2] = bmax[2] + EPSMESH;
     if(InExterior(xyz) == 0)is_extface[5] = 0;
     int j;
-    for(j = 0; j < meshi->nbptrs; j++) {
+    for(j = 0; j < meshi->nbptrs; j++){
       blockagedata *bc;
 
       bc = meshi->blockageinfoptrs[j];
@@ -1876,11 +1855,11 @@ void SetupMeshWalls(void){
       bc->is_extface[3] = 0;
       bc->is_extface[4] = 0;
       bc->is_extface[5] = 0;
-      if(meshi->is_extface[0] == 1 && bc->ijk[0] == 0          )bc->is_extface[0] = 1;
+      if(meshi->is_extface[0] == 1 && bc->ijk[0] == 0)bc->is_extface[0] = 1;
       if(meshi->is_extface[1] == 1 && bc->ijk[1] == meshi->ibar)bc->is_extface[1] = 1;
-      if(meshi->is_extface[2] == 1 && bc->ijk[2] == 0          )bc->is_extface[2] = 1;
+      if(meshi->is_extface[2] == 1 && bc->ijk[2] == 0)bc->is_extface[2] = 1;
       if(meshi->is_extface[3] == 1 && bc->ijk[3] == meshi->jbar)bc->is_extface[3] = 1;
-      if(meshi->is_extface[4] == 1 && bc->ijk[4] == 0          )bc->is_extface[4] = 1;
+      if(meshi->is_extface[4] == 1 && bc->ijk[4] == 0)bc->is_extface[4] = 1;
       if(meshi->is_extface[5] == 1 && bc->ijk[5] == meshi->kbar)bc->is_extface[5] = 1;
     }
   }
@@ -1958,12 +1937,6 @@ void *SetupAllIsosurfaces(void *arg){
   }
   THREAD_EXIT(isosurface_threads);
 }
-/* ------------------ ReadSMVCHID ------------------------ */
-
-int ReadSMVCHID(bufferstreamdata *stream){
-  ParseCHIDProcess(&global_scase, stream, SCAN);
-  return 0;
-}
 /* ------------------ GetViewPointPtr ------------------------ */
 
 char *GetViewPointPtr(char **viewpoint_list, int nviewpoint_list, char *viewpoint){
@@ -1988,7 +1961,6 @@ int GetViewpoints(char *inifile, char ***viewpointlist_ptr){
   int nviewpoints = 0;
   while(!feof(stream)){
     char buffer[255];
-
 
     CheckMemory;
     if(fgets(buffer, 255, stream)==NULL)break;
@@ -2236,7 +2208,7 @@ int ReadCharNonblocking(char *out) {
 
 #ifdef _WIN32
 
-    if (_kbhit()) {
+    if(_kbhit()){
         *out = _getch();   // reads immediately (no Enter actually required on Windows)
         return 1;
     }
@@ -2255,7 +2227,7 @@ int ReadCharNonblocking(char *out) {
 
     int rv = select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout);
 
-    if (rv > 0) {
+    if(rv > 0){
         return read(STDIN_FILENO, out, 1) == 1;
     }
     return 0;
@@ -2319,7 +2291,7 @@ void *CheckFiles(void *arg){
   ThreadLock(checkfiles_threads);
   global_scase.have_compressed_files = 0;
   ThreadUnlock(checkfiles_threads);
-  for(i = 0;i < global_scase.npatchinfo;i++){
+  for(i = 0; i < global_scase.npatchinfo; i++){
     patchdata *patchi;
     int have_file;
 
@@ -2332,7 +2304,7 @@ void *CheckFiles(void *arg){
     }
     ThreadUnlock(checkfiles_threads);
   }
-  for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+  for(i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
     int have_file;
 
@@ -2378,18 +2350,18 @@ void *CheckFiles(void *arg){
 void InitMeshBlockages(void){
   int i;
 
-  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+  for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int j;
     int counts[6];
     int *is_extface;
-    float *xplt, *yplt, *zplt;
+    float *xplt_fds, *yplt_fds, *zplt_fds;
 
     meshi = global_scase.meshescoll.meshinfo + i;
     if(meshi->nbptrs == 0)continue;
-    xplt = meshi->xplt_fds;
-    yplt = meshi->yplt_fds;
-    zplt = meshi->zplt_fds;
+    xplt_fds = meshi->xplt_fds;
+    yplt_fds = meshi->yplt_fds;
+    zplt_fds = meshi->zplt_fds;
     is_extface = meshi->is_extface;
     for(j=0; j< 6; j++){
       counts[j]            = 0;
@@ -2426,7 +2398,7 @@ void InitMeshBlockages(void){
       bclist = meshi->bc_faces[4]; if(bc->ijk[4] == 0           && is_extface[4] == 0)bclist[counts[4]++] = bc;
       bclist = meshi->bc_faces[5]; if(bc->ijk[5] == meshi->kbar && is_extface[5] == 0)bclist[counts[5]++] = bc;
     }
-    for(j = 0;j < meshi->nbptrs;j++){
+    for(j = 0; j < meshi->nbptrs; j++){
       blockagedata *bc;
       float *xyz;
       int *ijk;
@@ -2434,12 +2406,12 @@ void InitMeshBlockages(void){
       bc = meshi->blockageinfoptrs[j];
       xyz = bc->xyz;
       ijk = bc->ijk;
-      xyz[0] = xplt[ijk[0]];
-      xyz[1] = xplt[ijk[1]];
-      xyz[2] = yplt[ijk[2]];
-      xyz[3] = yplt[ijk[3]];
-      xyz[4] = zplt[ijk[4]];
-      xyz[5] = zplt[ijk[5]];
+      xyz[0] = xplt_fds[ijk[0]];
+      xyz[1] = xplt_fds[ijk[1]];
+      xyz[2] = yplt_fds[ijk[2]];
+      xyz[3] = yplt_fds[ijk[3]];
+      xyz[4] = zplt_fds[ijk[4]];
+      xyz[5] = zplt_fds[ijk[5]];
     }
   }
 }
@@ -2468,12 +2440,12 @@ void SetSliceParmInfo(sliceparmdata *sp){
 void SetExternalVents(void){
   int i;
 
-  for(i = 0;i < global_scase.meshescoll.nmeshes;i++){
+  for(i = 0; i < global_scase.meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo + i;
-    for(j = 0;j < meshi->nvents;j++){
+    for(j = 0; j < meshi->nvents; j++){
       ventdata *vj;
       float xyz[3];
 
@@ -2568,6 +2540,74 @@ void GetSkyImageTexture(void){
   NewMemory((void **)&global_scase.sky_texture->file, (strlen(buffer) + 1) * sizeof(char));
   strcpy(global_scase.sky_texture->file, buffer);
 }
+
+/* ------------------ ComparePatchMenuInfo ------------------------ */
+
+int ComparePatchMenuInfo(const void *arg1, const void *arg2){
+  patchmenudata *x, *y;
+
+  x = (patchmenudata *)arg1;
+  y = (patchmenudata *)arg2;
+  if(x->skip==y->skip)return strcmp(x->quantity, y->quantity);
+  if(x->skip == 1)return 1;
+  if(y->skip == 1)return -1;
+  return 0;
+}
+
+/* ------------------ HaveStructures ------------------------ */
+
+int HaveStructures(char *label){
+  for(int i = 0; i < global_scase.npatchinfo; i++){
+    char label2[255], *ext;
+
+    patchmenudata *pmi = patchmenuinfo + i;
+    if(pmi->isgeom == 1)continue;
+    strcpy(label2, pmi->quantity);
+    ext = strchr(label2, '(');
+    if(ext != NULL)ext[0] = 0;
+    if(strcmp(label, label2) == 0)return 1;
+  }
+  return 0;
+}
+
+/* ------------------ InitPatchMenuInfo ------------------------ */
+
+void InitPatchMenuInfo(void){
+  if(global_scase.npatchinfo==0)return;
+  NewMemory((void **)&patchmenuinfo, global_scase.npatchinfo * sizeof(patchmenudata));
+  for(int i = 0;i < global_scase.npatchinfo;i++){
+    patchmenudata *pmi;
+    patchdata *pi;
+
+    pmi = patchmenuinfo + i;
+    pi = global_scase.patchinfo + i;
+    strcpy(pmi->quantity, pi->label.longlabel);
+    pmi->index = i;
+    pmi->loaded = 0;
+    pmi->skip = 0;
+    pmi->isgeom = 0;
+    if(pi->patch_filetype == PATCH_GEOMETRY_BOUNDARY)pmi->isgeom = 1;
+  }
+  // reject geometry quanties if there is a structure bf with the same quantity
+  for(int i = 0; i < global_scase.npatchinfo; i++){
+    patchmenudata *pmi = patchmenuinfo + i;
+    if(pmi->isgeom == 1 && HaveStructures(pmi->quantity) == 1)pmi->skip = 1;
+  }
+  qsort(patchmenuinfo, global_scase.npatchinfo, sizeof(patchmenudata), ComparePatchMenuInfo);
+  npatchmenuinfo = 1;
+  for(int i = 1;i < global_scase.npatchinfo;i++){
+    patchmenudata *pmi;
+
+    pmi = patchmenuinfo + i;
+    if(pmi->skip == 1)break; // rejected quantieis are at end of list so can stop
+    if(strcmp(pmi->quantity, patchmenuinfo[npatchmenuinfo - 1].quantity) != 0){
+      memcpy(patchmenuinfo + npatchmenuinfo, pmi, sizeof(patchmenudata));
+      npatchmenuinfo++;
+    }
+  }
+  ResizeMemory((void **)&patchmenuinfo, npatchmenuinfo*sizeof(patchmenudata));
+}
+
 /* ------------------ ReadSMV_Configure ------------------------ */
 
 /// @brief Finish setting global variables after an SMV file has been parsed.
@@ -2597,6 +2637,8 @@ int ReadSMV_Configure(){
 
   PRINTF("  wrapping up\n");
 
+  InitPatchMenuInfo();
+
  // set results directory
   if(global_scase.npartinfo > 0 && global_scase.results_dir == NULL){
     global_scase.results_dir = SetResultsDir(global_scase.partinfo[0].reg_file);
@@ -2616,7 +2658,6 @@ int ReadSMV_Configure(){
   if(global_scase.nplot3dinfo > 0 && global_scase.results_dir == NULL){
     global_scase.results_dir = SetResultsDir(global_scase.plot3dinfo[0].reg_file);
   }
-
 
   GetSkyBoxTextures();
   GetSkyImageTexture();
@@ -2654,7 +2695,7 @@ int ReadSMV_Configure(){
   PRINT_TIMER(fdsrunning_timer, "filesize_timer");   // if file size changes then assume fds is running
 
   have_obsts = 0;
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi = global_scase.meshescoll.meshinfo + i;
@@ -2763,8 +2804,7 @@ int ReadSMV_Configure(){
 
   /* compute global bar's and box's */
 
-
-  for(i=0;i<global_scase.npartclassinfo;i++){
+  for(i=0; i<global_scase.npartclassinfo; i++){
     partclassdata *partclassi;
 
     partclassi = global_scase.partclassinfo + i;
@@ -2831,7 +2871,7 @@ int ReadSMV_Configure(){
   PRINT_TIMER(timer_readsmv, "GetGSliceParams");
 
   active_smokesensors=0;
-  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
+  for(i=0; i<global_scase.devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
     char *label;
 
@@ -2846,7 +2886,7 @@ int ReadSMV_Configure(){
     }
   }
 
-#ifdef pp_GETMESH_TEST
+#ifdef pp_GETMESH
   scenedata *InitSceneInfo(void);
   INIT_PRINT_TIMER(timer_sceneinfo);
   sceneinfo = InitSceneInfo();
@@ -2876,12 +2916,8 @@ int ReadSMV_Configure(){
     ThreadRun(readkeyboard_threads);
   }
 #endif
-#ifdef pp_SPEEDUP
   ThreadInit(&makeiblank_threads, n_makeiblank_threads, use_makeiblank_threads, serial_override, MakeIBlank);
   ThreadRun(makeiblank_threads);
-#else
-  MakeIBlank();
-#endif
   PRINT_TIMER(timer_readsmv, "MakeIBlank");
 
   SetCVentDirs();
@@ -2953,13 +2989,12 @@ int ReadSMV_Configure(){
   InitUserTicks();
   PRINT_TIMER(timer_readsmv, "InitUserTicks");
 
-
   // define changed_idlist used for blockage editing
 
   {
     int ntotal=0;
 
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0; i<global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
       meshi = global_scase.meshescoll.meshinfo + i;
@@ -2969,7 +3004,7 @@ int ReadSMV_Configure(){
 
     NewMemory((void **)&changed_idlist,sizeof(int)*(ntotal+1));
 
-    for(i=0;i<ntotal;i++){
+    for(i=0; i<ntotal; i++){
       changed_idlist[i]=0;
     }
     nchanged_idlist=ntotal;
@@ -3029,7 +3064,7 @@ int ReadSMV_Configure(){
   if(global_scase.meshescoll.nmeshes > 200){
     hide_scene = 1;
   }
-  if(global_scase.hrrpuvcut_set) {
+  if(global_scase.hrrpuvcut_set){
     global_hrrpuv_cb_min_default = global_scase.hrrpuvcut;
     global_hrrpuv_cb_min = global_hrrpuv_cb_min_default;
   }
@@ -3079,24 +3114,24 @@ int ReadSMV(bufferstreamdata *stream) {
 void UpdateUseTextures(void){
   int i;
 
-  for(i=0;i<global_scase.texture_coll.ntextureinfo;i++){
+  for(i=0; i<global_scase.texture_coll.ntextureinfo; i++){
     texturedata *texti;
 
     texti=global_scase.texture_coll.textureinfo + i;
     texti->used=0;
   }
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int j;
 
     meshi=global_scase.meshescoll.meshinfo + i;
     if(global_scase.texture_coll.textureinfo!=NULL){
-      for(j=0;j<meshi->nbptrs;j++){
+      for(j=0; j<meshi->nbptrs; j++){
         int k;
         blockagedata *bc;
 
         bc=meshi->blockageinfoptrs[j];
-        for(k=0;k<6;k++){
+        for(k=0; k<6; k++){
           texturedata *texti;
 
           texti = bc->surf[k]->textureinfo;
@@ -3107,7 +3142,7 @@ void UpdateUseTextures(void){
         }
       }
     }
-    for(j=0;j<meshi->nvents+12;j++){
+    for(j=0; j<meshi->nvents+12; j++){
       ventdata *vi;
 
       vi = meshi->ventinfo + j;
@@ -3134,7 +3169,7 @@ void UpdateUseTextures(void){
       }
     }
   }
-  for(i=0;i<global_scase.device_texture_list_coll.ndevice_texture_list;i++){
+  for(i=0; i<global_scase.device_texture_list_coll.ndevice_texture_list; i++){
     int texture_index;
     texturedata *texti;
 
@@ -3145,7 +3180,7 @@ void UpdateUseTextures(void){
       texti->used=1;
     }
   }
-  for(i=0;i<global_scase.ngeominfo;i++){
+  for(i=0; i<global_scase.ngeominfo; i++){
     geomdata *geomi;
 
     geomi = global_scase.geominfo + i;
@@ -3160,7 +3195,7 @@ void UpdateUseTextures(void){
     }
   }
   if(global_scase.terrain_texture_coll.nterrain_textures>0 && global_scase.texture_coll.textureinfo != NULL){
-    for(i=0;i<global_scase.terrain_texture_coll.nterrain_textures;i++){
+    for(i=0; i<global_scase.terrain_texture_coll.nterrain_textures; i++){
       texturedata *texti;
 
       texti =global_scase.texture_coll.textureinfo + global_scase.texture_coll.ntextureinfo - global_scase.terrain_texture_coll.nterrain_textures + i;
@@ -3170,7 +3205,7 @@ void UpdateUseTextures(void){
     }
   }
   ntextures_loaded_used=0;
-  for(i=0;i<global_scase.texture_coll.ntextureinfo;i++){
+  for(i=0; i<global_scase.texture_coll.ntextureinfo; i++){
     texturedata *texti;
 
     texti = global_scase.texture_coll.textureinfo + i;
@@ -3419,7 +3454,7 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %i %i",
         ground_color, ground_color+1, ground_color+2);
-      for(i = 0;i < 3;i++){
+      for(i = 0; i < 3; i++){
         ground_color[i] = CLAMP(ground_color[i], 0, 255);
         ground_color_save[i] = ground_color[i];
       }
@@ -3428,7 +3463,7 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %i %i",
         zenith_color, zenith_color + 1, zenith_color + 2);
-      for(i = 0;i < 3;i++){
+      for(i = 0; i < 3; i++){
         zenith_color[i] = CLAMP(zenith_color[i], 0, 255);
         zenith_color_save[i] = zenith_color[i];
       }
@@ -3437,7 +3472,7 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %i %i",
         horizon_color, horizon_color + 1, horizon_color + 2);
-      for(i = 0;i < 3;i++){
+      for(i = 0; i < 3; i++){
         horizon_color[i] = CLAMP(horizon_color[i], 0, 255);
         horizon_color_save[i] = horizon_color[i];
       }
@@ -3455,7 +3490,7 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %f %i %f", use_meshclip + 4, meshclip + 4, use_meshclip + 5, meshclip + 5);
 
-      for(i = 0;i < 6;i++){
+      for(i = 0; i < 6; i++){
         if(use_meshclip[i] != 0)use_meshclip[i] = 1;
       }
       if(show_intersection_box != 0)show_intersection_box = 1;
@@ -3490,7 +3525,14 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, " %i %i %i %i %i %i %i %i %i", vbt,vbt+1,vbt+2,vbt+3,vbt+4,vbt+5,vbt+6, &show_mirror_boundary, &show_mirror_boundary);
       show_all_interior_patch_data = vbt[INTERIORwall];
-      hide_all_interior_patch_data = 1 - show_all_interior_patch_data;
+      if(AreBoundaryFilesLoaded()==1){
+        if(show_all_interior_patch_data == 1){
+          ShowBoundaryMenu(SHOW_INTERIOR_WALL_MENU);
+        }
+        else{
+          ShowBoundaryMenu(HIDE_INTERIOR_WALL_MENU);
+        }
+      }
       continue;
     }
     if(MatchINI(buffer, "GEOMBOUNDARYPROPS")==1){
@@ -3526,7 +3568,7 @@ int ReadIni2(const char *inifile, int localfile){
           &hvaci->node_size, &hvaci->component_size, &hvaci->filter_size, &hvaci->cell_node_size);
         fgets(buffer, 255, stream);
         sscanf(buffer, " %i %i %i %i %i %i", dc, dc + 1, dc + 2, nc, nc + 1, nc + 2);
-        for(j=0;j<3;j++){
+        for(j=0; j<3; j++){
           hvaci->duct_color[j] = CLAMP(dc[j], 0, 255);
           hvaci->node_color[j] = CLAMP(nc[j], 0, 255);
         }
@@ -3556,7 +3598,7 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, " %i %i %i",
         slice_edgetypes,slice_edgetypes+1,slice_edgetypes+2);
 
-      for(i=0;i<3;i++){
+      for(i=0; i<3; i++){
         slice_edgetypes[i] = CLAMP(slice_edgetypes[i],0,2);
       }
 
@@ -3573,7 +3615,7 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, " %i %i %i",
              show_vector_slice, show_vector_slice+1, show_vector_slice+2);
 
-      for(i=0;i<MAX_CELL_TYPES;i++){
+      for(i=0; i<MAX_CELL_TYPES; i++){
         show_slice_shaded[i]   = CLAMP(show_slice_shaded[i],0,1);
         show_slice_outlines[i] = CLAMP(show_slice_outlines[i],0,1);
         show_slice_points[i]   = CLAMP(show_slice_points[i],0,1);
@@ -3717,7 +3759,7 @@ int ReadIni2(const char *inifile, int localfile){
              );
       update_device_timeaverage = 1;
       GLUIUpdateDeviceAdd();
-      for(i=0;i<nplot2dini;i++){
+      for(i=0; i<nplot2dini; i++){
         plot2ddata *plot2di;
         char *labelptr;
         int j;
@@ -3780,7 +3822,7 @@ int ReadIni2(const char *inifile, int localfile){
     }
     if(MatchINI(buffer, "GENPLOTLABELS") == 1){
       fgets(buffer, 255, stream);
-      for(i=0;i<nplot2dini;i++){
+      for(i=0; i<nplot2dini; i++){
         plot2ddata *plot2di;
         int j;
 
@@ -4029,7 +4071,7 @@ int ReadIni2(const char *inifile, int localfile){
       continue;
     }
 
-    if(MatchINI(buffer, "SHOWTERRAIN") == 1){
+    if(MatchINI(buffer, "SHOW2TERRAIN") == 1){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i %i", &global_scase.visTerrainType, &terrain_slice_overlap);
       continue;
@@ -4278,7 +4320,7 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, "%i", &tempval);
       tempval = MIN(tempval, nplot3dbounds_cpp);
 
-      for(j=0;j<tempval;j++){
+      for(j=0; j<tempval; j++){
         int iplot3d;
 
         cpp_boundsdata *boundi;
@@ -4355,7 +4397,7 @@ int ReadIni2(const char *inifile, int localfile){
 
         fgets(buffer, 255, stream);
         sscanf(buffer, "%i", &n3dsmokes);
-        for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+        for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
           vslicedata *vslicei;
 
           vslicei = global_scase.slicecoll.vsliceinfo + i;
@@ -4389,7 +4431,7 @@ int ReadIni2(const char *inifile, int localfile){
 
       fgets(buffer, 255, stream);
       sscanf(buffer, "%i", &n3dsmokes);
-      for(i = 0;i < global_scase.slicecoll.nmultisliceinfo;i++){
+      for(i = 0; i < global_scase.slicecoll.nmultisliceinfo; i++){
         multislicedata *mslicei;
 
         mslicei = global_scase.slicecoll.multisliceinfo + i;
@@ -4954,6 +4996,7 @@ int ReadIni2(const char *inifile, int localfile){
       fgets(buffer, 255, stream);
       sscanf(buffer, "%f %f", &nearclip, &farclip);
       farclip_save = farclip;
+      UpdateVentOffset(nearclip, farclip, 1);
       continue;
     }
     if(MatchINI(buffer, "SHOWTRACERSALWAYS") == 1){
@@ -5167,16 +5210,16 @@ int ReadIni2(const char *inifile, int localfile){
       sscanf(buffer, "%i ", &titlesafe_offset);
       continue;
     }
-    if(MatchINI(buffer, "VENTOFFSET") == 1){
+    if(MatchINI(buffer, "VENT2OFFSET") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%f ", &ventoffset_factor);
+      sscanf(buffer, "%f ", &ventoffset_smv_ini);
       continue;
     }
     if(MatchINI(buffer, "SHOWBLOCKS") == 1){
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %i %i", &visBlocks_ini, &solid_state_ini, &outline_state_ini);
+      sscanf(buffer, "%i %i %i", &visBlocks, &solid_state, &outline_state);
       update_showblock_ini = 1;
-      continue;
+      ShowInternalBlockages();
     }
     if(MatchINI(buffer, "SHOWSENSORS") == 1){
       fgets(buffer, 255, stream);
@@ -5765,7 +5808,8 @@ int ReadIni2(const char *inifile, int localfile){
       int nheight360_temp = 0;
 
       fgets(buffer, 255, stream);
-      sscanf(buffer, "%i %i %i", &render_window_size, &resolution_multiplier, &nheight360_temp);
+      sscanf(buffer, "%i %i %i", &render_window_size, &glui_resolution_multiplier, &nheight360_temp);
+      glui_resolution_multiplier = GLUIUpdateResolutionMultiplier(glui_resolution_multiplier);
       if(nheight360_temp > 0){
         nheight360 = nheight360_temp;
         nwidth360 = 2 * nheight360;
@@ -6038,7 +6082,6 @@ int ReadIni2(const char *inifile, int localfile){
           char *labelptr, *percenptr, label[256];
           int  colori[4];
 
-
           rgbi = ctableinfo + i;
           fgets(buffer, 255, stream);
           percenptr = strchr(buffer, '%');
@@ -6278,9 +6321,7 @@ int ReadIni2(const char *inifile, int localfile){
       */
 
       if(MatchINI(buffer, "GCOLORBAR") == 1){
-        colorbardata *cbi;
         int r1, g1, b1;
-        int n;
         int ncolorbarini;
 
         fgets(buffer, 255, stream);
@@ -6289,18 +6330,19 @@ int ReadIni2(const char *inifile, int localfile){
 
         ncolorbarini = MAX(ncolorbarini, 0);
         if(colorbars.ndefaultcolorbars==0){
-          InitDefaultColorbars(&colorbars, ncolorbarini, show_extreme_mindata,
+          InitDefaultColorbars(&colorbars,  show_extreme_mindata,
                              rgb_below_min, show_extreme_maxdata,
                              rgb_above_max, &colorbarcopyinfo);
           UpdateColorbarDialogs();
           UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
           update_colorbar_dialog = 0;
         }
-        colorbars.ncolorbars = colorbars.ndefaultcolorbars + ncolorbarini;
-        for(n = colorbars.ndefaultcolorbars; n<colorbars.ncolorbars; n++){
+        // Iterate through each of the colorbar entries in the GCOLOBAR section
+        // of the ini file (of which there are ncolorbarini).
+        for(int n = 0; n<ncolorbarini; n++){
           char *cb_buffptr;
-
-          cbi = colorbars.colorbarinfo + n;
+          // Add a new (empty) colorbar to the colobars list.
+          colorbardata *cbi = NewColorbar(&colorbars);
           fgets(buffer, 255, stream);
           TrimBack(buffer);
           cb_buffptr = TrimFront(buffer);
@@ -6331,8 +6373,10 @@ int ReadIni2(const char *inifile, int localfile){
           }
           RemapColorbar(cbi, show_extreme_mindata, rgb_below_min,
                   show_extreme_maxdata, rgb_above_max);
+          }
+          // A number of new colorbars may have been added, so update the GUI
+          // dialogs accordingly.
           UpdateColorbarDialogs();
-        }
 
         continue;
       }
@@ -6388,7 +6432,7 @@ int ReadIni2(const char *inifile, int localfile){
         if(nwindrosez_showhide>0){
           nrows = ((nwindrosez_showhide-1)/WINDROSE_PER_ROW+1);
           NewMemory((void **)&windrosez_showhide, nrows*WINDROSE_PER_ROW*sizeof(int));
-          for(vals=windrosez_showhide,i=0;i<nrows;i++,vals+=WINDROSE_PER_ROW){
+          for(vals=windrosez_showhide,i=0; i<nrows; i++,vals+=WINDROSE_PER_ROW){
             int j;
 
             i1 = WINDROSE_PER_ROW*i;
@@ -6396,7 +6440,7 @@ int ReadIni2(const char *inifile, int localfile){
             fgets(buffer, 255, stream);
             sscanf(buffer, " %i %i %i %i %i %i %i %i %i %i ",
               vals,vals+1,vals+2,vals+3,vals+4,vals+5,vals+6,vals+7,vals+8,vals+9);
-            for(j=i1;j<i2;j++){
+            for(j=i1; j<i2; j++){
               windrosez_showhide[j] = CLAMP(vals[j-i1],0,1);
             }
           }
@@ -6578,7 +6622,6 @@ int ReadIni2(const char *inifile, int localfile){
         continue;
       }
 
-
       /*
       +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
       ++++++++++++++++++++++ TICKS ++++++++++++++++++++++++++++++++
@@ -6608,7 +6651,6 @@ int ReadIni2(const char *inifile, int localfile){
           endt = ticki->end;
           nbarst = &ticki->nbars;
           dxyz = ticki->dxyz;
-
 
           /*
           TICKS
@@ -7070,7 +7112,7 @@ int ReadIni(char *inifile){
       returnval = ReadIni2(scratch_ini_filename, 1);
       FREEMEMORY(scratch_ini_filename);
     }
-    if(returnval == 2) {
+    if(returnval == 2){
       FREEMEMORY(caseini_filename);
       return 2;
     }
@@ -7106,7 +7148,7 @@ int ReadIni(char *inifile){
     if(showall_textures==1)TextureShowMenu(MENU_TEXTURE_SHOWALL);
   }
   if(colorbars.ndefaultcolorbars==0){
-    InitDefaultColorbars(&colorbars, 0, show_extreme_mindata, rgb_below_min,
+    InitDefaultColorbars(&colorbars, show_extreme_mindata, rgb_below_min,
                          show_extreme_maxdata, rgb_above_max, &colorbarcopyinfo);
     UpdateColorbarDialogs();
     UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
@@ -7734,7 +7776,7 @@ void WriteIni(int flag,char *filename){
     int usetexturebar = 1; //for older smokeviews
     fprintf(fileout, " %i %i %i %i\n", global_scase.nrgb, usetexturebar, colorbar_select_index, colorbar_selection_width);
   }
-  for(i=0;i<global_scase.nrgb;i++){
+  for(i=0; i<global_scase.nrgb; i++){
     fprintf(fileout," %f %f %f\n",global_scase.rgb[i][0],global_scase.rgb[i][1],global_scase.rgb[i][2]);
   }
   fprintf(fileout,"COLOR2BAR\n");
@@ -7773,7 +7815,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout," %f %f %i %i : shininess, default opaqueness\n",iso_shininess, iso_transparency, iso_transparency_option, iso_opacity_change);
   fprintf(fileout," %f %f %f : specular\n",iso_specular[0],iso_specular[1],iso_specular[2]);
   fprintf(fileout," %i : number of levels\n",MAX_ISO_COLORS);
-  for(i=0;i<MAX_ISO_COLORS;i++){
+  for(i=0; i<MAX_ISO_COLORS; i++){
     fprintf(fileout, " %f %f %f %f", iso_colors[4*i], iso_colors[4*i+1], iso_colors[4*i+2], iso_colors[4*i+3]);
     if(i==0)fprintf(fileout, " : red, green, blue, alpha (opaqueness)");
     fprintf(fileout, "\n");
@@ -7932,8 +7974,8 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout," %f\n",vectorpointsize);
   fprintf(fileout, "VENTLINEWIDTH\n");
   fprintf(fileout, " %f\n", global_scase.ventlinewidth);
-  fprintf(fileout, "VENTOFFSET\n");
-  fprintf(fileout, " %f\n", ventoffset_factor);
+  fprintf(fileout, "VENT2OFFSET\n");
+  fprintf(fileout, " %f\n", ventoffset_smv);
   fprintf(fileout, "WINDOWOFFSET\n");
   fprintf(fileout, " %i\n", titlesafe_offsetBASE);
   if(use_graphics == 1 &&
@@ -8056,9 +8098,18 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "GEOMDOMAIN\n");
   fprintf(fileout, " %i %i\n", showgeom_inside_domain, showgeom_outside_domain);
   fprintf(fileout, "GEOMSHOW\n");
-  fprintf(fileout, " %i %i %i %i %i %i %f %f %i %i %f %f %f\n",
-     0, 1, show_faces_shaded, show_faces_outline, smooth_geom_normal,
-     geom_force_transparent, geom_transparency, geom_linewidth, use_geom_factors, show_cface_normals, geom_pointsize, geom_dz_offset, geom_norm_offset);
+  if(boundary_loaded == 1){
+    fprintf(fileout, " %i %i %i %i %i %i %f %f %i %i %f %f %f\n",
+       0, 1, show_faces_shaded_save, show_faces_outline_save, smooth_geom_normal,
+       geom_force_transparent, geom_transparency, geom_linewidth, use_geom_factors,
+       show_cface_normals, geom_pointsize, geom_dz_offset, geom_norm_offset);
+  }
+  else{
+    fprintf(fileout, " %i %i %i %i %i %i %f %f %i %i %f %f %f\n",
+       0, 1, show_faces_shaded, show_faces_outline, smooth_geom_normal,
+       geom_force_transparent, geom_transparency, geom_linewidth, use_geom_factors,
+       show_cface_normals, geom_pointsize, geom_dz_offset, geom_norm_offset);
+  }
   fprintf(fileout, " %i %i %i %i\n", 0, 0, 0, 0);
 
   int hide_scene_old;
@@ -8086,7 +8137,7 @@ void WriteIni(int flag,char *filename){
     fprintf(fileout,"MESHVIS\n");
     fprintf(fileout," %i %i\n",global_scase.meshescoll.nmeshes, meshface_horiz);
 
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0; i<global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
       meshi = global_scase.meshescoll.meshinfo + i;
@@ -8118,7 +8169,12 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, "SHOWBLOCKLABEL\n");
   fprintf(fileout, " %i\n", visMeshlabel);
   fprintf(fileout, "SHOWBLOCKS\n");
-  fprintf(fileout, " %i %i %i\n", visBlocks, solid_state, outline_state);
+  if(boundary_loaded == 1){
+    fprintf(fileout, " %i %i %i\n", visBlocks_save, solid_state_save, outline_state_save);
+  }
+  else{
+    fprintf(fileout, " %i %i %i\n", visBlocks, solid_state, outline_state);
+  }
   fprintf(fileout, "SHOWBOUNDS\n");
   fprintf(fileout, " %i %i\n", bounds_each_mesh, show_bound_diffs);
   fprintf(fileout, "SHOWCADOPAQUE\n");
@@ -8177,7 +8233,7 @@ void WriteIni(int flag,char *filename){
   fprintf(fileout, " %i\n", visSprinkPart);
   fprintf(fileout, "SHOWSTREAK\n");
   fprintf(fileout, " %i %i %i %i\n", streak5show, streak5step, showstreakhead, streak_index);
-  fprintf(fileout, "SHOWTERRAIN\n");
+  fprintf(fileout, "SHOW2TERRAIN\n");
   fprintf(fileout, " %i %i\n", global_scase.visTerrainType, terrain_slice_overlap);
   fprintf(fileout, "SHOWTHRESHOLD\n");
   fprintf(fileout, " %i %i %f\n", vis_threshold, vis_onlythreshold, temp_threshold);
@@ -8306,10 +8362,10 @@ void WriteIni(int flag,char *filename){
     char *filei;
     char *nullfile="NULL";
 
-    for(iskybox=0;iskybox<nskyboxinfo;iskybox++){
+    for(iskybox=0; iskybox<nskyboxinfo; iskybox++){
       skyi = skyboxinfo + iskybox;
       fprintf(fileout,"SKYBOX\n");
-      for(i=0;i<6;i++){
+      for(i=0; i<6; i++){
         filei = skyi->face[i].file;
         if(filei==NULL)filei=nullfile;
         if(strcmp(filei,"NULL")==0){
@@ -8322,7 +8378,8 @@ void WriteIni(int flag,char *filename){
     }
   }
   fprintf(fileout, "RENDEROPTION\n");
-  fprintf(fileout, " %i %i %i\n", render_window_size, resolution_multiplier, nheight360);
+  glui_resolution_multiplier = GLUIUpdateResolutionMultiplier(glui_resolution_multiplier);
+  fprintf(fileout, " %i %i %i\n", render_window_size,glui_resolution_multiplier, nheight360);
   fprintf(fileout, "UNITCLASSES\n");
   fprintf(fileout, " %i\n", nunitclasses);
   for(i = 0; i<nunitclasses; i++){
@@ -8453,7 +8510,6 @@ void WriteIni(int flag,char *filename){
     col = tourcol_avatar;
     fprintf(fileout, " %f %f %f   :avatar\n", col[0], col[1], col[2]);
 
-
   }
   fprintf(fileout, "TOURCONSTANTVEL\n");
   fprintf(fileout, " %i\n", tour_constant_velocity);
@@ -8545,7 +8601,7 @@ void UpdateLoadedLists(void){
   patchdata *patchi;
 
   nslice_loaded=0;
-  for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+  for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
     slicei = global_scase.slicecoll.sliceinfo + i;
     if(slicei->loaded==1){
       slice_loaded_list[nslice_loaded]=i;
@@ -8554,7 +8610,7 @@ void UpdateLoadedLists(void){
   }
 
   ngeomslice_loaded = 0;
-  for(i=0;i<global_scase.npatchinfo;i++){
+  for(i=0; i<global_scase.npatchinfo; i++){
     patchi = global_scase.patchinfo + i;
     if(patchi->loaded==1&&patchi->boundary == 0)ngeomslice_loaded++;
   }

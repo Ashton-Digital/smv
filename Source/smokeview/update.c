@@ -18,18 +18,6 @@
 #include "IOobjects.h"
 #include "readsmvfile.h"
 
-/* ------------------ CompareFloat ------------------------ */
-
-int CompareFloat(const void *arg1, const void *arg2){
-  float x, y;
-
-  x=*(float *)arg1;
-  y=*(float *)arg2;
-  if( x< y)return -1;
-  if( x> y)return 1;
-  return 0;
-}
-
 /* ------------------ UpdateFrameNumber ------------------------ */
 
 void UpdateFrameNumber(int changetime){
@@ -39,7 +27,7 @@ void UpdateFrameNumber(int changetime){
     force_redisplay=0;
     itimeold=iglobal_times;
     if(showsmoke==1){
-      for(i=0;i<global_scase.npartinfo;i++){
+      for(i=0; i<global_scase.npartinfo; i++){
         partdata *parti;
 
         parti = global_scase.partinfo+i;
@@ -47,7 +35,7 @@ void UpdateFrameNumber(int changetime){
         parti->itime=parti->timeslist[iglobal_times];
       }
     }
-    for(i=0;i<ngeominfoptrs;i++){
+    for(i=0; i<ngeominfoptrs; i++){
       geomdata *geomi;
 
       geomi = geominfoptrs[i];
@@ -57,7 +45,7 @@ void UpdateFrameNumber(int changetime){
     if(showslice==1||showvslice==1){
       int ii;
 
-      for(ii=0;ii<nslice_loaded;ii++){
+      for(ii=0; ii<nslice_loaded; ii++){
         slicedata *sd;
 
         i = slice_loaded_list[ii];
@@ -107,7 +95,6 @@ void UpdateFrameNumber(int changetime){
       }
     }
     if(show3dsmoke==1 && global_scase.smoke3dcoll.nsmoke3dinfo > 0){
-#ifdef pp_SPEEDUP
       INIT_PRINT_TIMER(update_smoke_time);
       ThreadInit(&uncompresssmoke3d_threads, n_uncompresssmoke3d_threads, use_uncompresssmoke3d_threads, serial_override, UncompressSmoke3DAll);
       ThreadRunLoop(uncompresssmoke3d_threads);
@@ -119,19 +106,10 @@ void UpdateFrameNumber(int changetime){
       ThreadRunLoop(mergesmoke3d_threads);
       ThreadJoin(&mergesmoke3d_threads);
       PRINT_TIMER(merge_smoke_time, "MergeSmoke3D");
-#else
-      INIT_PRINT_TIMER(update_smoke_time);
-      UncompressSmoke3DAll();
-      PRINT_TIMER(update_smoke_time, "UncompressSmoke3D");
-
-      INIT_PRINT_TIMER(merge_smoke_time);
-      MergeSmoke3DAll();
-      PRINT_TIMER(merge_smoke_time, "MergeSmoke3D");
-#endif
       PrintMemoryInfo;
     }
     if(showpatch==1){
-      for(i=0;i<global_scase.npatchinfo;i++){
+      for(i=0; i<global_scase.npatchinfo; i++){
         patchdata *patchi;
 
         patchi = global_scase.patchinfo + i;
@@ -145,7 +123,7 @@ void UpdateFrameNumber(int changetime){
         patchi->geom_nval_dynamic = patchi->geom_ndynamics[patchi->geom_itime];
         if(patchi->is_compressed==1)UncompressBoundaryDataGEOM(patchi, patchi->geom_itime);
       }
-      for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+      for(i=0; i<global_scase.meshescoll.nmeshes; i++){
         patchdata *patchi;
         meshdata *meshi;
 
@@ -169,7 +147,7 @@ void UpdateFrameNumber(int changetime){
       meshdata *meshi;
 
       CheckMemory;
-      for(i=0;i<global_scase.nisoinfo;i++){
+      for(i=0; i<global_scase.nisoinfo; i++){
         isoi = global_scase.isoinfo + i;
         meshi = global_scase.meshescoll.meshinfo + isoi->blocknumber;
         if(isoi->loaded==0||meshi->iso_times==NULL||meshi->iso_timeslist==NULL)continue;
@@ -352,7 +330,7 @@ void UpdateShow(void){
     tourdata *touri;
 
     if(global_scase.tourcoll.ntourinfo>0){
-      for(i=0;i<global_scase.tourcoll.ntourinfo;i++){
+      for(i=0; i<global_scase.tourcoll.ntourinfo; i++){
         touri = global_scase.tourcoll.tourinfo + i;
         if(touri->display==1){
           showtours=1;
@@ -364,7 +342,7 @@ void UpdateShow(void){
   {
     int ii;
 
-    for(ii=0;ii<global_scase.smoke3dcoll.nsmoke3dinfo;ii++){
+    for(ii=0; ii<global_scase.smoke3dcoll.nsmoke3dinfo; ii++){
       smoke3ddata *smoke3di;
 
       smoke3di = global_scase.smoke3dcoll.smoke3dinfo + ii;
@@ -380,7 +358,7 @@ void UpdateShow(void){
   if(visTimeSlice==1){
     int ii;
 
-    for(ii=0;ii<nslice_loaded;ii++){
+    for(ii=0; ii<nslice_loaded; ii++){
       slicedata *sd;
 
       i=slice_loaded_list[ii];
@@ -396,7 +374,7 @@ void UpdateShow(void){
       SHOW_gslice_data_old=SHOW_gslice_data;
       updatemenu=1;
     }
-    for(ii=0;ii<nslice_loaded;ii++){
+    for(ii=0; ii<nslice_loaded; ii++){
       slicedata *sd;
 
       i=slice_loaded_list[ii];
@@ -409,7 +387,7 @@ void UpdateShow(void){
       }
     }
     if(have_extreme_maxdata==0){
-      for(ii=0;ii<nslice_loaded;ii++){
+      for(ii=0; ii<nslice_loaded; ii++){
         slicedata *sd;
 
         i=slice_loaded_list[ii];
@@ -422,7 +400,7 @@ void UpdateShow(void){
       }
     }
     if(have_extreme_mindata==0){
-      for(ii=0;ii<nslice_loaded;ii++){
+      for(ii=0; ii<nslice_loaded; ii++){
         slicedata *sd;
 
         i=slice_loaded_list[ii];
@@ -434,7 +412,7 @@ void UpdateShow(void){
         }
       }
     }
-    for(i=0;i<global_scase.npatchinfo;i++){
+    for(i=0; i<global_scase.npatchinfo; i++){
       patchdata *patchi;
 
       patchi=global_scase.patchinfo+i;
@@ -453,7 +431,7 @@ void UpdateShow(void){
   isoflag=0;
   tisoflag=0;
   if(visTimeIso==1){
-    for(i=0;i<global_scase.nisoinfo;i++){
+    for(i=0; i<global_scase.nisoinfo; i++){
       isodata *isoi;
 
       isoi = global_scase.isoinfo+i;
@@ -471,7 +449,7 @@ void UpdateShow(void){
   vsliceflag=0;
   vslicecolorbarflag=0;
   if(visTimeSlice==1){
-    for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
       vslicedata *vd;
       slicedata *sd;
 
@@ -484,7 +462,7 @@ void UpdateShow(void){
       vsliceflag=1;
       break;
     }
-    for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
       slicedata *sd;
       vslicedata *vd;
 
@@ -507,7 +485,7 @@ void UpdateShow(void){
       geomi->patchactive = 0;
     }
     wall_cell_color_flag=0;
-    for(i=0;i<global_scase.npatchinfo;i++){
+    for(i=0; i<global_scase.npatchinfo; i++){
       patchdata *patchi;
 
       patchi=global_scase.patchinfo+i;
@@ -524,7 +502,7 @@ void UpdateShow(void){
 
   partflag=0;
   if(visParticles==1&&visTimeParticles==1){
-    for(i=0;i<global_scase.npartinfo;i++){
+    for(i=0; i<global_scase.npartinfo; i++){
       partdata *parti;
 
       parti = global_scase.partinfo + i;
@@ -548,7 +526,7 @@ void UpdateShow(void){
     shooter_flag=1;
   }
 
-  if( plotstate==DYNAMIC_PLOTS &&
+  if(plotstate==DYNAMIC_PLOTS &&
     ( showdeviceflag==1 || showhrrflag==1 || sliceflag==1 || vsliceflag==1 || partflag==1 || patchflag==1 ||
     shooter_flag==1|| smoke3dflag==1 || showtours==1 || showhvacflag == 1 || plot2dflag == 1 ||
     (ReadZoneFile==1&&visZone==1&&visTimeZone==1)
@@ -561,14 +539,14 @@ void UpdateShow(void){
     if(patchflag==1)showpatch=1;
     drawing_boundary_files = showpatch;
 
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0; i<global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
       meshi=global_scase.meshescoll.meshinfo+i;
       meshi->visInteriorBoundaries=0;
     }
     if(showpatch==1&&vis_boundary_type[0]==1){
-      for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+      for(i=0; i<global_scase.meshescoll.nmeshes; i++){
         patchdata *patchi;
         meshdata *meshi;
 
@@ -594,7 +572,7 @@ void UpdateShow(void){
   if(showshooter==1)RenderTime=1;
   if(plotstate==STATIC_PLOTS&&nplot3dloaded>0&&plotn>0&&plotn<=numplot3dvars)showplot3d=1;
   if(showplot3d==1){
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0; i<global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
       int ii;
 
@@ -605,7 +583,7 @@ void UpdateShow(void){
       if(global_scase.plot3dinfo[ii].display==0)continue;
       if(global_scase.plot3dinfo[ii].extreme_min[plotn-1]==1)have_extreme_mindata=1;
     }
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0; i<global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
       int ii;
 
@@ -681,12 +659,12 @@ void SynchTimes(void){
 
   /* synchronize smooth blockage times */
 
-  for(n=0;n<nglobal_times;n++){
+  for(n=0; n<nglobal_times; n++){
     int j,jj;
 
   /* synchronize tour times */
 
-    for(j=0;j<global_scase.tourcoll.ntourinfo;j++){
+    for(j=0; j<global_scase.tourcoll.ntourinfo; j++){
       tourdata *tourj;
 
       tourj = global_scase.tourcoll.tourinfo + j;
@@ -696,7 +674,7 @@ void SynchTimes(void){
 
   /* synchronize geometry times */
 
-    for(j=0;j<ngeominfoptrs;j++){
+    for(j=0; j<ngeominfoptrs; j++){
       geomdata *geomi;
       unsigned char *times_map = NULL;
 
@@ -710,7 +688,7 @@ void SynchTimes(void){
 
   /* synchronize particle times */
 
-    for(j=0;j<global_scase.npartinfo;j++){
+    for(j=0; j<global_scase.npartinfo; j++){
       partdata *parti;
 
       parti=global_scase.partinfo+j;
@@ -738,7 +716,7 @@ void SynchTimes(void){
 
   /* synchronize slice times */
 
-    for(jj=0;jj<nslice_loaded;jj++){
+    for(jj=0; jj<nslice_loaded; jj++){
       slicedata *sd;
 
       sd = global_scase.slicecoll.sliceinfo + slice_loaded_list[jj];
@@ -755,7 +733,7 @@ void SynchTimes(void){
     {
       smoke3ddata *smoke3di;
 
-      for(jj=0;jj<global_scase.smoke3dcoll.nsmoke3dinfo;jj++){
+      for(jj=0; jj<global_scase.smoke3dcoll.nsmoke3dinfo; jj++){
         smoke3di = global_scase.smoke3dcoll.smoke3dinfo + jj;
         if(smoke3di->loaded==0)continue;
         smoke3di->timeslist[n] = GetDataTimeFrame(global_times[n], smoke3di->times_map, smoke3di->times,smoke3di->ntimes);
@@ -764,7 +742,7 @@ void SynchTimes(void){
 
   /* synchronize patch times */
 
-    for(j=0;j<global_scase.npatchinfo;j++){
+    for(j=0; j<global_scase.npatchinfo; j++){
       patchdata *patchi;
 
       patchi = global_scase.patchinfo + j;
@@ -772,7 +750,7 @@ void SynchTimes(void){
       if(patchi->structured == YES)continue;
       patchi->geom_timeslist[n] = GetDataTimeFrame(global_times[n], patchi->geom_times_map, patchi->geom_times,patchi->ngeom_times);
     }
-    for(j=0;j<global_scase.meshescoll.nmeshes;j++){
+    for(j=0; j<global_scase.meshescoll.nmeshes; j++){
       patchdata *patchi;
       meshdata *meshi;
 
@@ -785,7 +763,7 @@ void SynchTimes(void){
 
   /* synchronize isosurface times */
 
-    for(igrid=0;igrid<global_scase.meshescoll.nmeshes;igrid++){
+    for(igrid=0; igrid<global_scase.meshescoll.nmeshes; igrid++){
       meshdata *meshi;
 
       meshi=global_scase.meshescoll.meshinfo+igrid;
@@ -801,94 +779,6 @@ void SynchTimes(void){
 
   }
   ResetGLTime();
-}
-
-/* ------------------ GetLoadvfileinfo ------------------------ */
-
-int GetLoadvfileinfo(FILE *stream, char *filename){
-  int i;
-  char *fileptr;
-
-  TrimBack(filename);
-  fileptr = TrimFront(filename);
-  for(i = 0; i<global_scase.slicecoll.nsliceinfo; i++){
-    slicedata *slicei;
-
-    slicei = global_scase.slicecoll.sliceinfo+i;
-    if(strcmp(fileptr, slicei->file)==0){
-      fprintf(stream, "// LOADVFILE\n");
-      fprintf(stream, "//  %s\n", slicei->file);
-      fprintf(stream, "LOADVSLICEM\n");
-      fprintf(stream, " %s\n", slicei->label.longlabel);
-      if(slicei->slice3d==1){
-        fprintf(stream, " %i %f\n", 0, slicei->position_orig);
-      }
-      else{
-        fprintf(stream, " %i %f\n", slicei->idir, slicei->position_orig);
-      }
-      fprintf(stream, " %i\n", slicei->blocknumber+1);
-      return 1;
-    }
-  }
-  return 0;
-}
-
-/* ------------------ GetLoadfileinfo ------------------------ */
-
-int GetLoadfileinfo(FILE *stream, char *filename){
-  int i;
-  char *fileptr;
-
-  TrimBack(filename);
-  fileptr = TrimFront(filename);
-  for(i = 0; i<global_scase.slicecoll.nsliceinfo; i++){
-    slicedata *slicei;
-
-    slicei = global_scase.slicecoll.sliceinfo+i;
-    if(strcmp(fileptr, slicei->file)==0){
-      fprintf(stream, "// LOADFILE\n");
-      fprintf(stream, "//  %s\n", slicei->file);
-      fprintf(stream, "LOADSLICEM\n");
-      fprintf(stream, " %s\n", slicei->label.longlabel);
-      if(slicei->slice3d==1){
-        fprintf(stream, " %i %f\n", 0, slicei->position_orig);
-      }
-      else{
-        fprintf(stream, " %i %f\n", slicei->idir, slicei->position_orig);
-      }
-      fprintf(stream, " %i\n", slicei->blocknumber+1);
-      return 1;
-    }
-  }
-  for(i = 0; i < global_scase.nisoinfo; i++){
-    isodata *isoi;
-
-    isoi = global_scase.isoinfo + i;
-    if(strcmp(fileptr, isoi->file) == 0){
-      fprintf(stream, "// LOADFILE\n");
-      fprintf(stream, "//  %s\n", isoi->file);
-      fprintf(stream, "LOADISOM\n");
-      fprintf(stream, " %s\n", isoi->surface_label.longlabel);
-      fprintf(stream, " %i\n", isoi->blocknumber+1);
-      return 1;
-    }
-
-  }
-  for(i = 0; i < global_scase.npatchinfo; i++){
-    patchdata *patchi;
-
-    patchi = global_scase.patchinfo + i;
-    if(strcmp(fileptr, patchi->file) == 0){
-      fprintf(stream, "// LOADFILE\n");
-      fprintf(stream, "//  %s\n", patchi->file);
-      fprintf(stream, "LOADBOUNDARYM\n");
-      fprintf(stream, " %s\n", patchi->label.longlabel);
-      fprintf(stream, " %i\n", patchi->blocknumber+1);
-      return 1;
-    }
-
-  }
-  return 0;
 }
 
 /* ------------------ GetTime ------------------------ */
@@ -960,7 +850,7 @@ void MergeGlobalTimes(float *time_in, int ntimes_in){
   }
 
   // merge global_times and times_in into times_buffer
-  for(left=0,right=0,nbuffer=0;left<nglobal_times||right<ntimes_in;){
+  for(left=0,right=0,nbuffer=0; left<nglobal_times||right<ntimes_in;){
     float minval;
 
     if(left>=nglobal_times){
@@ -1022,7 +912,7 @@ void TruncateGlobalTimes(void){
   ibeg = 0;
   iend = nglobal_times - 1;
   if(use_tload_begin==1){
-    for(i=0;i<nglobal_times;i++){
+    for(i=0; i<nglobal_times; i++){
       if(global_scase.tload_begin<global_times[i]){
         ibeg = i;
         break;
@@ -1030,14 +920,14 @@ void TruncateGlobalTimes(void){
     }
   }
   if(use_tload_end==1){
-    for(i=nglobal_times-1;i>=0;i--){
+    for(i=nglobal_times-1; i>=0; i--){
       if(global_times[i]<global_scase.tload_end){
         iend = i;
         break;
       }
     }
   }
-  for(i=ibeg;i<=iend;i++){
+  for(i=ibeg; i<=iend; i++){
     global_times[i-ibeg] = global_times[i];
   }
   nglobal_times = iend + 1 - ibeg;
@@ -1125,7 +1015,7 @@ void UpdateTimes(void){
     }
   }
 
-  for(i=0;i<ngeominfoptrs;i++){
+  for(i=0; i<ngeominfoptrs; i++){
     geomdata *geomi;
 
     geomi = geominfoptrs[i];
@@ -1147,7 +1037,7 @@ void UpdateTimes(void){
     }
   }
   INIT_PRINT_TIMER(slice_timer);
-  for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+  for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
     slicedata *sd;
 
     sd=global_scase.slicecoll.sliceinfo+i;
@@ -1156,7 +1046,7 @@ void UpdateTimes(void){
     }
   }
   PRINT_TIMER(slice_timer, "UpdateTimes: slice");
-  for(i=0;i<global_scase.npatchinfo;i++){
+  for(i=0; i<global_scase.npatchinfo; i++){
     patchdata *patchi;
 
     patchi = global_scase.patchinfo + i;
@@ -1165,7 +1055,7 @@ void UpdateTimes(void){
     }
   }
   INIT_PRINT_TIMER(boundary_timer);
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     patchdata *patchi;
     meshdata *meshi;
     int filenum;
@@ -1185,7 +1075,7 @@ void UpdateTimes(void){
   }
   if(ReadIsoFile==1&&visAIso!=0){
     INIT_PRINT_TIMER(iso_timer);
-    for(i=0;i<global_scase.nisoinfo;i++){
+    for(i=0; i<global_scase.nisoinfo; i++){
       meshdata *meshi;
       isodata *ib;
 
@@ -1201,7 +1091,7 @@ void UpdateTimes(void){
 
     if(nsmoke3dloaded>0&&vis3DSmoke3D==1){
       INIT_PRINT_TIMER(smoke3d_timer);
-      for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+      for(i=0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
         smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
         if(smoke3di->loaded==0)continue;
         MergeGlobalTimes(smoke3di->times, smoke3di->ntimes);
@@ -1217,7 +1107,7 @@ void UpdateTimes(void){
     MergeGlobalTimes(parti->times, parti->ntimes);
   }
 
-  for(i=0;i<global_scase.tourcoll.ntourinfo;i++){
+  for(i=0; i<global_scase.tourcoll.ntourinfo; i++){
     tourdata *touri;
 
     touri = global_scase.tourcoll.tourinfo + i;
@@ -1234,7 +1124,7 @@ void UpdateTimes(void){
 
   // allocate memory for individual timelist arrays
 
-  for(i=0;i<ngeominfoptrs;i++){
+  for(i=0; i<ngeominfoptrs; i++){
     geomdata *geomi;
 
     geomi = geominfoptrs[i];
@@ -1242,14 +1132,14 @@ void UpdateTimes(void){
     FREEMEMORY(geomi->timeslist);
     if(nglobal_times>0)NewMemory((void **)&geomi->timeslist,nglobal_times*sizeof(int));
   }
-  for(i=0;i<global_scase.npartinfo;i++){
+  for(i=0; i<global_scase.npartinfo; i++){
     partdata *parti;
 
     parti=global_scase.partinfo+i;
     FREEMEMORY(parti->timeslist);
     if(nglobal_times>0)NewMemory((void **)&parti->timeslist,nglobal_times*sizeof(int));
   }
-  for(i=0;i<global_scase.tourcoll.ntourinfo;i++){
+  for(i=0; i<global_scase.tourcoll.ntourinfo; i++){
     tourdata *touri;
 
     touri=global_scase.tourcoll.tourinfo + i;
@@ -1262,7 +1152,7 @@ void UpdateTimes(void){
     NewMemory((void **)&shooter_timeslist,nshooter_frames*sizeof(int));
   }
 
-  for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+  for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
     slicedata *sd;
 
     sd = global_scase.slicecoll.sliceinfo + i;
@@ -1279,13 +1169,13 @@ void UpdateTimes(void){
   {
     smoke3ddata *smoke3di;
 
-    for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+    for(i=0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
       smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
       FREEMEMORY(smoke3di->timeslist);
       if(nglobal_times>0)NewMemory((void **)&smoke3di->timeslist,nglobal_times*sizeof(int));
     }
   }
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+i;
@@ -1294,7 +1184,7 @@ void UpdateTimes(void){
     if(nglobal_times>0)NewMemory((void **)&meshi->iso_timeslist,  nglobal_times*sizeof(int));
   }
 
-  for(i=0;i<global_scase.npatchinfo;i++){
+  for(i=0; i<global_scase.npatchinfo; i++){
     patchdata *patchi;
 
     patchi = global_scase.patchinfo + i;
@@ -1303,10 +1193,10 @@ void UpdateTimes(void){
     if(patchi->geom_times==NULL)continue;
     if(nglobal_times>0)NewMemory((void **)&patchi->geom_timeslist,nglobal_times*sizeof(int));
   }
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     FREEMEMORY(global_scase.meshescoll.meshinfo[i].patch_timeslist);
   }
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     if(global_scase.meshescoll.meshinfo[i].patch_times==NULL)continue;
     if(nglobal_times>0)NewMemory((void **)&global_scase.meshescoll.meshinfo[i].patch_timeslist,nglobal_times*sizeof(int));
   }
@@ -1333,33 +1223,33 @@ void UpdateTimes(void){
   INIT_PRINT_TIMER(timer_setpointers);
   izone=0;
   ResetItimes0();
-  for(i=0;i<ngeominfoptrs;i++){
+  for(i=0; i<ngeominfoptrs; i++){
     geomdata *geomi;
 
     geomi = geominfoptrs[i];
     if(geomi->loaded==0||geomi->display==0)continue;
     geomi->itime=0;
   }
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+i;
     meshi->patch_itime=0;
   }
-  for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+  for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
     slicedata *sd;
 
     sd = global_scase.slicecoll.sliceinfo + i;
     sd->itime=0;
   }
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+i;
     if(meshi->iso_times==NULL)continue;
     meshi->iso_itime=0;
   }
-  for(i=0;i<global_scase.npartinfo;i++){
+  for(i=0; i<global_scase.npartinfo; i++){
     partdata *parti;
 
     parti = global_scase.partinfo + i;
@@ -1370,12 +1260,12 @@ void UpdateTimes(void){
   /* determine visibility of each blockage at each time step */
 
   INIT_PRINT_TIMER(timer_visblocks);
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+i;
-    for(j=0;j<meshi->nbptrs;j++){
+    for(j=0; j<meshi->nbptrs; j++){
       blockagedata *bc;
 
       bc = meshi->blockageinfoptrs[j];
@@ -1385,7 +1275,7 @@ void UpdateTimes(void){
         int k;
 
         NewMemory((void **)&bc->showtimelist,nglobal_times*sizeof(int));
-        for(k=0;k<nglobal_times;k++){
+        for(k=0; k<nglobal_times; k++){
           int listindex;
 
           bc->showtimelist[k]=1;
@@ -1400,7 +1290,7 @@ void UpdateTimes(void){
   /* determine state of each device at each time step */
 
   INIT_PRINT_TIMER(timer_device);
-  for(i=0;i<global_scase.devicecoll.ndeviceinfo;i++){
+  for(i=0; i<global_scase.devicecoll.ndeviceinfo; i++){
     devicedata *devicei;
 
     devicei = global_scase.devicecoll.deviceinfo + i;
@@ -1411,7 +1301,7 @@ void UpdateTimes(void){
       int k;
 
       NewMemory((void **)&devicei->showstatelist,nglobal_times*sizeof(int));
-      for(k=0;k<nglobal_times;k++){
+      for(k=0; k<nglobal_times; k++){
         int listindex;
 
         listindex=GetIndex(global_times[k],devicei->act_times,devicei->nstate_changes);
@@ -1425,13 +1315,13 @@ void UpdateTimes(void){
 
   INIT_PRINT_TIMER(timer_vent);
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     int j;
     meshdata *meshi;
 
     meshi=global_scase.meshescoll.meshinfo+i;
     if(meshi->ventinfo==NULL)continue;
-    for(j=0;j<meshi->nvents;j++){
+    for(j=0; j<meshi->nvents; j++){
       ventdata *vi;
 
       vi = meshi->ventinfo+j;
@@ -1441,7 +1331,7 @@ void UpdateTimes(void){
         int k;
 
         NewMemory((void **)&vi->showtimelist,nglobal_times*sizeof(int));
-        for(k=0;k<nglobal_times;k++){
+        for(k=0; k<nglobal_times; k++){
           int listindex;
 
           vi->showtimelist[k]=1;
@@ -1508,7 +1398,7 @@ int GetPlotStateSub(int choice){
     case STATIC_PLOTS:
     case STATIC_PLOTS_NORECURSE:
       stept = 0;
-      for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+      for(i=0; i<global_scase.meshescoll.nmeshes; i++){
         plot3ddata *ploti;
         meshdata *meshi;
 
@@ -1549,7 +1439,7 @@ int GetPlotStateSub(int choice){
           }
         }
       }
-      for(i=0;i<nslice_loaded;i++){
+      for(i=0; i<nslice_loaded; i++){
         slicedata *slicei;
 
         slicei = global_scase.slicecoll.sliceinfo + slice_loaded_list[i];
@@ -1558,31 +1448,29 @@ int GetPlotStateSub(int choice){
         return DYNAMIC_PLOTS;
       }
       if(visGrid==0)stept = 1;
-      for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+      for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
         vslicedata *vslicei;
 
         vslicei = global_scase.slicecoll.vsliceinfo + i;
         if(vslicei->display==0||vslicei->vslicefile_labelindex!=slicefile_labelindex)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<global_scase.npatchinfo;i++){
-        patchdata *patchi;
-
-        patchi = global_scase.patchinfo + i;
-        if(patchi->loaded == 0)continue;
-        if(patchi->display == 1){
+      if(GetBoundaryDisplay()==1){
+        for(i=0; i<global_scase.npatchinfo; i++){
+          patchdata *patchi = global_scase.patchinfo + i;
+          if(patchi->loaded == 0)continue;
           if(patchi->boundary == 1 && patchi->shortlabel_index == iboundarytype)return DYNAMIC_PLOTS;
           if(patchi->boundary == 0 && patchi->shortlabel_index == slicefile_labelindex)return DYNAMIC_PLOTS;
         }
       }
-      for(i=0;i<global_scase.npartinfo;i++){
+      for(i=0; i<global_scase.npartinfo; i++){
         partdata *parti;
 
         parti = global_scase.partinfo + i;
         if(parti->loaded==0||parti->display==0)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<global_scase.nisoinfo;i++){
+      for(i=0; i<global_scase.nisoinfo; i++){
         isodata *isoi;
 
         isoi = global_scase.isoinfo + i;
@@ -1590,21 +1478,21 @@ int GetPlotStateSub(int choice){
         if(isoi->display==0)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<global_scase.nzoneinfo;i++){
+      for(i=0; i<global_scase.nzoneinfo; i++){
         zonedata *zonei;
 
         zonei = global_scase.zoneinfo + i;
         if(zonei->loaded==0||zonei->display==0)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<global_scase.tourcoll.ntourinfo;i++){
+      for(i=0; i<global_scase.tourcoll.ntourinfo; i++){
         tourdata *touri;
 
         touri = global_scase.tourcoll.tourinfo + i;
         if(touri->display==0)continue;
         return DYNAMIC_PLOTS;
       }
-      for(i=0;i<global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+      for(i=0; i<global_scase.smoke3dcoll.nsmoke3dinfo; i++){
         smoke3ddata *smoke3di;
 
         smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -1653,7 +1541,7 @@ int GetIndex(float key, const float *list, int nlist){
   if(nlist==1)return 0;
   if(key<list[1])return 0;
   if(key>=list[nlist-1])return nlist-1;
-  for(i=1;i<nlist-1;i++){
+  for(i=1; i<nlist-1; i++){
     if(list[i]<=key&&key<list[i+1])return i;
   }
   return 0;
@@ -1796,29 +1684,6 @@ void UpdateIsoIni(void){
   }
 }
 
-/* ------------------ Bytes2Label ------------------------ */
-
-char *Bytes2Label(char *label, FILE_SIZE bytes){
-  char vallabel[256];
-
-  if(bytes >= 0 && bytes < 1000){
-    sprintf(label, "%iB", (int)bytes);
-  }
-  else if(bytes >= 1000 && bytes < 1000000){
-    Float2String(vallabel, (float)bytes/1000.0, ncolorlabel_digits, force_fixedpoint);
-    sprintf(label, "%sKB", vallabel);
-  }
-  else if(bytes >= 1000000 && bytes < 1000000000){
-    Float2String(vallabel, (float)bytes/1000000.0, ncolorlabel_digits, force_fixedpoint);
-    sprintf(label, "%sMB", vallabel);
-  }
-  else{
-    Float2String(vallabel, (float)bytes/1000000000.0, ncolorlabel_digits, force_fixedpoint);
-    sprintf(label, "%sGB", vallabel);
-  }
-  return label;
-}
-
 #ifdef pp_SHOW_UPDATE
 #define SHOW_UPDATE(var) printf("updating: %s\n", #var);INIT_PRINT_TIMER(update_timer);updating=1
 #define END_SHOW_UPDATE(var) PRINT_TIMER(update_timer,#var)
@@ -1832,7 +1697,7 @@ char *Bytes2Label(char *label, FILE_SIZE bytes){
 void SetupAutoSmoke(void){
   int i;
 
-  for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+  for(i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -1854,7 +1719,7 @@ void SetupAutoSmoke(void){
       continue;
     }
   }
-  for(i = 0;i < global_scase.smoke3dcoll.nsmoke3dinfo;i++){
+  for(i = 0; i < global_scase.smoke3dcoll.nsmoke3dinfo; i++){
     smoke3ddata *smoke3di;
 
     smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
@@ -1886,7 +1751,7 @@ void UpdateShowScene(void){
     int i;
 
     update_set_clipplanes = 0;
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0; i<global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
       meshi = global_scase.meshescoll.meshinfo + i;
@@ -2251,7 +2116,7 @@ void UpdateShowScene(void){
 void UpdateFlippedColorbar(void){
   int i, flip = 0;
 
-  for(i = 0;i < nslice_loaded;i++){
+  for(i = 0; i < nslice_loaded; i++){
     slicedata *slicei;
 
     slicei = global_scase.slicecoll.sliceinfo + slice_loaded_list[i];
@@ -2284,7 +2149,6 @@ int GetColorbarState(void){
   visColorbarHorizontal_save = 0;
   return COLORBAR_HIDDEN;
 }
-
 
 /* ------------------ OutputMinMax  ------------------------ */
 
@@ -2358,7 +2222,7 @@ void OutputBounds(void){
 
     label = global_scase.slicecoll.sliceinfo[update_slice_bounds].label.longlabel;
     unit = global_scase.slicecoll.sliceinfo[update_slice_bounds].label.unit;
-    for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
       slicedata *slicei;
       char *labeli;
       meshdata *meshi;
@@ -2399,7 +2263,7 @@ void OutputBounds(void){
 
     label = global_scase.patchinfo[update_patch_bounds].label.longlabel;
     unit = global_scase.patchinfo[update_patch_bounds].label.unit;
-    for(i=0;i<global_scase.npatchinfo;i++){
+    for(i=0; i<global_scase.npatchinfo; i++){
       patchdata *patchi;
       char *labeli;
       meshdata *meshi;
@@ -2509,7 +2373,7 @@ void OutputBounds(void){
       }
     }
 
-    for(j=0;j<MAXPLOT3DVARS;j++){
+    for(j=0; j<MAXPLOT3DVARS; j++){
 
       label = global_scase.plot3dinfo[update_plot3d_bounds].label[j].longlabel;
       unit = global_scase.plot3dinfo[update_plot3d_bounds].label[j].unit;
@@ -2590,13 +2454,8 @@ void UpdateDisplay(void){
   }
   if(update_ini_boundary_type==1){
     update_ini_boundary_type = 0;
-    ShowBoundaryMenu(INTERIOR_WALL_MENU);
+    show_all_interior_patch_data = 1 - show_all_interior_patch_data;
     ShowBoundaryMenu(INI_EXTERIORwallmenu);
-  }
-  if(update_boundary_loaded == 1){ // a hack, shouldn't be necessary
-    update_boundary_loaded = 0;
-    ShowBoundaryMenu(INTERIOR_WALL_MENU);
-    ShowBoundaryMenu(INTERIOR_WALL_MENU);
   }
   if(update_use_soot_multiplier == 1){
     update_use_soot_multiplier = 0;
@@ -2630,7 +2489,7 @@ void UpdateDisplay(void){
     }
     INIT_PRINT_TIMER(timer_hidden_blockages);
 #ifdef _DEBUG
-    int nhidden_faces = 0, ntotal_obsts = 0;;
+    int nhidden_faces = 0, ntotal_obsts = 0;
 #endif
     for(ig = 0; ig < global_scase.meshescoll.nmeshes; ig++){
       meshdata *meshi;
@@ -2666,9 +2525,7 @@ void UpdateDisplay(void){
     update_make_iblank = 0;
     update_setvents    = 1;
     update_setcvents   = 1;
-#ifdef pp_SPEEDUP
     printf("blanking data structures updated\n");
-#endif
   }
   if(update_setvents==1){
     SetVentDirs();
@@ -2871,7 +2728,7 @@ void ShiftColorbars(void){
 #define BASE_EPS 0.0001
 
   if(ABS(colorbar_shift-1.0)<BASE_EPS)return;
-  for(i=0;i<MAXRGB;i++){
+  for(i=0; i<MAXRGB; i++){
     float factor;
     float *color1, *color2, color_index, *color_new;
     int color1_index;
@@ -2891,19 +2748,3 @@ void ShiftColorbars(void){
   }
   CheckMemory;
 }
-
-/* ------------------ PauseTime ------------------------ */
-
-void PauseTime(float pause_time){
-  float start_time;
-
-  // pause no more than 60 s
-  assert(opengl_finalized == 1);
-  start_time = glutGet(GLUT_ELAPSED_TIME) / 1000.0;
-  for(;;){
-    float delta_time;
-
-    delta_time = glutGet(GLUT_ELAPSED_TIME) / 1000.0 - start_time;
-    if(delta_time > pause_time || delta_time > 60.0)return;
-    }
-  }

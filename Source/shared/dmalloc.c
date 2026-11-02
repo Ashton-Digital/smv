@@ -52,6 +52,9 @@ int MemoryLoad(void){
   return (int)stat.dwMemoryLoad;
 }
 #endif
+
+/* ------------------ MemoryLoad ------------------------ */
+
 #ifdef __linux__
 int MemoryLoad(void){
   FILE *fp = fopen("/proc/meminfo", "r");
@@ -62,11 +65,11 @@ int MemoryLoad(void){
   long value;
   char unit[32];
 
-  while(fscanf(fp, "%63s %ld %31s\n", label, &value, unit) == 3) {
-    if(strcmp(label, "MemTotal:") == 0) {
+  while(fscanf(fp, "%63s %ld %31s\n", label, &value, unit) == 3){
+    if(strcmp(label, "MemTotal:") == 0){
       memTotal = value;
     }
-    else if(strcmp(label, "MemAvailable:") == 0) {
+    else if(strcmp(label, "MemAvailable:") == 0){
       memAvailable = value;
       break; // we got what we need
     }
@@ -85,7 +88,7 @@ int MemoryLoad(void){
   vm_statistics64_data_t vmstat;
   kern_return_t kr = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&vmstat, &count);
 
-  if (kr != KERN_SUCCESS)return -1;
+  if(kr != KERN_SUCCESS)return -1;
 
   int64_t pageSize;
   host_page_size(mach_host_self(), (vm_size_t*)&pageSize);
@@ -565,7 +568,6 @@ void _CheckMemoryOff(void){
   checkmemoryflag=0;
 }
 
-
 /* ------------------ _CheckMemory ------------------------ */
 
 void _CheckMemory(void){
@@ -595,7 +597,7 @@ mallocflag CreateBlockInfo(bbyte *pbNew, size_t sizeNew){
   assert(pbNew != NULL && sizeNew != 0);
 
   pbi = (blockinfo *)malloc(sizeof(blockinfo));
-  if( pbi != NULL){
+  if(pbi != NULL){
     pbi->pb = pbNew;
     pbi->size = sizeNew;
     pbi->pbiNext = pbiHead;

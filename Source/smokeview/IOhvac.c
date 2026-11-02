@@ -23,7 +23,6 @@ unsigned char *hvac_color_states[2] = {hvac_off_color, hvac_on_color};
 
 #define NODE_XYZ 0.1
 
-
 /* ------------------ UpdateHVACDuctColorLabels ------------------------ */
 
 void UpdateHVACDuctColorLabels(int index){
@@ -124,24 +123,10 @@ int GetHVACDuctState(hvacductdata *ducti){
   current_time = GetTime();
 
   if(current_time < times[0])return HVAC_STATE_INACTIVE;
-  for(i = 0;i < n - 1;i++){
+  for(i = 0; i < n - 1; i++){
     if(current_time >= times[i] && current_time < times[i + 1])return states[i];
   }
   return states[n - 1];
-}
-
-/* ------------------ GetDuctDir ------------------------ */
-
-int GetDuctDir(float *xyz){
-  float eyedir[3];
-
-  //cos(angle) = dir1 .dot. dir2 /(norm(dir1)*norm(dir2))
-  eyedir[0] = ABS(xyz[0] - fds_eyepos[0]);
-  eyedir[1] = ABS(xyz[1] - fds_eyepos[1]);
-  eyedir[2] = ABS(xyz[2] - fds_eyepos[2]);
-  if(eyedir[0]>MAX(eyedir[1],eyedir[2]))return 1;
-  if(eyedir[1]>MAX(eyedir[0],eyedir[2]))return 0;
-  return 2;
 }
 
 /* ------------------ DrawHVACDamper ------------------------ */
@@ -246,7 +231,7 @@ void DrawHVACFan(hvacductdata *ducti, float *xyz, float size, float diam, int st
     FREEMEMORY(hvac_circ_y);
     NewMemory((void **)&hvac_circ_x,2*HVAC_NCIRC*sizeof(float));
     NewMemory((void **)&hvac_circ_y,2*HVAC_NCIRC*sizeof(float));
-    for(i=0;i<HVAC_NCIRC;i++){
+    for(i=0; i<HVAC_NCIRC; i++){
       float arg;
       float r, xx, yy;
 
@@ -282,7 +267,7 @@ void DrawHVACFan(hvacductdata *ducti, float *xyz, float size, float diam, int st
   glScalef(size,size,size);
   glColor3fv(foregroundcolor);
   glBegin(GL_LINES);
-  for(i=0;i<2*HVAC_NCIRC-1;i++){
+  for(i=0; i<2*HVAC_NCIRC-1; i++){
     float x, y, xp1, yp1;
 
     if(i == HVAC_NCIRC - 1)continue;
@@ -403,7 +388,7 @@ void DrawHVAC(hvacdata *hvaci){
       nxyzs      = ducti->nxyz_reg_cell-1;
     }
     if(global_times != NULL && global_scase.hvaccoll.hvacductvar_index >= 0){
-      for(j = 0;j < nxyzs;j++){
+      for(j = 0; j < nxyzs; j++){
         float *xyz, *this_color;
         int cell, index;
         unsigned char ival;
@@ -424,7 +409,7 @@ void DrawHVAC(hvacdata *hvaci){
       }
     }
     else{
-      for(j = 0;j < nxyzs;j++){
+      for(j = 0; j < nxyzs; j++){
         float *xyz;
 
         xyz = xyzs + 3 * j;
@@ -456,7 +441,7 @@ void DrawHVAC(hvacdata *hvaci){
         xyzs       = ducti->xyz_reg_cell;
         nxyzs      = ducti->nxyz_reg_cell-1;
       }
-      for(j = 1;j < nxyzs-1;j++){
+      for(j = 1; j < nxyzs-1; j++){
         float *xyz;
 
         xyz = xyzs + 3 * j;
