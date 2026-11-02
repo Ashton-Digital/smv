@@ -241,6 +241,8 @@ try {
             throw "PyInstaller output is missing: $RequiredBinary"
         }
     }
+    Copy-Item -LiteralPath $CaptureLogo -Destination (Join-Path $PyDist "capture_logo.png")
+    Copy-Item -LiteralPath $CaptureCheck -Destination (Join-Path $PyDist "capture_check.svg")
     $UiSmoke = Start-Process -FilePath $UiBinary -ArgumentList "--smoke-test" -Wait -PassThru
     if ($UiSmoke.ExitCode -ne 0) {
         throw "Bundled capture window did not start (exit code $($UiSmoke.ExitCode))."
