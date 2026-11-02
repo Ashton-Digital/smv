@@ -9,12 +9,11 @@ import math
 import os
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QRectF, QSize, Qt, QThread, QTimer, Signal, Slot
-from PySide6.QtGui import (QBrush, QColor, QFont, QIcon, QPainter, QPainterPath,
-                         QPalette, QPen, QTextCursor)
+from PySide6.QtCore import QObject, QSize, Qt, QThread, QTimer, Signal, Slot
+from PySide6.QtGui import QColor, QFont, QIcon, QPalette, QTextCursor
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog,
     QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPlainTextEdit,
-    QProxyStyle, QPushButton, QRadioButton, QScrollArea, QSizePolicy, QStyle, QToolButton, QListWidget,
+    QPushButton, QRadioButton, QScrollArea, QSizePolicy, QToolButton, QListWidget,
     QVBoxLayout, QWidget, QButtonGroup)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -26,6 +25,7 @@ from smv_planes import available_planes, parse_plane_selection
 
 LOGO_FILE = (Path(sys.executable).resolve().parent if getattr(sys, "frozen", False)
              else SCRIPT_DIR) / "capture_logo.png"
+CHECK_FILE = LOGO_FILE.with_name("capture_check.svg")
 
 THEMES = {
     "dark": dict(bg="#101820", surface="#18242e", input="#111d26", text="#e7eef0",
@@ -37,54 +37,6 @@ THEMES = {
                   accent_hover="#096b70", selected="#cce9e8", disabled="#82939a",
                   error="#a83229", success="#167456"),
 }
-
-
-class IndicatorStyle(QProxyStyle):
-    """Draw high contrast checkbox and radio indicators with the active palette."""
-
-    def __init__(self) -> None:
-        super().__init__("Fusion")
-        self.colors = THEMES["dark"]
-
-    def pixelMetric(self, metric, option=None, widget=None) -> int:
-        if metric in (QStyle.PM_IndicatorWidth, QStyle.PM_IndicatorHeight,
-                      QStyle.PM_ExclusiveIndicatorWidth, QStyle.PM_ExclusiveIndicatorHeight):
-            return 16
-        return super().pixelMetric(metric, option, widget)
-
-    def drawPrimitive(self, element, option, painter, widget=None) -> None:
-        if element not in (QStyle.PE_IndicatorCheckBox, QStyle.PE_IndicatorRadioButton):
-            super().drawPrimitive(element, option, painter, widget)
-            return
-        c = self.colors
-        enabled = bool(option.state & QStyle.State_Enabled)
-        checked = bool(option.state & QStyle.State_On)
-        active = bool(option.state & (QStyle.State_MouseOver | QStyle.State_HasFocus))
-        border = c["disabled"] if not enabled else c["accent"] if checked or active else c["muted"]
-        fill = c["surface"] if not enabled else c["accent"] if checked and element == QStyle.PE_IndicatorCheckBox else c["input"]
-        rect = option.rect.adjusted(1, 1, -1, -1)
-        painter.save()
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(QPen(QColor(border), 1.2))
-        painter.setBrush(QBrush(QColor(fill)))
-        if element == QStyle.PE_IndicatorRadioButton:
-            painter.drawEllipse(rect)
-            if checked:
-                painter.setPen(Qt.NoPen)
-                painter.setBrush(QBrush(QColor(c["accent"] if enabled else c["disabled"])))
-                painter.drawEllipse(QRectF(rect).center(), 3.0, 3.0)
-        else:
-            painter.drawRoundedRect(rect, 3, 3)
-            if checked:
-                x, y, w, h = rect.x(), rect.y(), rect.width(), rect.height()
-                path = QPainterPath()
-                path.moveTo(x + 3, y + h * .52)
-                path.lineTo(x + w * .43, y + h - 3)
-                path.lineTo(x + w - 3, y + 3)
-                painter.setPen(QPen(QColor(c["bg"]), 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
-                painter.setBrush(Qt.NoBrush)
-                painter.drawPath(path)
-        painter.restore()
 
 
 class CaptureWorker(QObject):
@@ -423,6 +375,14 @@ class CaptureWindow(QWidget):
         QToolButton:focus {{ border-color: {c['accent']}; }}
         QCheckBox, QRadioButton {{ spacing: 7px; }}
         QCheckBox:focus, QRadioButton:focus {{ color: {c['accent']}; }}
+        QCheckBox::indicator, QRadioButton::indicator {{ width: 16px; height: 16px; background: {c['input']}; border: 1px solid {c['muted']}; }}
+        QCheckBox::indicator {{ border-radius: 4px; }}
+        QRadioButton::indicator {{ border-radius: 9px; }}
+        QCheckBox::indicator:hover, QRadioButton::indicator:hover,
+        QCheckBox::indicator:focus, QRadioButton::indicator:focus {{ border-color: {c['accent']}; }}
+        QCheckBox::indicator:checked {{ background: {c['accent']}; border-color: {c['accent']}; image: url('{CHECK_FILE.as_posix()}'); }}
+        QRadioButton::indicator:checked {{ border-color: {c['accent']}; background: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 {c['accent']}, stop:0.40 {c['accent']}, stop:0.43 {c['input']}, stop:1 {c['input']}); }}
+        QCheckBox::indicator:disabled, QRadioButton::indicator:disabled {{ background: {c['surface']}; border-color: {c['disabled']}; }}
         QScrollArea {{ border: none; background: transparent; }}
         QScrollBar:vertical {{ background: {c['bg']}; width: 10px; margin: 0; }}
         QScrollBar::handle:vertical {{ background: {c['border']}; border-radius: 4px; min-height: 25px; }}
@@ -433,10 +393,6 @@ class CaptureWindow(QWidget):
     def _apply_theme(self) -> None:
         c = THEMES[self.theme]
         app = QApplication.instance()
-        if not isinstance(app.style(), IndicatorStyle):
-            app.indicator_style = IndicatorStyle()
-            app.setStyle(app.indicator_style)
-        app.style().colors = c
         palette = self.palette()
         palette.setColor(QPalette.Window, QColor(c['bg']))
         palette.setColor(QPalette.WindowText, QColor(c['text']))
@@ -992,6 +948,9 @@ def main() -> None:
                 window.row_widgets[0][3].click()
                 if window.row_widgets:
                     raise RuntimeError("Remove did not delete the clip view row")
+                for _ in range(20):
+                    window.theme_button.click()
+                    app.processEvents()
             except Exception as error:
                 print(f"Capture UI smoke test failed: {error}", file=sys.stderr)
                 app.exit(1)

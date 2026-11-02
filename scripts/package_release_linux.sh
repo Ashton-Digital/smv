@@ -107,6 +107,7 @@ if ! python3 -c 'import PySide6.QtWidgets, PyInstaller'; then
 fi
 [[ -f "$repo_root/Utilities/Scripts/smv_planes.py" ]] || fail "smv_planes.py is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_logo.png" ]] || fail "capture_logo.png is missing"
+[[ -f "$repo_root/Utilities/Scripts/capture_check.svg" ]] || fail "capture_check.svg is missing"
 [[ -f "$repo_root/Utilities/Scripts/smv_help.sh" ]] || fail "smv_help.sh is missing"
 [[ -f "$repo_root/scripts/install_capture_desktop_shortcut.sh" ]] || fail "desktop shortcut helper is missing"
 [[ -d "$repo_root/Build/for_bundle/colorbars" ]] || fail "colorbars directory is missing"
@@ -168,6 +169,7 @@ install -m 0755 "$stage_root/ui-dist/capture_slices_ui" "$package_dir/capture_sl
 QT_QPA_PLATFORM=offscreen "$package_dir/capture_slices_ui" --smoke-test >/dev/null || fail "bundled Linux capture window did not start"
 install -m 0644 "$repo_root/Utilities/Scripts/smv_planes.py" "$package_dir/smv_planes.py"
 install -m 0644 "$repo_root/Utilities/Scripts/capture_logo.png" "$package_dir/capture_logo.png"
+install -m 0644 "$repo_root/Utilities/Scripts/capture_check.svg" "$package_dir/capture_check.svg"
 install -m 0755 "$repo_root/Utilities/Scripts/smv_help.sh" "$package_dir/smv_help.sh"
 install -m 0755 "$repo_root/scripts/install_capture_desktop_shortcut.sh" "$package_dir/install_capture_desktop_shortcut.sh"
 install -m 0644 "$config_file" "$package_dir/smokeview.ini"

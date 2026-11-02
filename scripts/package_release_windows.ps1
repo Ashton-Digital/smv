@@ -136,6 +136,7 @@ $CaptureUiScript = Join-Path $RepoRoot "Utilities/Scripts/capture_slices_ui.pyw"
 $CaptureUiCore = Join-Path $RepoRoot "Utilities/Scripts/capture_ui_core.py"
 $PlaneScript = Join-Path $RepoRoot "Utilities/Scripts/smv_planes.py"
 $CaptureLogo = Join-Path $RepoRoot "Utilities/Scripts/capture_logo.png"
+$CaptureCheck = Join-Path $RepoRoot "Utilities/Scripts/capture_check.svg"
 $CaptureIcon = Join-Path $RepoRoot "Utilities/Scripts/capture_logo.ico"
 $HelpFile = Join-Path $RepoRoot "Utilities/Scripts/smv_help_windows.txt"
 $ColorbarsDir = Join-Path $RepoRoot "Build/for_bundle/colorbars"
@@ -150,6 +151,7 @@ foreach ($RequiredPath in @(
     $CaptureUiCore,
     $PlaneScript,
     $CaptureLogo,
+    $CaptureCheck,
     $CaptureIcon,
     $HelpFile,
     $ColorbarsDir,
@@ -267,6 +269,7 @@ ImageMagick executable SHA-256: $((Get-FileHash -LiteralPath $PackagedMagick -Al
     Copy-Item -LiteralPath $CaptureUiCore -Destination (Join-Path $PackageDir "capture_ui_core.py")
     Copy-Item -LiteralPath $PlaneScript -Destination (Join-Path $PackageDir "smv_planes.py")
     Copy-Item -LiteralPath $CaptureLogo -Destination (Join-Path $PackageDir "capture_logo.png")
+    Copy-Item -LiteralPath $CaptureCheck -Destination (Join-Path $PackageDir "capture_check.svg")
     Copy-Item -LiteralPath $ObjectsFile -Destination (Join-Path $PackageDir "objects.svo")
     Copy-Item -LiteralPath $ColorbarsDir -Destination (Join-Path $PackageDir "colorbars") -Recurse
     Copy-Item -LiteralPath $TexturesDir -Destination (Join-Path $PackageDir "textures") -Recurse
@@ -432,7 +435,7 @@ Contact the Ashton Digital internal support channel for help with this build.
         "capture_slices_ui.exe", "capture_slices_ui.pyw",
         "capture_ui_core.py",
         "capture_result_slices.exe", "capture_result_slices.py",
-        "capture_result_slices.cmd", "smv_planes.py", "capture_logo.png",
+        "capture_result_slices.cmd", "smv_planes.py", "capture_logo.png", "capture_check.svg",
         "smvhelp.txt", "magick.exe",
         "PYTHON-LICENSE.txt", "DEPENDENCIES.txt"
     )) {
