@@ -999,6 +999,13 @@ class CaptureWindow(QWidget):
 def main() -> None:
     if sys.version_info < (3, 10):
         raise SystemExit("Python 3.10 or newer is required.")
+    # The bundled Qt Wayland text-input plugin can abort while editable clip
+    # selectors change focus. Use XWayland when a display is available, while
+    # respecting an explicitly selected Qt platform (including offscreen tests).
+    if (getattr(sys, "frozen", False) and sys.platform.startswith("linux")
+            and os.environ.get("WAYLAND_DISPLAY") and os.environ.get("DISPLAY")
+            and not os.environ.get("QT_QPA_PLATFORM")):
+        os.environ["QT_QPA_PLATFORM"] = "xcb"
     smoke_test = "--smoke-test" in sys.argv
     if smoke_test:
         sys.argv.remove("--smoke-test")
