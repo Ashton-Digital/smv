@@ -7,6 +7,7 @@ import threading
 import json
 import math
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -900,6 +901,23 @@ class CaptureWindow(QWidget):
             self.pending_result = None
 
     def _open_capture_folder(self, folder: Path) -> None:
+        if getattr(sys, "frozen", False) and sys.platform.startswith("linux"):
+            opener = shutil.which("xdg-open")
+            command = [opener, str(folder)] if opener else None
+            if command is None:
+                opener = shutil.which("gio")
+                if opener:
+                    command = [opener, "open", str(folder)]
+            if command is None:
+                QMessageBox.warning(self, "Open captures", "No desktop folder opener was found.")
+                return
+            try:
+                subprocess.Popen(command, env=external_process_env(),
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 start_new_session=True)
+            except OSError as error:
+                QMessageBox.warning(self, "Open captures", str(error))
+            return
         if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder))):
             QMessageBox.warning(self, "Open captures", f"Could not open {folder}")
 
