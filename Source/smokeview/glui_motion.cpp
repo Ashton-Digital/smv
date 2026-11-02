@@ -33,7 +33,6 @@ GLUI_Panel *PANEL_360 = NULL;
 GLUI_Panel *PANEL_360_debug = NULL;
 GLUI_Panel *PANEL_custom_view=NULL;
 GLUI_Panel *PANEL_render_file = NULL;
-GLUI_Panel *PANEL_render_format = NULL;
 GLUI_Panel *PANEL_movie_type = NULL;
 GLUI_Panel *PANEL_user_center = NULL;
 #ifdef ROTATE_TRANSLATE
@@ -50,7 +49,6 @@ GLUI_Panel *PANEL_height=NULL;
 #ifdef ROTATE_TRANSLATE
 GLUI_Panel *PANEL_translate2 = NULL;
 #endif
-GLUI_Panel *PANEL_translate3 = NULL;
 GLUI_Panel *PANEL_anglebuttons=NULL;
 GLUI_Panel *PANEL_reset1=NULL;
 GLUI_Panel *PANEL_reset2=NULL;
@@ -128,13 +126,9 @@ GLUI_Checkbox *CHECKBOX_overwrite_image = NULL;
 GLUI_Checkbox *CHECKBOX_fix_window_aspect = NULL;
 GLUI_Checkbox *CHECKBOX_use_geom_factors = NULL;
 GLUI_Checkbox *CHECKBOX_use_customview=NULL;
-GLUI_Checkbox *CHECKBOX_custom_view = NULL;
-GLUI_Checkbox *CHECKBOX_clip_show_rotation_center = NULL;
-GLUI_Checkbox *CHECKBOX_render360 = NULL;
 GLUI_Checkbox *CHECKBOX_screenview = NULL;
 GLUI_Checkbox *CHECKBOX_show_rotation_center=NULL;
 GLUI_Checkbox *CHECKBOX_clip_rendered_scene=NULL;
-GLUI_Checkbox *CHECKBOX_general_rotation=NULL;
 GLUI_Checkbox *CHECKBOX_blockpath=NULL;
 GLUI_Checkbox *CHECKBOX_gslice_data=NULL;
 GLUI_Checkbox *CHECKBOX_showgravity_vector=NULL;
@@ -228,7 +222,6 @@ void MakeMovieBashScript(void){
   fprintf(stream, "MAKEMOVIE=$FIREMODELS/smv/Utilities/Scripts/make_movie.sh\n");
   fprintf(stream, "QSMV=$FIREMODELS/smv/Utilities/Scripts/qsmv.sh\n");
   fprintf(stream, "SMOKEVIEW=$FIREMODELS/smv/Build/smokeview/intel_linux/smokeview_linux\n");
-
 
   fprintf(stream, "$QSMV -j SV_ -P $NPROCS -q $QUEUE -e $SMOKEVIEW -c %s %s\n", movie_ssf_script, global_scase.fdsprefix);
   fprintf(stream, "$MAKEMOVIE -i . -j SV_ -o %s %s %s\n", movie_htmldir, movie_basename, movie_basename);
@@ -381,7 +374,8 @@ extern "C" void GLUIUpdateRenderRadioButtons(int width_low, int height_low, int 
     if(RADIOBUTTON_render_current != NULL)RADIOBUTTON_render_current->set_name(label);
 
     //sprintf(label, "%ix%i ( %i x current)", width_high, height_high, glui_resolution_multiplier);
-    snprintf(label, sizeof(label), "%ix%i ( %i x current)", width_high, height_high, glui_resolution_multiplier);
+    snprintf(label, sizeof(label), "%ix%i ( %i x current)", width_high, height_high,
+      MAX(MIN_RESOLUTION_MULTIPLIER, glui_resolution_multiplier));
     if(RADIOBUTTON_render_high != NULL)RADIOBUTTON_render_high->set_name(label);
   }
 
@@ -578,10 +572,18 @@ void UpdateZaxisAngles(void){
 
 /* ------------------ GLUIUpdateResolutionMultiplier ------------------------ */
 
-extern "C" void GLUIUpdateResolutionMultiplier(void){
-  if(SPINNER_resolution_multiplier!=NULL&&resolution_multiplier!=SPINNER_resolution_multiplier->get_int_val()){
-    SPINNER_resolution_multiplier->set_int_val(resolution_multiplier);
+extern "C" int GLUIUpdateResolutionMultiplier(int resolution_multiplier_arg){
+  resolution_multiplier_arg = CLAMP(resolution_multiplier_arg, MIN_RESOLUTION_MULTIPLIER, MAX_RESOLUTION_MULTIPLIER);
+  if(SPINNER_resolution_multiplier!=NULL && resolution_multiplier_arg !=SPINNER_resolution_multiplier->get_int_val()){
+    SPINNER_resolution_multiplier->set_int_val(resolution_multiplier_arg);
   }
+
+  int width_low, height_low, width_high, height_high;
+
+  GetRenderResolution(&width_low, &height_low, &width_high, &height_high);
+  GLUIUpdateRenderRadioButtons(width_low, height_low, width_high, height_high);
+
+  return resolution_multiplier_arg;
 }
 
 /* ------------------ GSliceCB ------------------------ */
@@ -638,7 +640,6 @@ extern "C" void GLUIUpdateGsliceParms(void){
   CHECKBOX_gslice_data->set_int_val(vis_gslice_data);
 }
 
-
 /* ------------------ GLUIUpdateRotationType ------------------------ */
 
 extern "C" void GLUIUpdateRotationType(int val){
@@ -669,14 +670,13 @@ extern "C" void GLUISetPosXYZFDS(float *xyz){
   GLUISceneMotionCB(SET_VIEW_XYZ);
 }
 
-
 /* ------------------ ViewExist ------------------------ */
 
 int ViewExist(char *view){
   cameradata *ca;
 
   if(view == NULL)return 0;
-  for(ca = camera_list_first.next;ca->next != NULL;ca = ca->next){
+  for(ca = camera_list_first.next; ca->next != NULL; ca = ca->next){
     if(strcmp(view, ca->name) == 0)return 1;
   }
   return 0;
@@ -787,7 +787,7 @@ void EnableDisableViews(void){
   }
 }
 
-/*------------------GLUISetCurrentViewPoint------------------------ */
+/* ------------------ GLUISetCurrentViewPoint ------------------------ */
 
 extern "C" void GLUISetCurrentViewPoint(char *viewpoint_label){
   int i;
@@ -861,13 +861,13 @@ extern "C" void GLUIViewpointCB(int var){
     ResetDefaultMenu(2);
     break;
   case SHOWALL_SCREENS:
-    for(i = 0;i < nscreeninfo;i++){
+    for(i = 0; i < nscreeninfo; i++){
       screenvis[i] = 1;
       CHECKBOX_screenvis[i]->set_int_val(screenvis[i]);
     }
     break;
   case HIDEALL_SCREENS:
-    for(i = 0;i < nscreeninfo;i++){
+    for(i = 0; i < nscreeninfo; i++){
       screenvis[i] = 0;
       CHECKBOX_screenvis[i]->set_int_val(screenvis[i]);
     }
@@ -908,7 +908,7 @@ extern "C" void GLUIViewpointCB(int var){
     cex = &camera_list_first;
     cex = cex->next;
     cex = cex->next;
-    for(ca = cex;ca->next != NULL;ca = ca->next){
+    for(ca = cex; ca->next != NULL; ca = ca->next){
       if(ca->view_id == ival)break;
     }
     if(ival != ca->view_id){
@@ -938,7 +938,7 @@ extern "C" void GLUIViewpointCB(int var){
     cex = &camera_list_first;
     cex = cex->next;
     cex = cex->next;
-    for(ca = cex;ca->next != NULL;ca = ca->next){
+    for(ca = cex; ca->next != NULL; ca = ca->next){
       if(ca->view_id == ival)break;
     }
     if(ival == ca->view_id){
@@ -974,7 +974,7 @@ extern "C" void GLUIViewpointCB(int var){
     }
     ival = LIST_viewpoints->get_int_val();
     selected_view = ival;
-    for(ca = camera_list_first.next;ca->next != NULL;ca = ca->next){
+    for(ca = camera_list_first.next; ca->next != NULL; ca = ca->next){
       if(ca->view_id == ival)break;
     }
 
@@ -1052,7 +1052,6 @@ extern "C" void GLUIEnableResetSavedView(void){
   if(BUTTON_reset_saved_view!=NULL)BUTTON_reset_saved_view->enable();
 }
 
-
 /* ------------------ GLUIUpdateFileLabel ------------------------ */
 
 extern "C" void GLUIUpdateFileLabel(int var){
@@ -1066,12 +1065,6 @@ extern "C" void GLUIUpdateFileLabel(int var){
       }
     }
   }
-}
-
-/* ------------------ GLUIUpdateWindowAspect ------------------------ */
-
-extern "C" void GLUIUpdateWindowAspect(void){
-  if(CHECKBOX_fix_window_aspect != NULL)CHECKBOX_fix_window_aspect->set_int_val(fix_window_aspect);
 }
 
 /* ------------------ GLUIUpdateZoom ------------------------ */
@@ -1095,11 +1088,11 @@ extern "C" void GLUIUpdateViewpointList(void){
   int i;
 
   if(LIST_viewpoints == NULL)return;
-  for(ca=camera_list_first.next;ca->next!=NULL;ca=ca->next){
+  for(ca=camera_list_first.next; ca->next!=NULL; ca=ca->next){
     LIST_viewpoints->delete_item(ca->name);
   }
   SortCamerasID();
-  for(i = 0; i < ncameras_sorted;i++){
+  for(i = 0; i < ncameras_sorted; i++){
     ca = cameras_sorted[i];
     LIST_viewpoints->add_item(ca->view_id, ca->name);
   }
@@ -1278,7 +1271,6 @@ extern "C" void GLUIMotionSetup(int main_window){
 
   if(zaxis_custom==0){
     float vv[3], maxvv;
-
 
     if(global_scase.have_gvec==1){
       vv[0] = -global_scase.gvecphys[0];
@@ -1497,9 +1489,9 @@ extern "C" void GLUIMotionSetup(int main_window){
   render_size_index = RenderWindow;
   RenderCB(RENDER_RESOLUTION);
 
-  glui_resolution_multiplier=CLAMP(resolution_multiplier,1,10);
+  glui_resolution_multiplier=CLAMP(resolution_multiplier, MIN_RESOLUTION_MULTIPLIER, MAX_RESOLUTION_MULTIPLIER);
   SPINNER_resolution_multiplier = glui_motion->add_spinner_to_panel(ROLLOUT_image_size, "multiplier:", GLUI_SPINNER_INT, &glui_resolution_multiplier, RENDER_MULTIPLIER, RenderCB);
-  SPINNER_resolution_multiplier->set_int_limits(1, 10);
+  SPINNER_resolution_multiplier->set_int_limits(MIN_RESOLUTION_MULTIPLIER, MAX_RESOLUTION_MULTIPLIER);
   RenderCB(RENDER_MULTIPLIER);
 
   PANEL_360 = glui_motion->add_panel_to_panel(ROLLOUT_image_size, (char *)deg360, true);
@@ -1532,7 +1524,6 @@ extern "C" void GLUIMotionSetup(int main_window){
   CHECKBOX_screenvis[6] = glui_motion->add_checkbox_to_panel(ROLLOUT_lower, "6", screenvis + 6);
   CHECKBOX_screenvis[7] = glui_motion->add_checkbox_to_panel(ROLLOUT_lower, "7", screenvis + 7);
   CHECKBOX_screenvis[8] = glui_motion->add_checkbox_to_panel(ROLLOUT_lower, "8", screenvis + 8);
-
 
   ROLLOUT_middle = glui_motion->add_rollout_to_panel(ROLLOUT_screenvis, "middle", false, MIDDLE_SCREEN_ROLLOUT, ScreenRolloutCB);
   TOGGLE_ROLLOUT(screenprocinfo,nscreenprocinfo,ROLLOUT_middle, MIDDLE_SCREEN_ROLLOUT, glui_motion);
@@ -1921,14 +1912,14 @@ extern "C" void GLUIToggleRollout(procdata *procinfo, int nprocinfo, int motion_
   int i;
 
   if(toggle_dialogs==1){
-    for(i=0;i<nprocinfo;i++){
+    for(i=0; i<nprocinfo; i++){
       procdata *mi;
 
       mi = procinfo + i;
       if(mi->rollout_id!=motion_id)mi->rollout->close();
     }
   }
-  for(i=0;i<nprocinfo;i++){
+  for(i=0; i<nprocinfo; i++){
     procdata *mi;
 
     mi = procinfo + i;
@@ -1949,7 +1940,7 @@ extern "C" void GLUIToggleRollout(procdata *procinfo, int nprocinfo, int motion_
   }
 }
 
-  /* ------------------ GLUISceneMotionCB ------------------------ */
+/* ------------------ GLUISceneMotionCB ------------------------ */
 
 extern "C" void GLUISceneMotionCB(int var){
   float dx, dy;
@@ -2005,8 +1996,8 @@ extern "C" void GLUISceneMotionCB(int var){
       nearclip=0.00001;
       SPINNER_nearclip->set_float_val(nearclip);
     }
-    if(farclip<0.0){
-      farclip=0.00001;
+    if(farclip<nearclip){
+      farclip=4.0;
       SPINNER_farclip->set_float_val(farclip);
     }
     return;
@@ -2278,7 +2269,7 @@ extern "C" void GLUISceneMotionCB(int var){
     case ZOOM:
       updatemenu = 1;
       zoomindex=-1;
-      for(i=0;i<MAX_ZOOMS;i++){
+      for(i=0; i<MAX_ZOOMS; i++){
         if(ABS(zoom-zooms[i])<0.001){
           zoomindex=i;
           zoom=zooms[i];
@@ -2302,7 +2293,7 @@ extern "C" void GLUISceneMotionCB(int var){
         if(SPINNER_aperture!=NULL)SPINNER_aperture->set_float_val(aperture_glui);
       }
       zoomindex=-1;
-      for(i=0;i<MAX_ZOOMS+1;i++){
+      for(i=0; i<MAX_ZOOMS+1; i++){
         if(ABS(zoom-zooms[i])<0.001&&zooms[i]>0.0){
           zoomindex=i;
           zoom=zooms[i];
@@ -2556,7 +2547,7 @@ extern "C" void GLUIAddListView(char *label_in){
   cex=&camera_list_first;
   cex=cex->next;
   cex=cex->next;
-  for(ca=cex;ca->next!=NULL;ca=ca->next){
+  for(ca=cex; ca->next!=NULL; ca=ca->next){
     if(ca->view_id==ival)break;
   }
   if(ival==ca->view_id){
@@ -2657,12 +2648,7 @@ void RenderCB(int var){
       }
       break;
     case RENDER_MULTIPLIER:
-      {
-        int width_low, height_low, width_high, height_high;
-
-        GetRenderResolution(&width_low, &height_low, &width_high, &height_high);
-        GLUIUpdateRenderRadioButtons(width_low, height_low, width_high, height_high);
-      }
+      glui_resolution_multiplier = GLUIUpdateResolutionMultiplier(glui_resolution_multiplier);
       break;
     case MOVIE_FILETYPE:
       switch(movie_filetype){

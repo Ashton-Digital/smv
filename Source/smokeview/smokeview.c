@@ -45,7 +45,7 @@ void UpdateLights(float *pos1, float *pos2){
     float num_lights;
 
     num_lights = use_light0 + use_light1;
-    for(i = 0;i<3;i++){
+    for(i = 0; i<3; i++){
       ambientlight2[i] = ambientlight[i]/(float)num_lights;
       diffuselight2[i] = diffuselight[i]/(float)num_lights;
       specularlight2[i] = specularlight[i]/(float)num_lights;
@@ -110,7 +110,6 @@ void TransparentOff(void){
   glDepthMask(GL_TRUE);
   glDisable(GL_BLEND);
 }
-
 
 /* ------------------ SetViewPoint ------------------------ */
 
@@ -295,13 +294,4 @@ void SMV_EXIT(int code){
   fgets(buffer, 255, stdin);
 #endif
   exit(code);
-}
-
-/* ------------------ StartTimer ------------------------ */
-
-void StartTimer(float *timerptr){
-  float timer;
-
-  START_TIMER(timer);
-  *timerptr = timer;
 }

@@ -5,7 +5,6 @@
 
 #include <string.h>
 
-
 #define BUFFER_LEN 255
 
 /* ------------------ ReadJPEG ------------------------ */
@@ -28,14 +27,14 @@ unsigned char *ReadJPEG(const char *filename,int *width, int *height, int *is_tr
   HEIGHT=gdImageSY(image);
   *width=WIDTH;
   *height=HEIGHT;
-  if( NewMemory((void **)&dataptr,(unsigned int)(4*WIDTH*HEIGHT) )==0){
+  if(NewMemory((void **)&dataptr,(unsigned int)(4*WIDTH*HEIGHT) )==0){
     gdImageDestroy(image);
     return NULL;
   }
   dptr=dataptr;
   *is_transparent = 0;
   for(i = 0; i<HEIGHT; i++){
-    for(j=0;j<WIDTH;j++){
+    for(j=0; j<WIDTH; j++){
       unsigned int a;
 
       intrgb=(unsigned int)gdImageGetPixel(image,j,(unsigned int)(HEIGHT-(1+i)));
@@ -70,14 +69,14 @@ unsigned char *ReadPNG(const char *filename,int *width, int *height, int *is_tra
   fclose(file);
   *width=gdImageSX(image);
   *height=gdImageSY(image);
-  if( NewMemory((void **)&dataptr,(unsigned int)(4*(*width)*(*height)) )==0){
+  if(NewMemory((void **)&dataptr,(unsigned int)(4*(*width)*(*height)) )==0){
     gdImageDestroy(image);
     return NULL;
   }
   dptr=dataptr;
   *is_transparent = 0;
   for(i = 0; i<*height; i++){
-    for(j=0;j<*width;j++){
+    for(j=0; j<*width; j++){
       unsigned int a;
 
       intrgb=(unsigned int)gdImageGetPixel(image,j,(unsigned int)(*height-(1+i)));
@@ -140,7 +139,6 @@ unsigned char *ReadPicture(char *texturedir, char *filename, int *width, int *he
       }
     }
   }
-
 
   if(printflag==1)PRINTF("Loading texture:%s ",filebuffer);
   ext = filebuffer + strlen(filebuffer) - 4;
@@ -236,7 +234,7 @@ void EncodePNGData(unsigned char *buffer, int nbuffer, unsigned char *data, int 
 
   // encode signature
 
-  for(i = 0;i < 32;i++){
+  for(i = 0; i < 32; i++){
     unsigned char *c;
 
     c = buffer + skip * i + channel;
@@ -272,4 +270,3 @@ void EncodePNGData(unsigned char *buffer, int nbuffer, unsigned char *data, int 
     }
   }
 }
-

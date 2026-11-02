@@ -153,33 +153,6 @@ void DrawTimebar(float xleft, float xright, float ybot, float ytop){
   glEnd();
 }
 
-/* ------------------ DrawSelectColorbar ------------------------ */
-
-void DrawSelectColorbar(void){
-  int i;
-  colorbardata *cbi;
-
-  if(show_firecolormap==0){
-    cbi = colorbars.colorbarinfo + colorbartype;
-  }
-  else{
-    cbi = colorbars.colorbarinfo+colorbars.fire_colorbar_index;
-  }
-
-  glPointSize(20.0f);
-  glBegin(GL_POINTS);
-  for(i=0;i<cbi->nnodes;i++){
-    unsigned char *rrgb, r, g, b;
-
-    GetRGB(i+1, &r, &g, &b);
-    glColor3ub(r, g, b);
-
-    rrgb=cbi->node_rgb+3*i;
-    glVertex3f(rrgb[0]/255.0,rrgb[1]/255.0,rrgb[2]/255.0);
-  }
-  glEnd();
-}
-
 /* ------------------ DrawColorbarPathRGB ------------------------ */
 
 void DrawColorbarPathRGB(void){
@@ -195,7 +168,7 @@ void DrawColorbarPathRGB(void){
   }
   glPointSize(5.0);
   glBegin(GL_POINTS);
-  for(i=0;i<255;i++){
+  for(i=0; i<255; i++){
     float *rgbi;
 
     rgbi=cbi->colorbar_rgb+3*i;
@@ -206,7 +179,7 @@ void DrawColorbarPathRGB(void){
 
   glPointSize(10.0);
   glBegin(GL_POINTS);
-  for(i=0;i<cbi->nnodes;i++){
+  for(i=0; i<cbi->nnodes; i++){
     unsigned char *rrgb;
 
     rrgb=cbi->node_rgb+3*i;
@@ -256,7 +229,7 @@ void DrawColorbarPathRGB(void){
 
     glPointSize(10.0);
     glBegin(GL_POINTS);
-    for(i=0;i<cbi->nnodes;i++){
+    for(i=0; i<cbi->nnodes; i++){
       float *rgbi;
       float dzpoint;
 
@@ -275,7 +248,7 @@ void DrawColorbarPathRGB(void){
     glTranslatef(-global_scase.xbar0,-global_scase.ybar0,-global_scase.zbar0);
     int skip = 1;
     if(cbi->nnodes > 16)skip = cbi->nnodes / 16;
-    for(i=0;i<cbi->nnodes;i+=skip){
+    for(i=0; i<cbi->nnodes; i+=skip){
       char cbuff[1024];
       float dzpoint;
 
@@ -329,7 +302,7 @@ void DrawColorbarPathRGB(void){
       ncolors=MAXRGB-1;
     }
     glBegin(GL_TRIANGLES);
-    for(i=1;i<ncolors;i++){
+    for(i=1; i<ncolors; i++){
       float *rgbi;
       float zbot, ztop;
       float black[3] = {0.0, 0.0, 0.0};
@@ -447,7 +420,7 @@ void DrawColorbarPathCIELab(void){
 
   glPointSize(10.0);
   glBegin(GL_POINTS);
-  for(i = 0;i < cbi->nnodes;i++){
+  for(i = 0; i < cbi->nnodes; i++){
     float *rgbi;
     float dzpoint;
 
@@ -467,7 +440,7 @@ void DrawColorbarPathCIELab(void){
   glTranslatef(-global_scase.xbar0, -global_scase.ybar0, -global_scase.zbar0);
   int skip = 1;
   if(cbi->nnodes > 16)skip = cbi->nnodes / 16;
-  for(i = 0;i < cbi->nnodes;i+=skip){
+  for(i = 0; i < cbi->nnodes; i+=skip){
     char cbuff[1024];
     float dzpoint;
 
@@ -486,7 +459,7 @@ void DrawColorbarPathCIELab(void){
     ncolors=MAXRGB-1;
   }
   glBegin(GL_TRIANGLES);
-  for(i=1;i<ncolors;i++){
+  for(i=1; i<ncolors; i++){
     float *rgbi;
     float zbot, ztop;
     float black[3] = {0.0,0.0,0.0};
@@ -544,7 +517,7 @@ void UpdateCurrentColorbar(colorbardata *cb){
 void UpdateColorbarOrig(void){
   int i;
 
-  for(i = 0;i < colorbars.ncolorbars;i++){
+  for(i = 0; i < colorbars.ncolorbars; i++){
     colorbardata *cbi;
 
     cbi = colorbars.colorbarinfo + i;
@@ -691,21 +664,15 @@ void UpdateColorbarDialogs(void){
 /* ------------------ AddColorbar ------------------------ */
 
 int AddColorbar(int icolorbar){
-  colorbardata *cb_to, *cb_from;
   char cb_label[255];
 
-  colorbars.ncolorbars++;
-  CheckMemory;
-  ResizeMemory((void **)&colorbars.colorbarinfo, colorbars.ncolorbars * sizeof(colorbardata));
+  colorbardata *cb_from = colorbars.colorbarinfo + icolorbar;
+  colorbardata *cb_to = NewColorbar(&colorbars);
   UpdateCurrentColorbar(colorbars.colorbarinfo + colorbartype);
 
-  cb_from = colorbars.colorbarinfo + icolorbar;
   CheckMemory;
 
-  // new colorbar
-
-  cb_to = colorbars.colorbarinfo + colorbars.ncolorbars - 1;
-
+  // Copy all of the data from the source colorbar
   memcpy(cb_to, cb_from, sizeof(colorbardata));
   strcpy(cb_to->menu_label, cb_from->menu_label);
   strcat(cb_to->menu_label, "_copy");
@@ -831,7 +798,7 @@ int CountColorbars(void){
   UpdateShowColorbar(&showcfast_local, &show_slice_colorbar_local,
     &show_hvacduct_colorbar_local, &show_hvacnode_colorbar_local);
 
-  for(i=0;i< N_COLORBARS;i++){
+  for(i=0; i< N_COLORBARS; i++){
     hcolorbar_vis[i]=-1;
   }
   if(show_hvacduct_colorbar_local == 1){
@@ -1361,7 +1328,7 @@ void DrawHorizontalColorbarRegLabels(void){
     sb = isobounds + iisottype;
     tttmin = iso_valmin;
     tttmax = iso_valmax;
-    for(i = 0;i < 256;i++){
+    for(i = 0; i < 256; i++){
       float f1;
 
       f1 = (float)i / 255.0;
@@ -1555,7 +1522,6 @@ void DrawHorizontalColorbarRegLabels(void){
       float val;
 
       horiz_position = MIX2(i, global_scase.nrgb - 2, hcolorbar_right_pos, hcolorbar_left_pos);
-
 
       if(iposition == i)continue;
       if(patchflag == 1){
@@ -1768,7 +1734,7 @@ void DrawVerticalColorbarRegLabels(void){
     }
     tttmin = iso_valmin;
     tttmax = iso_valmax;
-    for(i = 0;i < 256;i++){
+    for(i = 0; i < 256; i++){
       float f1;
 
       f1 = (float)i / 255.0;
@@ -1794,7 +1760,7 @@ void DrawVerticalColorbarRegLabels(void){
       float val;
 
       if(iposition == i)continue;
-      val = tttmin + i*isorange / (global_scase.nrgb - 2);;
+      val = tttmin + i*isorange / (global_scase.nrgb - 2);
       val = ScaleFloat(val, isofactor);
       colorbar_vals[i] = val;
     }
@@ -1975,7 +1941,6 @@ void DrawVerticalColorbarRegLabels(void){
     }
     {
       float valmin, valmax;
-
 
       if(slicefactor!=NULL){
         valmin = tttmin;

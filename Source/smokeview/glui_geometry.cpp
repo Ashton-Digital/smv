@@ -88,7 +88,6 @@ GLUI_Checkbox *CHECKBOX_show_cface_normals = NULL;
 GLUI_Checkbox *CHECKBOX_show_zlevel = NULL;
 GLUI_Checkbox *CHECKBOX_surface_solid=NULL, *CHECKBOX_surface_outline=NULL, *CHECKBOX_surface_points = NULL;
 GLUI_Checkbox *CHECKBOX_geom_force_transparent = NULL;
-GLUI_Checkbox *CHECKBOX_geomtest=NULL, *CHECKBOX_triangletest=NULL;
 GLUI_Checkbox *CHECKBOX_show_geom_normal = NULL;
 GLUI_Checkbox *CHECKBOX_smooth_geom_normal = NULL;
 GLUI_Checkbox *CHECKBOX_show_texture_1dimage = NULL;
@@ -100,7 +99,6 @@ GLUI_RadioGroup *RADIO_cface_type = NULL;
 GLUI_RadioGroup *RADIO_hvac_show_component_labels = NULL;
 GLUI_RadioGroup *RADIO_hvac_show_filters          = NULL;
 
-
 GLUI_StaticText *STATIC_vertx1=NULL;
 GLUI_StaticText *STATIC_verty1=NULL;
 GLUI_StaticText *STATIC_vertz1=NULL;
@@ -110,9 +108,6 @@ GLUI_StaticText *STATIC_vertz2 = NULL;
 GLUI_StaticText *STATIC_dist=NULL;
 GLUI_StaticText *STATIC_tri_area = NULL;
 
-GLUI_Checkbox *CHECKBOX_use_surf_color=NULL;
-
-GLUI_Rollout *ROLLOUT_geomtest=NULL;
 GLUI_Rollout *ROLLOUT_geom_rgbs = NULL;
 GLUI_Rollout *ROLLOUT_geom_properties=NULL;
 
@@ -168,7 +163,6 @@ GLUI *glui_geometry=NULL;
 
 GLUI_Button *BUTTON_blockage_1=NULL;
 GLUI_Button *BUTTON_reset_zbounds = NULL;
-GLUI_Button *BUTTON_reset_offset = NULL;
 
 GLUI_Checkbox *CHECKBOX_blockage=NULL;
 
@@ -183,7 +177,7 @@ GLUI_Listbox *LIST_hvacductvar_index = NULL;
 
 GLUI_Panel *PANEL_geomtest2 = NULL;
 GLUI_Panel *PANEL_cfaces = NULL;
-GLUI_Panel *PANEL_obj_select=NULL,*PANEL_faces=NULL,*PANEL_triangles=NULL,*PANEL_volumes=NULL,*PANEL_geom_showhide;
+GLUI_Panel *PANEL_obj_select=NULL,*PANEL_faces=NULL,*PANEL_triangles=NULL,*PANEL_geom_showhide;
 GLUI_Panel *PANEL_vertex1_rgb = NULL;
 GLUI_Panel *PANEL_vertex2_rgb = NULL;
 GLUI_Panel *PANEL_triangle_rgb = NULL;
@@ -192,9 +186,7 @@ GLUI_Panel *PANEL_properties_triangle = NULL;
 GLUI_Panel *PANEL_properties_vertex = NULL;
 GLUI_Panel *PANEL_properties2 = NULL;
 GLUI_Panel *PANEL_obj_stretch2=NULL,*PANEL_obj_stretch3=NULL, *PANEL_obj_stretch4=NULL;
-GLUI_Panel *PANEL_geomedgecheck=NULL;
 GLUI_Panel *PANEL_group1=NULL;
-GLUI_Panel *PANEL_geom_offset=NULL;
 GLUI_Panel *PANEL_terrain_images = NULL;
 GLUI_Panel *PANEL_geom_show = NULL;
 
@@ -203,16 +195,10 @@ GLUI_Rollout *ROLLOUT_structured=NULL;
 GLUI_Rollout *ROLLOUT_unstructured=NULL;
 GLUI_Rollout *ROLLOUT_terrain = NULL;
 
-GLUI_Spinner *SPINNER_face_factor=NULL;
-
 GLUI_StaticText *STATIC_blockage_index=NULL;
 GLUI_StaticText *STATIC_mesh_index=NULL;
 GLUI_StaticText *STATIC_label=NULL;
 GLUI_StaticText *STATIC_id_label = NULL;
-
-char a_updatelabel[1000];
-char *updatelabel=NULL;
-
 
 /* ------------------ GLUIUpdateHVACViews ------------------------ */
 
@@ -306,20 +292,6 @@ extern "C" void GLUIGetGeomDialogState(void){
   }
 }
 
-/* ------------------ HaveTexture ------------------------ */
-
-int HaveTexture(void){
-  int i;
-
-  for(i = 0; i < global_scase.texture_coll.ntextureinfo; i++){
-    texturedata *texti;
-
-    texti = global_scase.texture_coll.textureinfo + i;
-    if(texti->loaded == 1 && texti->used == 1)return 1;
-  }
-  return 0;
-}
-
 /* ------------------ BlockeditDlgCB ------------------------ */
 
 void BlockeditDlgCB(int var){
@@ -339,7 +311,6 @@ void BlockeditDlgCB(int var){
 }
 
 /* ------------------ GLUIUpdateTriangleInfo ------------------------ */
-
 
 extern "C" void GLUIUpdateTriangleInfo(surfdata *tri_surf, float tri_area){
   char label[100];
@@ -410,7 +381,7 @@ extern "C" void GLUIUpdateVertexInfo(float *xyz1, float *xyz2){
 void Glui2HVAC(void){
   int i;
 
-  for(i = 0;i < global_scase.hvaccoll.nhvacinfo;i++){
+  for(i = 0; i < global_scase.hvaccoll.nhvacinfo; i++){
     if(hvac_network_ductnode_index==-1||hvac_network_ductnode_index==i){
       int display;
       hvacdata *hvaci;
@@ -440,7 +411,7 @@ extern "C" void GLUIHVAC2Glui(int index){
 
   hvaci = global_scase.hvaccoll.hvacinfo + index;
   memcpy(glui_hvac, hvaci, sizeof(hvacdata));
-  for(i=0;i<3;i++){
+  for(i=0; i<3; i++){
     SPINNER_hvac_duct_color[i]->set_int_val(glui_hvac->duct_color[i]);
     SPINNER_hvac_node_color[i]->set_int_val(glui_hvac->node_color[i]);
   }
@@ -559,7 +530,7 @@ void HvacCB(int var){
       break;
     case HVAC_SHOWALL_NETWORK:
     case HVAC_HIDEALL_NETWORK:
-      for(i=0;i<global_scase.hvaccoll.nhvacinfo;i++){
+      for(i=0; i<global_scase.hvaccoll.nhvacinfo; i++){
         hvacdata *hvaci;
 
         hvaci = global_scase.hvaccoll.hvacinfo + i;
@@ -570,7 +541,7 @@ void HvacCB(int var){
       break;
     case HVAC_SHOWALL_CONNECTIONS:
     case HVAC_HIDEALL_CONNECTIONS:
-      for (i = 0; i < global_scase.hvaccoll.nhvacconnectinfo; i++){
+      for(i = 0; i < global_scase.hvaccoll.nhvacconnectinfo; i++){
         hvacconnectdata *hi;
 
         hi = global_scase.hvaccoll.hvacconnectinfo + i;
@@ -632,7 +603,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
       hvac_show_networks = 1;
       PANEL_hvac_network = glui_geometry->add_panel_to_panel(ROLLOUT_hvac, "networks");
     }
-    for (i = 0; i < global_scase.hvaccoll.nhvacinfo; i++){
+    for(i = 0; i < global_scase.hvaccoll.nhvacinfo; i++){
       hvacdata* hvaci;
 
       hvaci = global_scase.hvaccoll.hvacinfo + i;
@@ -648,7 +619,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
       NewMemory((void **)&CHECKBOX_hvac_show_connections, global_scase.hvaccoll.nhvacconnectinfo*sizeof(GLUI_Checkbox *));
       glui_geometry->add_column_to_panel(PANEL_hvac_group1, false);
       PANEL_hvac_connections = glui_geometry->add_panel_to_panel(PANEL_hvac_group1, "connections");
-      for (i = 0; i < global_scase.hvaccoll.nhvacconnectinfo; i++){
+      for(i = 0; i < global_scase.hvaccoll.nhvacconnectinfo; i++){
         hvacconnectdata *hi;
         char label[100];
 
@@ -689,7 +660,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
     if(global_scase.hvaccoll.hvacductvalsinfo!=NULL&&global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars>0){
       LIST_hvacductvar_index = glui_geometry->add_listbox_to_panel(PANEL_hvac_duct, "quantity:", &global_scase.hvaccoll.hvacductvar_index, HVAC_DUCT_LIST, HvacCB);
       LIST_hvacductvar_index->add_item(-1, "");
-      for(i = 0;i < global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars;i++){
+      for(i = 0; i < global_scase.hvaccoll.hvacductvalsinfo->n_duct_vars; i++){
         hvacvaldata *hi;
 
         hi = global_scase.hvaccoll.hvacductvalsinfo->duct_vars + i;
@@ -721,7 +692,7 @@ extern "C" void GLUIGeometrySetup(int main_window){
     if(global_scase.hvaccoll.hvacnodevalsinfo!=NULL&&global_scase.hvaccoll.hvacnodevalsinfo->n_node_vars>0){
       LIST_hvacnodevar_index = glui_geometry->add_listbox_to_panel(PANEL_hvac_node, "quantity:", &global_scase.hvaccoll.hvacnodevar_index, HVAC_NODE_LIST, HvacCB);
       LIST_hvacnodevar_index->add_item(-1, "");
-      for(i = 0;i < global_scase.hvaccoll.hvacnodevalsinfo->n_node_vars;i++){
+      for(i = 0; i < global_scase.hvaccoll.hvacnodevalsinfo->n_node_vars; i++){
         hvacvaldata *hi;
 
         hi = global_scase.hvaccoll.hvacnodevalsinfo->node_vars + i;
@@ -1329,12 +1300,6 @@ void VolumeCB(int var){
   }
 }
 
-/* ------------------ GLUIHideHVAC ------------------------ */
-
-extern "C" void GLUIHideHVAC(void){
-  GLUICloseRollouts(glui_geometry);
-}
-
 /* ------------------ GLUIShowHVAC ------------------------ */
 
 extern "C" void GLUIShowHVAC(void){
@@ -1451,7 +1416,7 @@ extern "C" void GLUIUpdateBlockVals(int flag){
       switch(wall_case){
       case WALL_1:
         temp=bchighlight->surf_index[UP_Z];
-        for(i=0;i<6;i++){
+        for(i=0; i<6; i++){
           bchighlight->surf_index[i]=temp;
         }
         break;
@@ -1469,7 +1434,7 @@ extern "C" void GLUIUpdateBlockVals(int flag){
       }
 
       if(global_scase.surfcoll.nsurfinfo>0){
-        for(i=0;i<6;i++){
+        for(i=0; i<6; i++){
           surface_indices[i] = global_scase.surfcoll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
           surface_indices_bak[i] = global_scase.surfcoll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
           LIST_obst_surface[i]->set_int_val(surface_indices[i]);
@@ -1478,7 +1443,7 @@ extern "C" void GLUIUpdateBlockVals(int flag){
     }
     else{
       if(global_scase.surfcoll.nsurfinfo>0){
-        for(i=0;i<6;i++){
+        for(i=0; i<6; i++){
           surface_indices[i]=global_scase.surfcoll.inv_sorted_surfidlist[0];
           surface_indices_bak[i]=global_scase.surfcoll.inv_sorted_surfidlist[0];
           LIST_obst_surface[i]->set_int_val(surface_indices[i]);
@@ -1501,7 +1466,7 @@ extern "C" void GLUIObjectCB(int var){
       case WALL_1:
         temp=surface_indices_bak[UP_Z];
         if(global_scase.surfcoll.nsurfinfo>0){
-          for(i=0;i<6;i++){
+          for(i=0; i<6; i++){
             surface_indices[i]=temp;
             LIST_obst_surface[i]->set_int_val(temp);
           }
@@ -1509,7 +1474,7 @@ extern "C" void GLUIObjectCB(int var){
         break;
       case WALL_3:
         if(global_scase.surfcoll.nsurfinfo>0){
-          for(i=0;i<6;i++){
+          for(i=0; i<6; i++){
             temp=surface_indices_bak[i];
             surface_indices[i]=temp;
             LIST_obst_surface[i]->set_int_val(temp);
@@ -1518,7 +1483,7 @@ extern "C" void GLUIObjectCB(int var){
         break;
       case WALL_6:
         if(global_scase.surfcoll.nsurfinfo>0){
-          for(i=0;i<6;i++){
+          for(i=0; i<6; i++){
             temp=surface_indices_bak[i];
             surface_indices[i]=temp;
             LIST_obst_surface[i]->set_int_val(temp);
@@ -1531,7 +1496,7 @@ extern "C" void GLUIObjectCB(int var){
       }
 
       if(bchighlight!=NULL){
-        for(i=0;i<6;i++){
+        for(i=0; i<6; i++){
           bchighlight->surf[i]=global_scase.surfcoll.surfinfo+global_scase.surfcoll.sorted_surfidlist[surface_indices_bak[i]];
           bchighlight->surf_index[i]=global_scase.surfcoll.sorted_surfidlist[surface_indices_bak[i]];
         }
@@ -1551,7 +1516,7 @@ extern "C" void GLUIObjectCB(int var){
       }
       switch(wall_case){
       case WALL_6:
-        for(i=0;i<6;i++){
+        for(i=0; i<6; i++){
           LIST_obst_surface[i]->enable();
         }
         LIST_obst_surface[DOWN_Z]->set_name("z lower face");
@@ -1562,7 +1527,7 @@ extern "C" void GLUIObjectCB(int var){
         LIST_obst_surface[UP_X]->set_name("x upper face");
         break;
       case WALL_3:
-        for(i=0;i<6;i++){
+        for(i=0; i<6; i++){
           LIST_obst_surface[i]->disable();
         }
         LIST_obst_surface[DOWN_Z]->enable();
@@ -1578,7 +1543,7 @@ extern "C" void GLUIObjectCB(int var){
 
         break;
       case WALL_1:
-        for(i=0;i<6;i++){
+        for(i=0; i<6; i++){
           LIST_obst_surface[i]->disable();
         }
         LIST_obst_surface[UP_Z]->enable();

@@ -16,7 +16,7 @@
 
 const char *CLE_Message(enum CommandLineError cle, char *message){
   char message_local[80];
-  switch (cle){
+  switch(cle){
   case CLE_OK:
     return NULL;
     break;
@@ -57,7 +57,7 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
   args.x2 = false;
 #endif
   args.encode_png_commandline = false;
-  for (i = 1; i < argc; i++){
+  for(i = 1; i < argc; i++){
     if(IsCommonOption(argv[i])==1)continue;
     if(strcmp(argv[i], "-ini") == 0){
       args.ini = true;
@@ -167,7 +167,7 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
         strcpy(args.ini_to, local_ini_to);
       }
     } 
-    else if(strcmp(argv[i], "-update_ini") == 0) {
+    else if(strcmp(argv[i], "-update_ini") == 0){
       // As per convert_ini, but in-place
       args.update_ini = true;
       char *local_ini_from = NULL, *local_ini_to = NULL;
@@ -431,20 +431,4 @@ CommandlineArgs ParseCommandlineNew(int argc, char **argv, char *message,
     }
   }
   return args;
-}
-
-/// @brief Free any allocated buffers in @ref CommandlineArgs. Performs
-/// null-checks on all buffers.
-/// @param args The previously parse command line arguments.
-
-/* ------------------ FreeCommandlineArgs ------------------------ */
-
-void FreeCommandlineArgs(CommandlineArgs *args){
-  FREEMEMORY(args->prog);
-  FREEMEMORY(args->input_file);
-  FREEMEMORY(args->bindir);
-  FREEMEMORY(args->casedir);
-  FREEMEMORY(args->lang);
-  FREEMEMORY(args->ini_from);
-  FREEMEMORY(args->ini_to);
 }

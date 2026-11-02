@@ -31,7 +31,6 @@ typedef struct _procdata {
 } procdata;
 #endif
 
-
 /* --------------------------  geomdiagdata ------------------------------------ */
 
 typedef struct _geomdiagdata {
@@ -113,7 +112,6 @@ typedef struct _keyworddata{
   int index, nparams, line_number;
 } keyworddata;
 
-
 /* --------------------------  facedata ------------------------------------ */
 
 typedef struct _facedata {
@@ -184,6 +182,13 @@ typedef struct _curvedata{
   int update_avg;
   float linewidth;
 } curvedata;
+
+/* --------------------------  patchmenudata ------------------------------------ */
+
+typedef struct _patchmenudata{
+  char quantity[256];
+  int index, loaded, isgeom, skip;
+} patchmenudata;
 
 /* --------------------------  plot2ddata ----------------------------------- */
 
@@ -350,7 +355,7 @@ typedef struct _skyboxdata {
   texturedata face[6];
 } skyboxdata;
 
-#ifdef pp_GETMESH_TEST
+#ifdef pp_GETMESH
 /* --------------------------  celldata ----------------------------------- */
 
 typedef struct _celldata {
