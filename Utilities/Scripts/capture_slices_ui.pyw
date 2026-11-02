@@ -818,6 +818,12 @@ def main() -> None:
     if smoke_test:
         sys.argv.remove("--smoke-test")
     app = QApplication(sys.argv)
+    app.setApplicationName("smv-cap-ui")
+    app.setApplicationDisplayName("Capture result slices")
+    if sys.platform.startswith("linux"):
+        app.setDesktopFileName("smv-cap-ui")
+    if LOGO_FILE.is_file():
+        app.setWindowIcon(QIcon(str(LOGO_FILE)))
     app.setStyle("Fusion")
     app.setFont(QFont("Segoe UI", 9))
     window = CaptureWindow()

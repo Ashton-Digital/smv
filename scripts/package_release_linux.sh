@@ -108,6 +108,7 @@ fi
 [[ -f "$repo_root/Utilities/Scripts/smv_planes.py" ]] || fail "smv_planes.py is missing"
 [[ -f "$repo_root/Utilities/Scripts/capture_logo.png" ]] || fail "capture_logo.png is missing"
 [[ -f "$repo_root/Utilities/Scripts/smv_help.sh" ]] || fail "smv_help.sh is missing"
+[[ -f "$repo_root/scripts/install_capture_desktop_shortcut.sh" ]] || fail "desktop shortcut helper is missing"
 [[ -d "$repo_root/Build/for_bundle/colorbars" ]] || fail "colorbars directory is missing"
 [[ -d "$repo_root/Build/for_bundle/textures" ]] || fail "textures directory is missing"
 
@@ -168,6 +169,7 @@ QT_QPA_PLATFORM=offscreen "$package_dir/capture_slices_ui" --smoke-test >/dev/nu
 install -m 0644 "$repo_root/Utilities/Scripts/smv_planes.py" "$package_dir/smv_planes.py"
 install -m 0644 "$repo_root/Utilities/Scripts/capture_logo.png" "$package_dir/capture_logo.png"
 install -m 0755 "$repo_root/Utilities/Scripts/smv_help.sh" "$package_dir/smv_help.sh"
+install -m 0755 "$repo_root/scripts/install_capture_desktop_shortcut.sh" "$package_dir/install_capture_desktop_shortcut.sh"
 install -m 0644 "$config_file" "$package_dir/smokeview.ini"
 install -m 0644 "$repo_root/Build/for_bundle/.smokeview_bin" "$package_dir/.smokeview_bin"
 install -m 0644 "$repo_root/Build/for_bundle/objects.svo" "$package_dir/objects.svo"
@@ -435,6 +437,7 @@ chmod 0755 "$staging_dir/capture_result_slices.py"
 chmod 0755 "$staging_dir/capture_slices_ui.pyw"
 chmod 0755 "$staging_dir/capture_slices_ui"
 chmod 0755 "$staging_dir/smv_help.sh"
+chmod 0755 "$staging_dir/install_capture_desktop_shortcut.sh"
 chmod -R a+rX "$staging_dir"
 
 if ((replacing_existing == 1)); then
@@ -449,6 +452,7 @@ ln -sfn "$target/smokeview" "$link_dir/af-smv"
 ln -sfn "$target/capture_result_slices.py" "$link_dir/smv-cap"
 ln -sfn "$target/capture_slices_ui" "$link_dir/smv-cap-ui"
 ln -sfn "$target/smv_help.sh" "$link_dir/smvhelp"
+ln -sfn "$target/install_capture_desktop_shortcut.sh" "$link_dir/smv-cap-ui-shortcut"
 
 generic_launcher="$link_dir/smokeview"
 if [[ ! -e "$generic_launcher" && ! -L "$generic_launcher" ]]; then
@@ -514,6 +518,9 @@ Exec="$link_dir/smv-cap-ui"
 Icon=$target/capture_logo.png
 Terminal=false
 Categories=Graphics;Science;
+StartupWMClass=smv-cap-ui
+StartupNotify=true
+X-Ashton-Smokeview=true
 DESKTOP_EOF
 
 chmod 0644 "$mime_dir/packages/af-smv.xml" "$applications_dir/af-smv.desktop" "$applications_dir/smv-cap.desktop" "$applications_dir/smv-cap-ui.desktop"
@@ -546,11 +553,19 @@ elif command -v xdg-mime >/dev/null 2>&1; then
     echo "Warning: could not set Ashton Smokeview as the default .smv application."
 fi
 
+if ((system_install == 0)); then
+  "$link_dir/smv-cap-ui-shortcut" || echo "Desktop shortcut could not be created; run smv-cap-ui-shortcut later."
+elif [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != root ]] && command -v runuser >/dev/null 2>&1; then
+  runuser -u "$SUDO_USER" -- "$link_dir/smv-cap-ui-shortcut" || \
+    echo "Desktop shortcut for $SUDO_USER could not be created; run smv-cap-ui-shortcut as that user."
+fi
+
 echo
 echo "Installed Ashton Smokeview in $target"
 echo "Smokeview launcher: $link_dir/af-smv"
 echo "Capture launcher: $link_dir/smv-cap"
 echo "Capture window: $link_dir/smv-cap-ui"
+echo "Desktop shortcut for another user: run $link_dir/smv-cap-ui-shortcut as that user"
 echo "Help launcher: $link_dir/smvhelp"
 echo "Run now: $link_dir/af-smv"
 echo "To capture: $link_dir/smv-cap /path/to/case.smv"

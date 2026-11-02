@@ -608,7 +608,8 @@ chmod +x ashton-smokeview-v6.11.2-af3-linux-x64.sh
 That installs under `$HOME/.local/opt/ashton-smokeview`, with the
 `af-smv`/`smv-cap`/`smv-cap-ui`/`smvhelp`
 commands symlinked into `$HOME/.local/bin` and the `.smv` file association set
-only for that user.
+only for that user. It also creates an **Ashton Capture Slices** launcher on
+that user's desktop, using the configured XDG desktop directory.
 
 ### Installing for every user on a shared machine
 
@@ -629,7 +630,18 @@ entries under `/usr/share` rather than any one user's home directory. It also
 sets the
 system-wide default `.smv` application directly, since `xdg-mime default` only
 ever writes the invoking (root) user's own configuration and cannot set a
-machine-wide default on its own. **Do not** run the installer as root without
+machine-wide default on its own. If IT uses `sudo`, the installer also creates
+a desktop launcher for the account that invoked it. Each other user who wants
+an icon on their own desktop should run this once in their login session:
+
+```bash
+smv-cap-ui-shortcut
+```
+
+The capture window and Linux desktop entry share the `smv-cap-ui` application
+identity so the taskbar can display the capture icon. Desktop shells may still
+require the user to trust a newly created desktop launcher on first use.
+**Do not** run the installer as root without
 `--system` — that installs a copy usable only by the root account, under
 `/root`, which is invisible and useless to everyone else; the installer prints
 a warning if you do this.
