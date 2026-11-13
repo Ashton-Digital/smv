@@ -4046,8 +4046,7 @@ void DoScript(void){
     else{
       advance_script = 1;
       if(render_status!=RENDER_OFF)advance_script = 0;
-      if(current_script_command != NULL &&
-         current_script_command->command == SCRIPT_RENDERRESULTS &&
+      if(current_script_command->command == SCRIPT_RENDERRESULTS &&
          current_script_command->exit == 0)advance_script = 0;
     }
 #define NREPEATS 1
