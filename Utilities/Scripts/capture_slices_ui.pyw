@@ -900,7 +900,6 @@ class CaptureWindow(QWidget):
         self.worker.status.connect(self._progress)
         self.worker.done.connect(self._capture_done)
         self.worker.done.connect(self.thread.quit)
-        self.thread.finished.connect(self.worker.deleteLater)
         self.thread.finished.connect(self._thread_finished)
         self.thread.start()
 
@@ -968,6 +967,10 @@ class CaptureWindow(QWidget):
 
     @Slot()
     def _thread_finished(self) -> None:
+        # finished is emitted from the worker thread, so wait for it to exit
+        # before the worker is released; otherwise Qt's deferred delete and the
+        # Python reference drop destroy the worker from two threads at once.
+        self.thread.wait()
         self.thread = None
         self.worker = None
         self.job = None
