@@ -223,13 +223,15 @@ def is_white_component(colour: str) -> bool:
 
 
 def run_magick(command: list[str]) -> subprocess.CompletedProcess[str] | None:
-    # The limit stops a slow or stalled ImageMagick (resource policy, swapping)
+    # The timeout stops a slow or stalled ImageMagick (resource policy, swapping)
     # from freezing the capture, and the message is the only trace of why a
-    # crop was skipped.
+    # crop was skipped. A single thread avoids the intermittent OpenMP crashes
+    # seen with the ImageMagick 6 shipped by Ubuntu 22.04 and lowers peak memory.
     try:
         result = subprocess.run(
             command, check=False, capture_output=True, text=True,
             encoding="utf-8", errors="replace", timeout=MAGICK_TIMEOUT_SECONDS,
+            env={**os.environ, "MAGICK_THREAD_LIMIT": "1"},
         )
     except subprocess.TimeoutExpired:
         print(
