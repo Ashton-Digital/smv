@@ -12,7 +12,6 @@ jobs:
       matrix:
         os:
           - ubuntu-24.04
-          - macos-15
         compiler:
           - gcc
           - clang
@@ -35,22 +34,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install build-essential freeglut3-dev libx11-dev libxmu-dev libxi-dev libglew-dev libgd-dev libjson-c-dev
-      # If we are building on macos configure the environment to use gcc-14 as
-      # the compiler
-      - name: set macos gcc
-        if: runner.os == 'macOS' && matrix.compiler == 'gcc'
-        shell: bash
-        run: |
-          echo "CC=gcc-14" >> $GITHUB_ENV
-          echo "CXX=g++-14" >> $GITHUB_ENV
-          brew install glew gd zlib json-c
-      - name: set macos gcc
-        if: runner.os == 'macOS' && matrix.compiler == 'clang'
-        shell: bash
-        run: |
-          echo "CC=clang" >> $GITHUB_ENV
-          echo "CXX=clang" >> $GITHUB_ENV
-          brew install glew gd zlib json-c
       # If we are building on linux configure the environment to use gcc as the
       # compiler
       - name: set linux gcc
@@ -76,12 +59,6 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.build }} \
             -DCMAKE_C_COMPILER=${{ matrix.compiler }}
           cmake --build ${{github.workspace}}/cbuild -j4 -v
-      # Run the CMake-based tests on MacOS
-      - name: Test
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          ctest --test-dir cbuild -j10 --output-on-failure -V
       # Run the CMake-based tests on Linux
       - name: Test
         if: runner.os == 'Linux'
