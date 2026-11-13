@@ -32,10 +32,9 @@ GLUI_Listbox *LIST_trainerpath=NULL,*LIST_viewpoint=NULL;
 
 GLUI_Panel *PANEL_smokeview=NULL;
 GLUI_Panel *PANEL_explore=NULL;
-GLUI_Panel *PANEL_manual=NULL;//, *PANEL_automatic=NULL;
-GLUI_Panel *PANEL_move=NULL,*PANEL_rotate2=NULL;
+GLUI_Panel *PANEL_move=NULL;
 
-GLUI_Button *BUTTON_smoke3d=NULL, *BUTTON_temp=NULL, *BUTTON_oxy=NULL, *BUTTON_unload=NULL;
+GLUI_Button *BUTTON_smoke3d=NULL, *BUTTON_temp=NULL, *BUTTON_oxy=NULL;
 
 GLUI_Translation *TRANSLATE_updown=NULL,*TRANSLATE_leftright_inout=NULL;
 GLUI_Translation *TRANSLATE_az_elev=NULL;
@@ -160,7 +159,7 @@ void TrainerCB(int var){
         rotation_type = EYE_CENTERED;
         HandleRotationType(ROTATION_2AXIS);
       }
-      for(i = 0;i < global_scase.tourcoll.ntourinfo;i++){
+      for(i = 0; i < global_scase.tourcoll.ntourinfo; i++){
         tourdata *touri;
 
         touri = global_scase.tourcoll.tourinfo + i;
@@ -231,7 +230,6 @@ void RotateCB(int var){
   az = camera_current->az_elev;
   elev = camera_current->az_elev + 1;
 
-
   if(rotation_type != ROTATION_2AXIS){
     rotation_type = ROTATION_2AXIS;
     HandleRotationType(ROTATION_2AXIS);
@@ -295,7 +293,7 @@ extern "C" void GLUITrainerSetup(int main_window){
     int i;
     LIST_trainerpath->add_item(-1,"Manual");
     LIST_trainerpath->add_item(-2,"-");
-    for(i=0;i<global_scase.tourcoll.ntourinfo;i++){
+    for(i=0; i<global_scase.tourcoll.ntourinfo; i++){
       tourdata *touri;
 
       touri = global_scase.tourcoll.tourinfo + i;
@@ -308,7 +306,7 @@ extern "C" void GLUITrainerSetup(int main_window){
   {
     cameradata *ca;
 
-    for(ca=camera_list_first.next;ca->next!=NULL;ca=ca->next){
+    for(ca=camera_list_first.next; ca->next!=NULL; ca=ca->next){
       if(strcmp(ca->name,"external")!=0){
         LIST_viewpoint->add_item(ca->view_id, ca->name);
       }

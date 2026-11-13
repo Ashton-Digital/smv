@@ -45,7 +45,7 @@ void UpdateLights(float *pos1, float *pos2){
     float num_lights;
 
     num_lights = use_light0 + use_light1;
-    for(i = 0;i<3;i++){
+    for(i = 0; i<3; i++){
       ambientlight2[i] = ambientlight[i]/(float)num_lights;
       diffuselight2[i] = diffuselight[i]/(float)num_lights;
       specularlight2[i] = specularlight[i]/(float)num_lights;
@@ -110,7 +110,6 @@ void TransparentOff(void){
   glDepthMask(GL_TRUE);
   glDisable(GL_BLEND);
 }
-
 
 /* ------------------ SetViewPoint ------------------------ */
 
@@ -177,11 +176,15 @@ void DisplayVersionInfo(char *progname, common_opts *opts){
   if(global_scase.fds_version!=NULL){
     PRINTF("FDS Build        : %s\n",global_scase.fds_version);
   }
+  char *smv_bindir = GetSmvRootDir();
+  if(smv_bindir){
+    PRINTF("Root directory   : %s\n", smv_bindir);
+  }
   char *smv_progname = GetBinPath();
 #ifdef _DEBUG
-  PRINTF("Smokeview        : %s(debug)\n",smv_progname);
+  PRINTF("Smokeview exe    : %s(debug)\n",smv_progname);
 #else
-  PRINTF("Smokeview        : %s\n",smv_progname);
+  PRINTF("Smokeview exe    : %s\n",smv_progname);
 #endif
   FREEMEMORY(smv_progname);
   if(verbose_output == 1){
@@ -190,19 +193,6 @@ void DisplayVersionInfo(char *progname, common_opts *opts){
 #endif
     if(global_scase.texturedir!=NULL)PRINTF("Texture directory: %s\n",global_scase.texturedir);
   }
-  char *smv_bindir = GetSmvRootDir();
-  if(smv_bindir){
-    PRINTF("Root directory   : %s\n", smv_bindir);
-  }
-  char *global_ini_path = GetSystemIniPath();
-  if(global_ini_path != NULL && FileExistsOrig(global_ini_path) == 1){
-    PRINTF("Global ini       : %s\n", global_ini_path);
-  }
-  else{
-    PRINTF("Global ini       : not found\n");
-  }
-  FREEMEMORY(global_ini_path);
-
   char fullini_filename[256];
   strcpy(fullini_filename, "");
   char *smokeview_scratchdir = GetUserConfigDir();
@@ -223,6 +213,16 @@ void DisplayVersionInfo(char *progname, common_opts *opts){
   }
   FREEMEMORY(caseini_filename);
   FREEMEMORY(smokeview_scratchdir);
+
+  char *globalini_filename = GetSmokeviewIniPath();
+  if(globalini_filename != NULL){
+    PRINTF("Smokeview ini    : %s\n", globalini_filename);
+  }
+  else{
+    PRINTF("Smokeview ini    : not found\n");
+  }
+  FREEMEMORY(globalini_filename);
+
   if(smv_filename != NULL || opts->show_version == 0){
     if(strlen(fullini_filename) > 0){
       PRINTF("Casename ini     : %s\n", fullini_filename);
@@ -295,13 +295,4 @@ void SMV_EXIT(int code){
   fgets(buffer, 255, stdin);
 #endif
   exit(code);
-}
-
-/* ------------------ StartTimer ------------------------ */
-
-void StartTimer(float *timerptr){
-  float timer;
-
-  START_TIMER(timer);
-  *timerptr = timer;
 }

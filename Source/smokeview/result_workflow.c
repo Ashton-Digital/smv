@@ -95,7 +95,7 @@ static void SetFittedAxisView(int view);
 
 int SetResultWorkflowCaptureTime(float requested_time, float *capture_time){
   float min_time_diff;
-  int i, selected_frame = 0;
+  int i, capture_frame = 0;
 
   UpdateTimes();
   if(global_times == NULL || nglobal_times <= 0)return 0;
@@ -105,13 +105,13 @@ int SetResultWorkflowCaptureTime(float requested_time, float *capture_time){
 
     if(time_diff < min_time_diff){
       min_time_diff = time_diff;
-      selected_frame = i;
+      capture_frame = i;
     }
   }
-  SetTimeFrameIndex(selected_frame, PAUSE_TIME);
-  script_itime = selected_frame;
+  SetTimeFrameIndex(capture_frame, PAUSE_TIME);
+  script_itime = capture_frame;
   last_time_paused = 1;
-  if(capture_time != NULL)*capture_time = global_times[selected_frame];
+  if(capture_time != NULL)*capture_time = global_times[capture_frame];
   return 1;
 }
 
@@ -243,7 +243,7 @@ int GetResultWorkflowStatus(char *label, int label_size){
 
 static void RestoreWorkflowTime(float selected_time, int selected_time_valid, int selected_stept){
   float min_time_diff;
-  int i, selected_frame = 0;
+  int i, capture_frame = 0;
 
   if(global_times == NULL || nglobal_times <= 0){
     stept = selected_stept;
@@ -259,10 +259,10 @@ static void RestoreWorkflowTime(float selected_time, int selected_time_valid, in
 
     if(time_diff < min_time_diff){
       min_time_diff = time_diff;
-      selected_frame = i;
+      capture_frame = i;
     }
   }
-  SetTimeFrameIndex(selected_frame, selected_stept);
+  SetTimeFrameIndex(capture_frame, selected_stept);
 }
 
 /* ------------------ ResetResultWorkflows ------------------------ */

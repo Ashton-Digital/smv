@@ -40,7 +40,9 @@ unsigned int *random_ints, nrandom_ints;
 /// @brief Given a UTF-8 (or ASCII) string, convert it to Windows UTF-16.
 /// @param string a UTF-8 (or ASCII) string
 /// @return a UTF-16 string or NULL on error
-wchar_t *convert_utf8_to_utf16(const char *input_string) {
+/* ------------------ convert_utf8_to_utf16 ------------------------ */
+
+wchar_t *convert_utf8_to_utf16(const char *input_string){
   int r;
   r = MultiByteToWideChar(CP_UTF8, 0, input_string, -1, NULL, 0);
   if(r == 0) goto err;
@@ -53,7 +55,7 @@ err:
   // There was an error converting this string to utf-16. Produce a suitable
   // error message and return NULL.
   DWORD dw = GetLastError();
-  switch(dw) {
+  switch(dw){
   case ERROR_INSUFFICIENT_BUFFER:
     fprintf(stderr, "A supplied buffer size was not large enough, or it was "
                     "incorrectly set to NULL.\n");
@@ -76,7 +78,9 @@ err:
 /// @brief Given a (Windows) UTF-16 string, convert to UTF-8.
 /// @param string a (Windows) UTF-16 string
 /// @return a UTF-8 string or NULL on error
-char *convert_utf16_to_utf8(const wchar_t *input_string) {
+/* ------------------ convert_utf16_to_utf8 ------------------------ */
+
+char *convert_utf16_to_utf8(const wchar_t *input_string){
   int r;
   r = WideCharToMultiByte(CP_UTF8, 0, input_string, -1, NULL, 0, NULL, NULL);
   if(r == 0) goto err;
@@ -89,7 +93,7 @@ err:
   // There was an error converting this string to utf-8. Produce a suitable
   // error message and return NULL.
   DWORD dw = GetLastError();
-  switch(dw) {
+  switch(dw){
   case ERROR_INSUFFICIENT_BUFFER:
     fprintf(stderr, "A supplied buffer size was not large enough, or it was "
                     "incorrectly set to NULL.\n");
@@ -125,15 +129,15 @@ char *ConcatLabels(char *label1, char *label2, char *label3, char *label){
 
 /* ------------------ GetCharPtr ------------------------ */
 
-char *GetCharPtr(char *label) {
+char *GetCharPtr(char *label){
   char *labelptr, labelcopy[256], *labelcopyptr;
   int lenlabel;
 
-  if (label == NULL || strlen(label) == 0) return NULL;
+  if(label == NULL || strlen(label) == 0) return NULL;
   strcpy(labelcopy, label);
   labelcopyptr = TrimFrontBack(labelcopy);
   lenlabel = strlen(labelcopyptr);
-  if (lenlabel == 0) return NULL;
+  if(lenlabel == 0) return NULL;
   NewMemory((void **)&labelptr, lenlabel + 1);
   strcpy(labelptr, labelcopyptr);
   return labelptr;
@@ -156,7 +160,7 @@ void InitRandAB(int size){
 
   nrandom_ints=size;
   NewMemory((void **)&random_ints,nrandom_ints*sizeof(unsigned int));
-  for(i=0;i<nrandom_ints;i++){
+  for(i=0; i<nrandom_ints; i++){
     random_ints[i]=rand();
   }
 }
@@ -223,7 +227,7 @@ void ParseCSV(char *buffer, char *buffer_temp, char **tokens, int *ntokens){
   TrimBack(buffer);
   lenbuffer = strlen(buffer);
   tokens[nt++] = buffer;
-  for(i=0;i<lenbuffer;i++){
+  for(i=0; i<lenbuffer; i++){
     if(buffer[i] == '"'){
       in_quote = 1 - in_quote;
       continue;
@@ -234,7 +238,7 @@ void ParseCSV(char *buffer, char *buffer_temp, char **tokens, int *ntokens){
       tokens[nt++] = buffer + i + 1;
     }
   }
-  for(i=0;i<nt;i++){
+  for(i=0; i<nt; i++){
     char *tok;
 
     tok = tokens[i];
@@ -286,6 +290,8 @@ int GetRowCols(FILE *stream, int *nrows, int *ncols){
 #define pp_GITDATE "unknown"
 #endif
 
+/* ------------------ GetGitInfo ------------------------ */
+
 void GetGitInfo(char *githash, char *gitdate, int *gittest){
   char rev[256], *beg=NULL;
 
@@ -293,7 +299,7 @@ void GetGitInfo(char *githash, char *gitdate, int *gittest){
   TrimBack(rev);
   beg = TrimFront(rev);
   if(gittest != NULL){
-    char *testtoken=NULL, revcopy[256];;
+    char *testtoken=NULL, revcopy[256];
     int revision = 1;
 
     *gittest = 1;
@@ -328,7 +334,6 @@ void GetGitInfo(char *githash, char *gitdate, int *gittest){
   }
 }
 
-
 /* ------------------ StripQuotes ------------------------ */
 
 void StripQuotes(char *buffer){
@@ -337,7 +342,7 @@ void StripQuotes(char *buffer){
 
   char *c;
 
-  for(c=buffer;c<buffer+strlen(buffer);c++){
+  for(c=buffer; c<buffer+strlen(buffer); c++){
     if(*c=='"')*c=' ';
   }
 }
@@ -349,7 +354,7 @@ void StripCommas(char *buffer){
 
   char *c;
 
-  for(c=buffer;c<buffer+strlen(buffer);c++){
+  for(c=buffer; c<buffer+strlen(buffer); c++){
     if(*c==',')*c=' ';
   }
 }
@@ -379,6 +384,8 @@ int RandInt(int min, int max){
 #define GETPID getpid
 #endif
 
+/* ------------------ RandStr ------------------------ */
+
 char *RandStr(char* str, int length){
 
 //  returns a random character string of length length
@@ -392,7 +399,7 @@ char *RandStr(char* str, int length){
     seed += GETPID();
     srand(seed);
 
-    for(i=0;i<length;i++){
+    for(i=0; i<length; i++){
       str[i]=(char)RandInt(65,90);
     }
     str[length]=0;
@@ -404,7 +411,7 @@ char *RandStr(char* str, int length){
 void TrimCommas(char *line){
   char *c;
 
-  for(c = line + strlen(line) - 1;c>=line;c--){
+  for(c = line + strlen(line) - 1; c>=line; c--){
     if(isspace((unsigned char)(*c)))continue;
     if(strncmp(c,",",1)!=0)break;
     *c=' ';
@@ -439,7 +446,7 @@ char *TrimFront(char *line){
 
   char *c;
 
-  for(c=line;c<=line+strlen(line)-1;c++){
+  for(c=line; c<=line+strlen(line)-1; c++){
     if(!isspace((unsigned char)(*c)))return c;
   }
   return line;
@@ -453,7 +460,7 @@ const char *TrimFrontConst(const char *line){
 
   const char *c;
 
-  for(c=line;c<=line+strlen(line)-1;c++){
+  for(c=line; c<=line+strlen(line)-1; c++){
     if(!isspace((unsigned char)(*c)))return c;
   }
   return line;
@@ -543,8 +550,8 @@ char *STRSTR(char *string, const char *key){
 
   if(string==NULL||key==NULL)return NULL;
 
-  for(s=string;*s!=0;s++){
-    for(k=(char *)key;*k!=0;k++){
+  for(s=string; *s!=0; s++){
+    for(k=(char *)key; *k!=0; k++){
       ss = s + (k-key);
       if(*ss==0)return NULL;
       if(toupper(*ss)!=toupper(*k))break;
@@ -725,7 +732,7 @@ void RoundPos(float val, char *cval, int ndigits){
     }
   }
   label[255] = 0;
-  for(i = lastdigit; i<strlen(label);i++){
+  for(i = lastdigit; i<strlen(label); i++){
     if(label[i]!='.')label[i] = '0';
   }
   TrimZeros(label);
@@ -832,7 +839,7 @@ int OnlyZeros(char *label){
   int i;
 
   if(label == NULL)return 1;
-  for(i = 1;i < strlen(label);i++){
+  for(i = 1; i < strlen(label); i++){
     if(label[i] != '0')return 0;
   }
   return 1;
@@ -928,7 +935,7 @@ void Floats2Strings(char **c_vals, float *vals, int nvals, int ndigits, int fixe
   if(force_decimal_label == 0){
     int only_zero = 1;
 
-    for(i = 0;i < nvals;i++){
+    for(i = 0; i < nvals; i++){
       char *decimal, *Epos;
 
       decimal = strchr(c_vals[i], '.');
@@ -939,7 +946,7 @@ void Floats2Strings(char **c_vals, float *vals, int nvals, int ndigits, int fixe
       }
     }
     if(only_zero == 1){
-      for(i = 0;i < nvals;i++){
+      for(i = 0; i < nvals; i++){
         char *decimal;
 
         decimal = strchr(c_vals[i], '.');
@@ -956,7 +963,7 @@ void Floats2Strings(char **c_vals, float *vals, int nvals, int ndigits, int fixe
     if(decimal!=NULL)decimal[0] = 0;
     ndecimals = ndigits - strlen(cmaxlabel);
     if(decimal != NULL && ndecimals>=0){
-      for(i = 0;i < nvals;i++){
+      for(i = 0; i < nvals; i++){
         char *dec, *Epos;
         int npad, len_dec;
 
@@ -1113,7 +1120,7 @@ char *GetChid(char *file, char *buffer){
     if(chidptr==NULL)continue;
 
     chidptr+=5;
-    for(i=0;i<strlen(chidptr);i++){
+    for(i=0; i<strlen(chidptr); i++){
       c=chidptr+i;
       if(*c=='\''){
         found1st=1;
@@ -1123,7 +1130,7 @@ char *GetChid(char *file, char *buffer){
     }
     if(found1st==0)break;
 
-    for(i=0;i<strlen(chidptr);i++){
+    for(i=0; i<strlen(chidptr); i++){
       c=chidptr+i;
       if(*c=='\''){
         found2nd=1;
@@ -1167,7 +1174,7 @@ void Array2String(float *vals, int nvals, char *string){
 
   strcpy(string,"");
   if(nvals==0)return;
-  for(i=0;i<nvals-1;i++){
+  for(i=0; i<nvals-1; i++){
     sprintf(cval,"%f",vals[i]);
     TrimZeros(cval);
     strcat(string,cval);
@@ -1226,7 +1233,7 @@ char *GetStringPtr(char *buffer){
   }
   if(first<0)return NULL;
 
-  for(i=strlen(buffer)-1;i>=0;i--){
+  for(i=strlen(buffer)-1; i>=0; i--){
     if(buffer[i]!=' '){
       last = i;
       break;
@@ -1328,7 +1335,6 @@ int MatchINI(char *buffer, const char *key){
   return Match(buffer, key);
 }
 
-
 /* ------------------ MatchSMV ------------------------ */
 
 int MatchSMV(char *buffer, const char *key){
@@ -1347,7 +1353,7 @@ int MatchUpper(char *buffer, const char *key){
   lenbuffer=strlen(buffer);
 
   if(lenbuffer!=lenkey)return NOTMATCH;
-  for(i=0;i<lenkey;i++){
+  for(i=0; i<lenkey; i++){
     if(toupper(buffer[i])!=toupper(key[i]))return NOTMATCH;
   }
   if(lenbuffer>lenkey&&!isspace((unsigned char)buffer[lenkey]))return NOTMATCH;
@@ -1743,7 +1749,7 @@ void ToLower(char *string){
    char *c;
 
    if(string==NULL)return;
-   for(c=string;*c!=0;c++){
+   for(c=string; *c!=0; c++){
      if(*c>='A'&&*c<='Z')*c+='a'-'A';
    }
 }
@@ -1793,13 +1799,13 @@ char *STRCHRR(char *strbeg, char *searchbeg, int c){
   char *cc;
 
   if(searchbeg>strbeg){
-    for(cc=searchbeg;cc>=strbeg;cc--){
+    for(cc=searchbeg; cc>=strbeg; cc--){
       if(*cc==c||*cc==0)return cc+1;
     }
     return strbeg;
   }
   else{
-    for(cc=searchbeg;cc<=strbeg;cc++){
+    for(cc=searchbeg; cc<=strbeg; cc++){
       if(*cc==c||*cc==0)return cc-1;
     }
     return strbeg;
@@ -2070,16 +2076,14 @@ unsigned char *GetHashSHA256(char *file){
 
 void UsageCommon(int option){
   if(option == HELP_SUMMARY){
-    PRINTF("  -help      - display help summary\n");
-    PRINTF("  -help_all  - display all help info\n");
-    PRINTF("  -version   - display version information\n");
+    PRINTF(" -help      - display help summary\n");
+    PRINTF(" -help_all  - display all help info\n");
+    PRINTF(" -version   - display version information\n");
   }
   if(option == HELP_ALL){
-    PRINTF("  -md5       - display an md5 hash when -version is invoked\n");
-    PRINTF("  -sha1      - display a sha1 hash when -version is invoked\n");
-    PRINTF("  -sha256    - display a sha256 hash when -version is invoked\n");
-    PRINTF("  -hash_all  - display all hashes when -version option is invoked\n");
-    PRINTF("  -hash_none - do not display any hashes  when -version is invoked\n");
+    PRINTF(" -md5       - display an md5 hash when -version is invoked\n");
+    PRINTF(" -sha1      - display a sha1 hash when -version is invoked\n");
+    PRINTF(" -sha256    - display a sha256 hash when -version is invoked\n");
   }
 }
 
@@ -2092,8 +2096,6 @@ int IsCommonOption(char *argi){
   if(STRCMP("-sha256", argi)==0)return 1;
   if(STRCMP("-sha1", argi)==0)return 1;
   if(STRCMP("-md5", argi)==0)return 1;
-  if(STRCMP("-hash_all", argi)==0)return 1;
- if(STRCMP("-hash_none", argi)==0)return 1;
   return 0;
 }
 
@@ -2140,14 +2142,6 @@ common_opts ParseCommonOptions(int argc, char **argv){
       opts.hash_option = HASH_MD5;
       continue;
     }
-    if(STRCMP("-hash_all", argi)==0){
-      opts.hash_option = HASH_ALL;
-      continue;
-    }
-    if(STRCMP("-hash_none", argi)==0){
-      opts.hash_option = HASH_NONE;
-      continue;
-    }
   }
   return opts;
 }
@@ -2173,21 +2167,21 @@ void PRINTversion(char *progname, int option){
   PRINTF("Sanitize checks  : enabled\n");
 #endif
 
-  if(option==HASH_MD5||option==HASH_ALL){
+  if(option==HASH_MD5){
     unsigned char *hash = NULL;
 
     hash = GetHashMD5(progfullpath);
     if(hash!=NULL)PRINTF("Checksum(MD5)    : %s\n", hash);
     FREEMEMORY(hash);
   }
-  if(option==HASH_SHA1||option==HASH_ALL){
+  if(option==HASH_SHA1){
     unsigned char *hash = NULL;
 
     hash = GetHashSHA1(progfullpath);
     if(hash!=NULL)PRINTF("Checksum(SHA1)   : %s\n", hash);
     FREEMEMORY(hash);
   }
-  if(option==HASH_SHA256||option==HASH_ALL){
+  if(option==HASH_SHA256){
     unsigned char *hash = NULL;
 
     hash = GetHashSHA256(progfullpath);

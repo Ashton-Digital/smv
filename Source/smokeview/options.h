@@ -15,12 +15,8 @@
 //#define pp_TERRAIN_HIDE     // hide terrain when hiding internal blockages
 //#define pp_OPACITY_DEBUG    // output hrrpuv opacity in center of each mesh
 //#define pp_GLUT_DEBUG       // add debug print for glut debugging
-#define pp_SPEEDUP            // speed up smokeview
-//#define pp_READ_KEYBOARD      // read keyboard in the command shell so the visualization can be paused 
-//#define pp_GETMESH_TEST
-//#define pp_COMPRESS         // new compression code
-//#define pp_ZONEVENT         // shouldn't need code surrounded by this directive
-//#define pp_PART_SCALE       // add scale call when drawing particle objects (probably not necessary)
+//#define pp_READ_KEYBOARD    // read keyboard in the command shell so the visualization can be paused 
+//#define pp_GETMESH          // fast algorithm for finding a mesh
 
 //*** options: windows
 
@@ -40,7 +36,6 @@
 //*** options: for debugging
 
 #ifdef _DEBUG
-#define pp_BNDF_DEBUG        // add 3 checkboxes for controlling different types of boundary file output
 #endif
 
 #endif

@@ -20,11 +20,11 @@
 
 /* ------------------ ReallocTourMemory ------------------------ */
 
-void ReallocTourMemory(tour_collection *tourcoll) {
+void ReallocTourMemory(tour_collection *tourcoll){
   tourdata *touri;
 
-  if(tourcoll->tour_ntimes > 0) {
-    for(int i = 0; i < tourcoll->ntourinfo; i++) {
+  if(tourcoll->tour_ntimes > 0){
+    for(int i = 0; i < tourcoll->ntourinfo; i++){
       touri = tourcoll->tourinfo + i;
       FREEMEMORY(touri->path_times);
       NewMemory((void **)&touri->path_times,
@@ -51,11 +51,11 @@ void ReallocTourMemory(tour_collection *tourcoll) {
 
 /* ------------------ FreeTour ------------------------ */
 
-void FreeTour(tourdata *touri) {
+void FreeTour(tourdata *touri){
   int i;
   keyframe *framei;
 
-  for(i = 0; i < touri->nkeyframes; i++) {
+  for(i = 0; i < touri->nkeyframes; i++){
     framei = touri->keyframe_list[i];
     FREEMEMORY(framei);
   }
@@ -67,11 +67,11 @@ void FreeTour(tourdata *touri) {
 
 /* ------------------ FreeTours ------------------------ */
 
-void FreeTours(tour_collection *tourcoll) {
+void FreeTours(tour_collection *tourcoll){
   int i;
 
-  if(tourcoll->ntourinfo > 0) {
-    for(i = 0; i < tourcoll->ntourinfo; i++) {
+  if(tourcoll->ntourinfo > 0){
+    for(i = 0; i < tourcoll->ntourinfo; i++){
       tourdata *touri;
 
       touri = tourcoll->tourinfo + i;
@@ -84,7 +84,7 @@ void FreeTours(tour_collection *tourcoll) {
 
 /* ------------------ InitTour ------------------------ */
 
-void InitTour(tour_collection *tourcoll, tourdata *touri) {
+void InitTour(tour_collection *tourcoll, tourdata *touri){
   touri->glui_avatar_index = 0;
   touri->display2 = 0;
   touri->display = 0;
@@ -112,7 +112,7 @@ void InitTour(tour_collection *tourcoll, tourdata *touri) {
 
 /* ------------------ HermiteView ------------------------ */
 
-void HermiteView(float t, keyframe *kf1, keyframe *kf2, float *view) {
+void HermiteView(float t, keyframe *kf1, keyframe *kf2, float *view){
   float *p0, *p1, *m0, *m1;
   float t3, t2;
 
@@ -129,7 +129,7 @@ void HermiteView(float t, keyframe *kf1, keyframe *kf2, float *view) {
 
 /* ------------------ GetKeyFrame ------------------------ */
 
-keyframe *GetKeyFrame(const tourdata *touri, float time) {
+keyframe *GetKeyFrame(const tourdata *touri, float time){
   keyframe *first_key, *last_key, *this_key;
 
   first_key = touri->first_frame.next;
@@ -138,7 +138,7 @@ keyframe *GetKeyFrame(const tourdata *touri, float time) {
   last_key = touri->last_frame.prev;
   if(time >= last_key->time) return last_key->prev;
 
-  for(this_key = first_key; this_key != last_key; this_key = this_key->next) {
+  for(this_key = first_key; this_key != last_key; this_key = this_key->next){
     keyframe *next_key;
 
     next_key = this_key->next;
@@ -149,7 +149,7 @@ keyframe *GetKeyFrame(const tourdata *touri, float time) {
 
 /* ------------------ GetKeyView ------------------------ */
 
-void GetKeyView(float t, keyframe *this_key, float *view) {
+void GetKeyView(float t, keyframe *this_key, float *view){
   keyframe *next_key;
   float dt, t_scaled;
 
@@ -161,7 +161,7 @@ void GetKeyView(float t, keyframe *this_key, float *view) {
 }
 /* ------------------ GetTourView ------------------------ */
 
-void GetTourView(float t, tourdata *this_tour, float *view) {
+void GetTourView(float t, tourdata *this_tour, float *view){
   keyframe *this_key;
 
   this_key = GetKeyFrame(this_tour, t);
@@ -170,15 +170,15 @@ void GetTourView(float t, tourdata *this_tour, float *view) {
 
 /* ------------------ GetTourVal ------------------------ */
 
-void GetTourXYZView(float time, float *times, float *vals, int n, float *val3) {
+void GetTourXYZView(float time, float *times, float *vals, int n, float *val3){
   int left;
   float *v1, *v2, factor;
 
-  if(time <= times[0]) {
+  if(time <= times[0]){
     memcpy(val3, vals, 3 * sizeof(float));
     return;
   }
-  if(time >= times[n - 1]) {
+  if(time >= times[n - 1]){
     memcpy(val3, vals + 3 * (n - 1), 3 * sizeof(float));
     return;
   }
@@ -195,7 +195,7 @@ void GetTourXYZView(float time, float *times, float *vals, int n, float *val3) {
 
 /* ------------------ CopyFrame ------------------------ */
 
-keyframe *CopyFrame(const keyframe *framei) {
+keyframe *CopyFrame(const keyframe *framei){
   keyframe *frame;
 
   NewMemory((void **)&frame, sizeof(keyframe));
@@ -207,10 +207,10 @@ keyframe *CopyFrame(const keyframe *framei) {
 
 /* ------------------ DeleteTourFrames ------------------------ */
 
-void DeleteTourFrames(tourdata *thistour) {
+void DeleteTourFrames(tourdata *thistour){
   keyframe *frame;
 
-  for(frame = thistour->first_frame.next; frame->next != NULL;) {
+  for(frame = thistour->first_frame.next; frame->next != NULL;){
     keyframe *next;
 
     next = frame->next;

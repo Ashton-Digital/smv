@@ -145,7 +145,7 @@ void ParseSmvObjectString(object_collection *objectscoll, char *string,
   char *tokens_head[BUFFER_SIZE], *tokens_tail[BUFFER_SIZE];
   int in_head = 1, nhead = 0, ntail = 0;
 
-  for(i=0;i<BUFFER_SIZE;i++){
+  for(i=0; i<BUFFER_SIZE; i++){
     tokens_tail[i] = NULL;
   }
   c = string;
@@ -613,7 +613,6 @@ int GetTokenId(char *token, int *opptr, int *num_opptr, int *num_outopptr){
 
   int op, num_op, num_outop;
   int return_val;
-
 
   return_val = 0;
   if(STRCMP(token, "translate") == 0){
@@ -1440,7 +1439,7 @@ void InitStdObjectDefs(object_collection *objectscoll, int isZoneFireModel){
 
 /* ------------------ InitObjectCollection ------------------------ */
 
-int InitObjectCollection(object_collection *coll) {
+int InitObjectCollection(object_collection *coll){
   // Set everything to NULL
   memset(coll, 0, sizeof(object_collection));
   strcpy(coll->object_def_first.label, "first");
@@ -1456,11 +1455,11 @@ int InitObjectCollection(object_collection *coll) {
 
 /* ------------------ CreateObjectCollection ------------------------ */
 
-object_collection *CreateObjectCollection(void) {
+object_collection *CreateObjectCollection(void){
   object_collection *coll;
   if(NEWMEMORY(coll, sizeof(object_collection)) == 0) return NULL;
   int ret = InitObjectCollection(coll);
-  if(ret != 0) {
+  if(ret != 0){
     FREEMEMORY(coll);
     return NULL;
   }
@@ -1673,7 +1672,7 @@ void UpdatePartClassDepend(partclassdata *partclassi){
     int nvar;
 
     obj_frame=partclassi->prop->smv_object->obj_frames[0];
-    for(i=0;i<partclassi->nvars_dep-3;i++){
+    for(i=0; i<partclassi->nvars_dep-3; i++){
       char *var;
 
       var=partclassi->vars_dep[i];

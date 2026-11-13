@@ -43,7 +43,7 @@ int GetGridIndex(float val, int dir, float *plotxyz, int nplotxyz){
   if(plotxyz!=NULL){
     min_val=ABS(val-plotxyz[0]);
     return_index=0;
-    for(i=1;i<nplotxyz;i++){
+    for(i=1; i<nplotxyz; i++){
       vali = ABS(val-plotxyz[i]);
       if(vali<min_val){
         return_index=i;
@@ -62,7 +62,7 @@ void NextXIndex(int inc,int flag){
   first=1;
   if(flag==1)inc=-1;
   if(flag==-1)inc=1;
-  for(j=0;j<nplotx_all;j++){
+  for(j=0; j<nplotx_all; j++){
     if(first==1){
       first=0;
       if(flag==1)iplotx_all=nplotx_all-1;
@@ -83,7 +83,7 @@ void NextXIndex(int inc,int flag){
     if(iplotx_all>nplotx_all-1)iplotx_all=0;
     if(visGrid!=NOGRID_NOPROBE)return;
     if(plotstate==DYNAMIC_PLOTS){
-      for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+      for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
         slicedata *slicei;
         meshdata *meshi;
 
@@ -92,7 +92,7 @@ void NextXIndex(int inc,int flag){
         meshi = global_scase.meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iplotx_all[iplotx_all]!=-1)return;
       }
-      for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+      for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
         vslicedata *vslicei;
         meshdata *meshi;
 
@@ -103,7 +103,7 @@ void NextXIndex(int inc,int flag){
       }
     }
     else{
-      for(i=0;i<global_scase.nplot3dinfo;i++){
+      for(i=0; i<global_scase.nplot3dinfo; i++){
         plot3ddata *plot3di;
         meshdata *meshi;
 
@@ -124,7 +124,7 @@ void NextYIndex(int inc,int flag){
   first=1;
   if(flag==1)inc=-1;
   if(flag==-1)inc=1;
-  for(j=0;j<nploty_all;j++){
+  for(j=0; j<nploty_all; j++){
     if(first==1){
       first=0;
       if(flag==1)iploty_all=nploty_all-1;
@@ -145,7 +145,7 @@ void NextYIndex(int inc,int flag){
     if(iploty_all>nploty_all-1)iploty_all=0;
     if(visGrid!=NOGRID_NOPROBE)return;
     if(plotstate==DYNAMIC_PLOTS){
-      for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+      for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
         slicedata *slicei;
         meshdata *meshi;
 
@@ -154,7 +154,7 @@ void NextYIndex(int inc,int flag){
         meshi = global_scase.meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iploty_all[iploty_all]!=-1)return;
       }
-      for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+      for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
         vslicedata *vslicei;
         meshdata *meshi;
 
@@ -165,7 +165,7 @@ void NextYIndex(int inc,int flag){
       }
     }
     else{
-      for(i=0;i<global_scase.nplot3dinfo;i++){
+      for(i=0; i<global_scase.nplot3dinfo; i++){
         plot3ddata *plot3di;
         meshdata *meshi;
 
@@ -186,7 +186,7 @@ void NextZIndex(int inc,int flag){
   first=1;
   if(flag==1)inc=-1;
   if(flag==-1)inc=1;
-  for(j=0;j<nplotz_all;j++){
+  for(j=0; j<nplotz_all; j++){
     if(first==1){
       first=0;
       if(flag==1)iplotz_all=nplotz_all-1;
@@ -207,7 +207,7 @@ void NextZIndex(int inc,int flag){
     if(iplotz_all>nplotz_all-1)iplotz_all=0;
     if(visGrid!=NOGRID_NOPROBE)return;
     if(plotstate==DYNAMIC_PLOTS){
-      for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+      for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
         slicedata *slicei;
         meshdata *meshi;
 
@@ -216,7 +216,7 @@ void NextZIndex(int inc,int flag){
         meshi = global_scase.meshescoll.meshinfo + slicei->blocknumber;
         if(meshi->iplotz_all[iplotz_all]!=-1)return;
       }
-      for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+      for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
         vslicedata *vslicei;
         meshdata *meshi;
 
@@ -227,7 +227,7 @@ void NextZIndex(int inc,int flag){
       }
     }
     else{
-      for(i=0;i<global_scase.nplot3dinfo;i++){
+      for(i=0; i<global_scase.nplot3dinfo; i++){
         plot3ddata *plot3di;
         meshdata *meshi;
 
@@ -237,23 +237,6 @@ void NextZIndex(int inc,int flag){
         if(meshi->iplotz_all[iplotz_all]!=-1)return;
       }
     }
-  }
-}
-
-/* ------------------ WindowStatus ------------------------ */
-
-void WindowStatus(int state){
-  PRINTF("state=%i\n",state);
-  switch(state){
-  case GLUT_HIDDEN:
-  case GLUT_FULLY_COVERED:
-    break;
-  case GLUT_FULLY_RETAINED:
-  case GLUT_PARTIALLY_RETAINED:
-    break;
-  default:
-    assert(FFALSE);
-    break;
   }
 }
 
@@ -390,7 +373,7 @@ void MouseEditBlockage(int x, int y){
     UpdateCurrentMesh(meshi);
     bchighlight_old=bchighlight;
     bchighlight = meshi->blockageinfoptrs[highlight_block];
-    for(i=0;i<6;i++){
+    for(i=0; i<6; i++){
       surface_indices[i]=global_scase.surfcoll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
       surface_indices_bak[i]=global_scase.surfcoll.inv_sorted_surfidlist[bchighlight->surf_index[i]];
     }
@@ -636,20 +619,20 @@ void CheckTimeBound(void){
       smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
       smoke3di->ismoke3d_time = 0;
     }
-    for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
       slicedata *sd;
 
       sd=global_scase.slicecoll.sliceinfo+i;
       sd->itime=0;
     }
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0; i<global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
       meshi=global_scase.meshescoll.meshinfo+i;
 
       meshi->patch_itime=0;
     }
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0; i<global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
       meshi=global_scase.meshescoll.meshinfo+i;
@@ -660,7 +643,7 @@ void CheckTimeBound(void){
   if((timebar_drag==0&&iglobal_times<0)||(timebar_drag==1&&iglobal_times>nglobal_times-1)){
     izone=nzone_times-1;
     iglobal_times=nglobal_times-1;
-    for(i=0;i<global_scase.npartinfo;i++){
+    for(i=0; i<global_scase.npartinfo; i++){
       partdata *parti;
 
       parti=global_scase.partinfo+i;
@@ -672,14 +655,14 @@ void CheckTimeBound(void){
       smoke3di = global_scase.smoke3dcoll.smoke3dinfo + i;
       smoke3di->ismoke3d_time = smoke3di->ntimes-1;
     }
-    for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+    for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
       slicedata *sd;
 
       sd=global_scase.slicecoll.sliceinfo+i;
       sd->itime=sd->ntimes-1;
       if(sd->slice3d==1)sd->itime--;
     }
-    for(i=0;i<global_scase.npatchinfo;i++){
+    for(i=0; i<global_scase.npatchinfo; i++){
       patchdata *patchi;
       meshdata *meshi;
 
@@ -688,7 +671,7 @@ void CheckTimeBound(void){
       meshi = global_scase.meshescoll.meshinfo + patchi->blocknumber;
       meshi->patch_itime=patchi->ntimes-1;
     }
-    for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+    for(i=0; i<global_scase.meshescoll.nmeshes; i++){
       meshdata *meshi;
 
       meshi=global_scase.meshescoll.meshinfo+i;
@@ -698,12 +681,12 @@ void CheckTimeBound(void){
   }
   /* set blockage visibility */
 
-  for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+  for(i=0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
     int j;
 
     meshi=global_scase.meshescoll.meshinfo+i;
-    for(j=0;j<meshi->nbptrs;j++){
+    for(j=0; j<meshi->nbptrs; j++){
       blockagedata *bc;
 
       bc=meshi->blockageinfoptrs[j];
@@ -718,8 +701,8 @@ void CheckTimeBound(void){
 /* ------------------ GetColorbarIndex ------------------------ */
 
 int GetColorbarIndex(int x, int y){
-  if(visColorbarVertical == 1) {
-    if(vcolorbar_left_pos <= x && x <= vcolorbar_right_pos) {
+  if(visColorbarVertical == 1){
+    if(vcolorbar_left_pos <= x && x <= vcolorbar_right_pos){
       y = screenHeight - y;
       if(vcolorbar_down_pos <= y && y <= vcolorbar_top_pos){
         int index;
@@ -730,10 +713,10 @@ int GetColorbarIndex(int x, int y){
       return CB_SELECT_STOP;
     }
   }
-  else if(visColorbarHorizontal == 1) {
+  else if(visColorbarHorizontal == 1){
     y = screenHeight - y;
-    if(hcolorbar_down_pos <= y && y <= hcolorbar_top_pos) {
-      if(hcolorbar_left_pos <= x && x <= hcolorbar_right_pos) {
+    if(hcolorbar_down_pos <= y && y <= hcolorbar_top_pos){
+      if(hcolorbar_left_pos <= x && x <= hcolorbar_right_pos){
         int index;
         index = CLAMP(255 * (float)(x - hcolorbar_left_pos) /
                           (float)(hcolorbar_right_pos - hcolorbar_left_pos),
@@ -831,7 +814,7 @@ int GetTimeBarFrame(int xm){
     timexm = global_times[0]*(1.0-factor) + factor*global_times[nglobal_times - 1];
     if(timexm < global_times[0])return 0;
     if(timexm >= global_times[nglobal_times - 1])return nglobal_times - 1;
-    for(i = 0;i < nglobal_times - 1;i++){
+    for(i = 0; i < nglobal_times - 1; i++){
       if(timexm >= global_times[i] && timexm < global_times[i + 1])return i;
     }
     return nglobal_times-1;
@@ -1486,7 +1469,7 @@ void MouseDragCB(int xm, int ym){
 
   in_external=0;
 
-  if( colorbar_drag==1&&(showtime==1 || showplot3d==1)){
+  if(colorbar_drag==1&&(showtime==1 || showplot3d==1)){
     ColorbarDrag(xm,ym);
     GLUTPOSTREDISPLAY;
     return;
@@ -1781,7 +1764,7 @@ void Keyboard(unsigned char key, int flag){
       }
       if(visVector==1&&nplot3dloaded>0){
         gbsave=current_mesh;
-        for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+        for(i=0; i<global_scase.meshescoll.nmeshes; i++){
           gbi = global_scase.meshescoll.meshinfo + i;
           if(gbi->plot3dfilenum==-1)continue;
           UpdateCurrentMesh(gbi);
@@ -1995,13 +1978,13 @@ void Keyboard(unsigned char key, int flag){
       {
         int nslice_loaded_local=0, nvslice_loaded_local=0;
 
-        for(i=0;i<global_scase.slicecoll.nsliceinfo;i++){
+        for(i=0; i<global_scase.slicecoll.nsliceinfo; i++){
           slicedata *sd;
 
           sd = global_scase.slicecoll.sliceinfo + i;
           if(sd->loaded==1)nslice_loaded_local++;
         }
-        for(i=0;i<global_scase.slicecoll.nvsliceinfo;i++){
+        for(i=0; i<global_scase.slicecoll.nvsliceinfo; i++){
           vslicedata *vd;
 
           vd = global_scase.slicecoll.vsliceinfo + i;
@@ -2489,6 +2472,7 @@ void Keyboard(unsigned char key, int flag){
         }
 
         if(strncmp((const char *)&key2, "R", 1)==0&&keystate!=GLUT_ACTIVE_ALT){
+          glui_resolution_multiplier = GLUIUpdateResolutionMultiplier(glui_resolution_multiplier);
           resolution_multiplier = glui_resolution_multiplier;
         }
         else{
@@ -2521,7 +2505,7 @@ void Keyboard(unsigned char key, int flag){
           else{
             int show_plot3dkeywords=0;
 
-            for(i=0;i<global_scase.meshescoll.nmeshes;i++){
+            for(i=0; i<global_scase.meshescoll.nmeshes; i++){
               meshdata *meshi;
               plot3ddata *plot3di;
               float *xp, *yp, *zp;
@@ -3023,12 +3007,12 @@ void Keyboard(unsigned char key, int flag){
     if(strncmp((const char *)&key2,"<",1)==0||strncmp((const char *)&key2,",",1)==0){ClipDir=-1;}
      else if(strncmp((const char *)&key2,">",1)==0||strncmp((const char *)&key2,".",1)==0){ClipDir=1;}
 
-    if(stepclip_xmin==1  )clip_i += skip_global*ClipDir;
-    if(stepclip_ymin==1  )clip_j += skip_global*ClipDir;
-    if(stepclip_zmin==1  )clip_k += skip_global*ClipDir;
-    if(stepclip_xmax==1  )global_scase.clip_I += skip_global*ClipDir;
-    if(stepclip_ymax==1  )global_scase.clip_J += skip_global*ClipDir;
-    if(stepclip_zmax==1  )global_scase.clip_K += skip_global*ClipDir;
+    if(stepclip_xmin==1)clip_i += skip_global*ClipDir;
+    if(stepclip_ymin==1)clip_j += skip_global*ClipDir;
+    if(stepclip_zmin==1)clip_k += skip_global*ClipDir;
+    if(stepclip_xmax==1)global_scase.clip_I += skip_global*ClipDir;
+    if(stepclip_ymax==1)global_scase.clip_J += skip_global*ClipDir;
+    if(stepclip_zmax==1)global_scase.clip_K += skip_global*ClipDir;
 
     UpdateClipbounds(clipinfo.clip_xmin,&clip_i,clipinfo.clip_xmax,&global_scase.clip_I,current_mesh->ibar);
     UpdateClipbounds(clipinfo.clip_ymin,&clip_j,clipinfo.clip_ymax,&global_scase.clip_J,current_mesh->jbar);
@@ -3213,26 +3197,26 @@ float SetClipVal(int flag){
 
   for(i = 0; i<global_scase.meshescoll.nmeshes; i++){
     meshdata *meshi;
-    float *xplt, *yplt, *zplt;
+    float *xplt_fds, *yplt_fds, *zplt_fds;
     int plotx, ploty, plotz;
 
     meshi = global_scase.meshescoll.meshinfo+i;
 
     switch(flag){
       case 0:
-        xplt = meshi->xplt_fds;
+        xplt_fds = meshi->xplt_fds;
         plotx = meshi->iplotx_all[iplotx_all];
-        if(plotx>=0)return xplt[plotx];
+        if(plotx>=0)return xplt_fds[plotx];
         break;
       case 1:
-        yplt = meshi->yplt_fds;
+        yplt_fds = meshi->yplt_fds;
         ploty = meshi->iploty_all[iploty_all];
-        if(ploty>=0)return yplt[ploty];
+        if(ploty>=0)return yplt_fds[ploty];
         break;
       case 2:
-        zplt = meshi->zplt_fds;
+        zplt_fds = meshi->zplt_fds;
         plotz = meshi->iplotz_all[iplotz_all];
-        if(plotz>=0)return zplt[plotz];
+        if(plotz>=0)return zplt_fds[plotz];
         break;
       default:
         assert(FFALSE);
@@ -3418,7 +3402,6 @@ void HandleMoveKeys(int  key){
 
   float *eye_xyz;
 #define LOOKANGLE_CHANGE 11.25
-
 
   eye_xyz = camera_current->eye;
 
@@ -3740,7 +3723,6 @@ void SetScreenSize(int *width, int *height){
     GLUIUpdateRenderRadioButtons(width_low, height_low, width_high, height_high);
   }
 }
-
 
 /* ------------------ ReshapeCB ------------------------ */
 
@@ -4064,8 +4046,7 @@ void DoScript(void){
     else{
       advance_script = 1;
       if(render_status!=RENDER_OFF)advance_script = 0;
-      if(current_script_command != NULL &&
-         current_script_command->command == SCRIPT_RENDERRESULTS &&
+      if(current_script_command->command == SCRIPT_RENDERRESULTS &&
          current_script_command->exit == 0)advance_script = 0;
     }
 #define NREPEATS 1
@@ -4106,38 +4087,6 @@ void DoScript(void){
   }
 }
 
-/* ------------------ DoScriptHtml ------------------------ */
-
-void DoScriptHtml(void){
-  int i;
-  int error_code;
-
-  error_code = CompileScript(default_script->file);
-  switch(error_code){
-  case 0:
-    StartScript();
-    break;
-  case 1:
-    fprintf(stderr, "*** Error: unable to open script file");
-    if(default_script->file != NULL)fprintf(stderr, ": %s", default_script->file);
-    fprintf(stderr, "\n");
-  case 2:
-    break;
-  default:
-    assert(FFALSE);
-    break;
-  }
-  for(i=0;i<nscriptinfo;i++){
-    scriptdata *scripti;
-
-    scripti = scriptinfo + i;
-    if(scripti->need_graphics==1){
-      printf("***warning: script command, %s, requires graphics\n", scripti->command_label);
-      continue;
-    }
-    RunScriptCommand(scripti);
-  }
-}
 
 /* ------------------ IdleDisplay ------------------------ */
 
@@ -4234,7 +4183,7 @@ void DoNonStereo(void){
         FREEMEMORY(screeni->screenbuffer);
       }
     }
-    if(render_mode == RENDER_GIF) {
+    if(render_mode == RENDER_GIF){
       int i, ibuffer = 0;
       GLubyte **screenbuffers;
 
@@ -4261,7 +4210,7 @@ void DoNonStereo(void){
         FREEMEMORY(screenbuffers[i]);
       }
       FREEMEMORY(screenbuffers);
-      if (render_status == RENDER_OFF) {
+      if(render_status == RENDER_OFF){
         GifEnd();
       }
     }
@@ -4283,7 +4232,13 @@ void DoNonStereo(void){
 
 void DisplayCB(void){
   SNIFF_ERRORS("DisplayDB: start");
-  DoScript();
+  // force scene display before running a script
+  if(runscript_firsttime == 1){
+    runscript_firsttime = 0;
+  }
+  else{
+    DoScript();
+  }
   UpdateDisplay();
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   if(stereotype==STEREO_NONE){
@@ -4308,7 +4263,6 @@ void SetMainWindow(void){
 }
 
 /* ------------------ ResizeWindow ------------------------ */
-
 
 void ResizeWindow(int width, int height){
   float wscaled, hscaled;

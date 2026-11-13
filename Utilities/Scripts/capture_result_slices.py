@@ -32,6 +32,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from smv_planes import parse_plane_selection
 
 
+MAGICK_TIMEOUT_SECONDS = 300
 QUANTITIES = ("visibility", "temperature", "velocity", "pressure")
 QUANTITY_PATTERN = "|".join(QUANTITIES)
 COMPONENT_PATTERN = re.compile(
@@ -221,6 +222,33 @@ def is_white_component(colour: str) -> bool:
     )
 
 
+def run_magick(command: list[str]) -> subprocess.CompletedProcess[str] | None:
+    # The limit stops a slow or stalled ImageMagick (resource policy, swapping)
+    # from freezing the capture, and the message is the only trace of why a
+    # crop was skipped.
+    try:
+        result = subprocess.run(
+            command, check=False, capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=MAGICK_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        print(
+            f"capture_result_slices: warning: ImageMagick did not finish within "
+            f"{MAGICK_TIMEOUT_SECONDS} s",
+            file=sys.stderr,
+        )
+        return None
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip().splitlines()
+        print(
+            f"capture_result_slices: warning: ImageMagick exited with {result.returncode}: "
+            f"{detail[0] if detail else 'no output'}",
+            file=sys.stderr,
+        )
+        return None
+    return result
+
+
 def detect_model_bounds(
     capture: Capture, convert_command: list[str]
 ) -> tuple[int, int, int, int] | None:
@@ -233,8 +261,8 @@ def detect_model_bounds(
         "-connected-components", "8",
         "null:",
     ]
-    result = subprocess.run(command, check=False, capture_output=True, text=True)
-    if result.returncode != 0:
+    result = run_magick(command)
+    if result is None:
         return None
 
     image_area = capture.width * capture.height
@@ -312,8 +340,7 @@ def crop_capture(
         command.extend(["-bordercolor", "white", "-border", f"{padding}x{padding}"])
     command.append(str(cropped_path))
     try:
-        result = subprocess.run(command, check=False, capture_output=True, text=True)
-        if result.returncode != 0:
+        if run_magick(command) is None:
             return False
         os.replace(cropped_path, capture.path)
         return True
